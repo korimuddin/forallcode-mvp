@@ -872,15 +872,8 @@ function RepoPage() {
         </div>
       </section>
 
-      <CodebaseMapPanel
-        owner={username}
-        repo={repo}
-        title="A visual map of this repository."
-        description="Trace the main branch, active branches, forks, pull requests, and merge points before you open the file tree."
-      />
-
       <div className="repo-tab-bar">
-        {["Code", "Commits", "Branches", "Settings"].map((tab) => (
+        {["Code", "Commits", "Branches", "Visual Map", "Settings"].map((tab) => (
           <button className={activeTab === tab ? "active" : ""} key={tab} onClick={() => setActiveTab(tab)}>{tab}</button>
         ))}
       </div>
@@ -931,6 +924,17 @@ function RepoPage() {
               <time>{branch.updated}</time>
             </div>
           ))}
+        </section>
+      )}
+
+      {activeTab === "Visual Map" && (
+        <section className="repo-map-panel">
+          <CodebaseMapPanel
+            owner={username}
+            repo={repo}
+            title="A visual map of this repository."
+            description="Trace the main branch, active branches, forks, pull requests, and merge points before you open the file tree."
+          />
         </section>
       )}
 

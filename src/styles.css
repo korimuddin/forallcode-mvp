@@ -2703,12 +2703,17 @@ pre { padding: 14px; overflow: auto; }
 }
 
 .phase-list-panel,
-.repo-settings-panel {
+.repo-settings-panel,
+.repo-map-panel {
   border: 1px solid var(--cream3);
   border-top: 0;
   border-radius: 0 0 20px 20px;
   background: var(--white);
   padding: 18px;
+}
+
+.repo-map-panel .codebase-map-section {
+  border-radius: 16px;
 }
 
 .commit-row,
