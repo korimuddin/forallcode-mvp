@@ -75,6 +75,51 @@ export async function fetchGitHubReceivedEvents(username, githubAccessToken) {
   return response.json();
 }
 
+async function fetchGitHubJson(path, githubAccessToken) {
+  const response = await fetch(`https://api.github.com${path}`, {
+    headers: {
+      Authorization: `Bearer ${githubAccessToken}`,
+      Accept: "application/vnd.github+json"
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`GitHub request failed for ${path}.`);
+  }
+
+  return response.json();
+}
+
+export async function fetchGitHubRepoOverview(owner, repo, githubAccessToken) {
+  if (!owner || !repo || !githubAccessToken) return null;
+
+  const encodedOwner = encodeURIComponent(owner);
+  const encodedRepo = encodeURIComponent(repo);
+  const repoPath = `/repos/${encodedOwner}/${encodedRepo}`;
+  const repository = await fetchGitHubJson(repoPath, githubAccessToken);
+  const defaultBranch = repository.default_branch || "main";
+
+  const [treeResult, commitsResult, branchesResult, forksResult, pullsResult, readmeResult] = await Promise.allSettled([
+    fetchGitHubJson(`${repoPath}/git/trees/${encodeURIComponent(defaultBranch)}?recursive=1`, githubAccessToken),
+    fetchGitHubJson(`${repoPath}/commits?per_page=20`, githubAccessToken),
+    fetchGitHubJson(`${repoPath}/branches?per_page=50`, githubAccessToken),
+    fetchGitHubJson(`${repoPath}/forks?sort=newest&per_page=10`, githubAccessToken),
+    fetchGitHubJson(`${repoPath}/pulls?state=all&per_page=10`, githubAccessToken),
+    fetchGitHubJson(`${repoPath}/readme`, githubAccessToken)
+  ]);
+
+  return {
+    repository,
+    defaultBranch,
+    files: treeResult.status === "fulfilled" ? mapGitHubTree(treeResult.value?.tree || []) : [],
+    commits: commitsResult.status === "fulfilled" ? commitsResult.value.map(mapGitHubCommit) : [],
+    branches: branchesResult.status === "fulfilled" ? branchesResult.value.map((branch) => mapGitHubBranch(branch, defaultBranch)) : [],
+    forks: forksResult.status === "fulfilled" ? forksResult.value.map(mapGitHubFork) : [],
+    pulls: pullsResult.status === "fulfilled" ? pullsResult.value.map(mapGitHubPull) : [],
+    readme: readmeResult.status === "fulfilled" ? decodeGitHubContent(readmeResult.value?.content) : ""
+  };
+}
+
 export function getSessionIdentity(session) {
   const metadata = session?.user?.user_metadata || {};
   const emailName = session?.user?.email?.split("@")[0] || "";
@@ -203,6 +248,76 @@ function eventAction(event) {
   };
 
   return actions[event.type] || "updated";
+}
+
+function mapGitHubTree(tree) {
+  return tree
+    .filter((item) => item.type === "tree" || item.type === "blob")
+    .sort((a, b) => {
+      if (a.path.split("/").length !== b.path.split("/").length) {
+        return a.path.split("/").length - b.path.split("/").length;
+      }
+      if (a.type !== b.type) return a.type === "tree" ? -1 : 1;
+      return a.path.localeCompare(b.path);
+    })
+    .slice(0, 120)
+    .map((item) => ({
+      path: item.path,
+      name: item.path.split("/").pop(),
+      indent: Math.min(item.path.split("/").length - 1, 4),
+      type: item.type === "tree" ? "folder" : "file"
+    }));
+}
+
+function mapGitHubCommit(commit) {
+  const author = commit.commit?.author?.name || commit.author?.login || "Unknown";
+
+  return {
+    hash: commit.sha?.slice(0, 7) || "",
+    message: commit.commit?.message?.split("\n")[0] || "Commit",
+    author,
+    time: formatRelativeDate(commit.commit?.author?.date || commit.commit?.committer?.date),
+    url: commit.html_url || ""
+  };
+}
+
+function mapGitHubBranch(branch, defaultBranch) {
+  return {
+    name: branch.name,
+    default: branch.name === defaultBranch,
+    updated: branch.commit?.sha ? branch.commit.sha.slice(0, 7) : "Latest",
+    sha: branch.commit?.sha || ""
+  };
+}
+
+function mapGitHubFork(fork) {
+  return {
+    name: fork.full_name || fork.name,
+    owner: fork.owner?.login || "",
+    updated: formatRelativeDate(fork.updated_at)
+  };
+}
+
+function mapGitHubPull(pull) {
+  return {
+    number: pull.number,
+    title: pull.title,
+    state: pull.merged_at ? "merged" : pull.state,
+    head: pull.head?.ref || "",
+    base: pull.base?.ref || "main",
+    updated: formatRelativeDate(pull.updated_at)
+  };
+}
+
+function decodeGitHubContent(content) {
+  if (!content) return "";
+  try {
+    const binary = atob(content.replace(/\n/g, ""));
+    const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+    return new TextDecoder().decode(bytes);
+  } catch {
+    return "";
+  }
 }
 
 function formatRelativeDate(value) {

@@ -30,7 +30,7 @@ import Skeleton from "./components/ui/Skeleton";
 import { useAuthSession, useDocumentTitle, useIsMobile, useSignedInUserData } from "./lib/hooks";
 import { renderMarkdown } from "./lib/markdownRenderer";
 import { createNotification } from "./lib/notifications";
-import { getCurrentSession, isSupabaseConfigured, signInWithGitHub, signInWithPassword, supabase } from "./lib/supabase";
+import { fetchGitHubRepoOverview, getCurrentSession, isSupabaseConfigured, signInWithGitHub, signInWithPassword, supabase } from "./lib/supabase";
 import "./styles.css";
 import "./styles/mobile.css";
 
@@ -142,28 +142,6 @@ const lessonDetails = {
     steps: ["Compare permissions", "Pick a licence", "Add it to the repo", "Make terms visible"]
   }
 };
-
-const fileTreeItems = [
-  { type: "folder", name: "src", indent: 0 },
-  { type: "folder", name: "components", indent: 1 },
-  { type: "file", name: "TopNav.jsx", indent: 2 },
-  { type: "file", name: "CommandPalette.jsx", indent: 2 },
-  { type: "file", name: "main.jsx", indent: 1 },
-  { type: "file", name: "README.md", indent: 0 },
-  { type: "file", name: "package.json", indent: 0 }
-];
-
-const commits = [
-  { hash: "406fa61", message: "Restore top navigation styling", author: "Korim", time: "18 minutes ago" },
-  { hash: "2f1179d", message: "Add Supabase config and Phase 2 navigation", author: "Korim", time: "1 hour ago" },
-  { hash: "fe6bb74", message: "Update branding and appearance settings", author: "Korim", time: "Today" }
-];
-
-const branches = [
-  { name: "main", default: true, updated: "18 minutes ago" },
-  { name: "codex/phase-2-pages", default: false, updated: "1 hour ago" },
-  { name: "studio-redesign", default: false, updated: "Yesterday" }
-];
 
 function useInitialLoading(delay = 420) {
   const [loading, setLoading] = useState(true);
@@ -648,6 +626,7 @@ function NewRepoPage() {
 function CodebaseMapPanel({
   owner,
   repo,
+  repoGraph,
   title = "See the shape of the work before it grows.",
   description = "ForAllCode shows the main branch, feature branches, forks, pull requests, and merges as a living diagram."
 }) {
@@ -658,7 +637,7 @@ function CodebaseMapPanel({
         <h2>{title}</h2>
         <p>{description}</p>
       </div>
-      <CodebaseDiagram owner={owner} repo={repo} />
+      <CodebaseDiagram owner={owner} repo={repo} repoGraph={repoGraph} />
       <div className="codebase-map-legend">
         <span><i className="main" /> Main branch</span>
         <span><i className="branch" /> Feature branch</span>
@@ -669,24 +648,28 @@ function CodebaseMapPanel({
   );
 }
 
-function CodebaseDiagram({ owner = "origin", repo = "forallcode" }) {
-  const commits = [
-    { x: 90, y: 170, label: "init" },
-    { x: 210, y: 170, label: "README" },
-    { x: 330, y: 170, label: "app" },
-    { x: 460, y: 170, label: "review" },
-    { x: 590, y: 170, label: "merge" },
-    { x: 710, y: 170, label: "launch" }
-  ];
-  const feature = [
-    { x: 330, y: 92, label: "auth" },
-    { x: 460, y: 92, label: "tests" }
-  ];
-  const fork = [
-    { x: 210, y: 260, label: "fork" },
-    { x: 350, y: 300, label: "patch" },
-    { x: 500, y: 260, label: "PR" }
-  ];
+function CodebaseDiagram({ owner = "origin", repo = "forallcode", repoGraph }) {
+  const mainCommits = (repoGraph?.commits || []).slice(0, 6).reverse().map((commit, index, items) => ({
+    x: 90 + index * (items.length > 1 ? 620 / (items.length - 1) : 0),
+    y: 170,
+    label: commit.hash || `c${index + 1}`
+  }));
+  const commits = mainCommits.length > 0 ? mainCommits : [{ x: 90, y: 170, label: "empty" }];
+  const feature = (repoGraph?.branches || [])
+    .filter((branch) => !branch.default)
+    .slice(0, 2)
+    .map((branch, index) => ({
+      x: 330 + index * 130,
+      y: 92,
+      label: branch.name.length > 18 ? `${branch.name.slice(0, 15)}...` : branch.name
+    }));
+  const fork = (repoGraph?.forks || []).slice(0, 2).map((item, index) => ({
+    x: 210 + index * 150,
+    y: 260 + index * 30,
+    label: item.owner || item.name
+  }));
+  const pull = repoGraph?.pulls?.[0];
+  const defaultBranch = repoGraph?.defaultBranch || "main";
 
   return (
     <div className="codebase-diagram" aria-label="Visual diagram of main branch, forks, feature branches, and merges">
@@ -698,15 +681,19 @@ function CodebaseDiagram({ owner = "origin", repo = "forallcode" }) {
         </defs>
 
         <path className="map-line main-line" d="M90 170 H710" />
-        <path className="map-line branch-line" d="M330 170 C340 120 370 92 410 92 H460 C506 92 530 124 590 170" />
-        <path className="map-line fork-line" d="M210 170 C212 225 260 258 350 300 C432 332 492 302 590 170" />
-        <path className="map-line pr-line" d="M500 260 C545 244 570 212 590 170" markerEnd="url(#arrow-soft)" />
+        {feature.length > 0 && <path className="map-line branch-line" d="M330 170 C340 120 370 92 410 92 H460 C506 92 530 124 590 170" />}
+        {fork.length > 0 && <path className="map-line fork-line" d="M210 170 C212 225 260 258 350 300 C432 332 492 302 590 170" />}
+        {pull && <path className="map-line pr-line" d="M500 260 C545 244 570 212 590 170" markerEnd="url(#arrow-soft)" />}
 
         <rect x="54" y="26" width="196" height="54" rx="16" fill="#fffdf9" stroke="#e8e0d4" />
         <text x="74" y="58">{owner}/{repo}</text>
 
-        <rect x="586" y="244" width="146" height="54" rx="16" fill="#f5e4c4" stroke="#e8e0d4" />
-        <text x="606" y="276">open pull request</text>
+        {pull && (
+          <>
+            <rect x="586" y="244" width="146" height="54" rx="16" fill="#f5e4c4" stroke="#e8e0d4" />
+            <text x="606" y="276">PR #{pull.number} {pull.state}</text>
+          </>
+        )}
 
         {commits.map((commit, index) => (
           <g key={commit.label}>
@@ -729,9 +716,9 @@ function CodebaseDiagram({ owner = "origin", repo = "forallcode" }) {
           </g>
         ))}
 
-        <text className="map-label" x="650" y="142">main</text>
-        <text className="map-label" x="380" y="122">feature/login</text>
-        <text className="map-label" x="286" y="246">noor/forallcode fork</text>
+        <text className="map-label" x="650" y="142">{defaultBranch}</text>
+        {feature[0] && <text className="map-label" x="380" y="122">active branch</text>}
+        {fork[0] && <text className="map-label" x="286" y="246">recent fork</text>}
       </svg>
     </div>
   );
@@ -752,11 +739,44 @@ function RepoPage() {
       forks: 0,
       updated: "Recently",
       private: false
-    };
+  };
   const [activeTab, setActiveTab] = useState("Code");
   const [landingHtml, setLandingHtml] = useState("");
-  const loadingRepoContent = useInitialLoading();
+  const [repoDetails, setRepoDetails] = useState(null);
+  const [repoDetailsLoading, setRepoDetailsLoading] = useState(true);
+  const [repoDetailsError, setRepoDetailsError] = useState("");
   const cloneUrl = `https://github.com/${username}/${repo}.git`;
+
+  useEffect(() => {
+    let alive = true;
+
+    async function loadGitHubDetails() {
+      setRepoDetailsLoading(true);
+      setRepoDetailsError("");
+
+      try {
+        const session = await getCurrentSession();
+        if (!session?.provider_token) {
+          throw new Error("Sign in with GitHub to load live repo contents.");
+        }
+
+        const details = await fetchGitHubRepoOverview(username, repo, session.provider_token);
+        if (alive) setRepoDetails(details);
+      } catch (error) {
+        if (alive) {
+          setRepoDetails(null);
+          setRepoDetailsError(error.message || "Could not load this repository from GitHub.");
+        }
+      } finally {
+        if (alive) setRepoDetailsLoading(false);
+      }
+    }
+
+    loadGitHubDetails();
+    return () => {
+      alive = false;
+    };
+  }, [username, repo]);
 
   useEffect(() => {
     async function loadPublishedLanding() {
@@ -830,23 +850,30 @@ function RepoPage() {
 
       {activeTab === "Code" && (
         <section className="phase-code-tab">
-          {loadingRepoContent ? (
+          {repoDetailsLoading ? (
             <>
               <RepoFileTreeSkeleton />
               <ReadmeSkeleton />
             </>
+          ) : repoDetailsError ? (
+            <RepoDataMessage title="Could not load GitHub files" text={repoDetailsError} />
           ) : (
             <>
               <aside className="phase-file-tree">
-                <select><option>main</option><option>codex/phase-2-pages</option><option>studio-redesign</option></select>
-                {fileTreeItems.map((item) => (
-                  <button key={`${item.name}-${item.indent}`} style={{ paddingLeft: `${12 + item.indent * 18}px` }}>
+                <select value={repoDetails?.defaultBranch || "main"} onChange={() => {}}>
+                  {(repoDetails?.branches?.length ? repoDetails.branches : [{ name: repoDetails?.defaultBranch || "main" }]).map((branch) => (
+                    <option key={branch.name}>{branch.name}</option>
+                  ))}
+                </select>
+                {(repoDetails?.files || []).map((item) => (
+                  <button key={item.path} title={item.path} style={{ paddingLeft: `${12 + item.indent * 18}px` }}>
                     {item.type === "folder" ? <Folder size={15} /> : <FileText size={15} />}
                     {item.name}
                   </button>
                 ))}
+                {repoDetails?.files?.length === 0 && <p className="empty-state">No files found in this repository.</p>}
               </aside>
-              <ReadmePreview repo={data} />
+              <ReadmePreview repo={data} markdown={repoDetails?.readme} />
             </>
           )}
         </section>
@@ -854,34 +881,42 @@ function RepoPage() {
 
       {activeTab === "Commits" && (
         <section className="phase-list-panel">
-          {commits.map((commit) => (
+          {repoDetailsLoading && <RepoListLoading />}
+          {!repoDetailsLoading && repoDetailsError && <RepoDataMessage title="Could not load GitHub commits" text={repoDetailsError} />}
+          {!repoDetailsLoading && !repoDetailsError && (repoDetails?.commits || []).map((commit) => (
             <div className="commit-row" key={commit.hash}>
-              <span className="phase-initials">{commit.author[0]}</span>
+              <span className="phase-initials">{commit.author?.[0] || "?"}</span>
               <div><strong>{commit.message}</strong><p>{commit.author}</p></div>
               <code>{commit.hash}</code>
               <time>{commit.time}</time>
             </div>
           ))}
+          {!repoDetailsLoading && !repoDetailsError && repoDetails?.commits?.length === 0 && <RepoDataMessage title="No commits found" text="GitHub did not return any commits for this repository." />}
         </section>
       )}
 
       {activeTab === "Branches" && (
         <section className="phase-list-panel">
-          {branches.map((branch) => (
+          {repoDetailsLoading && <RepoListLoading />}
+          {!repoDetailsLoading && repoDetailsError && <RepoDataMessage title="Could not load GitHub branches" text={repoDetailsError} />}
+          {!repoDetailsLoading && !repoDetailsError && (repoDetails?.branches || []).map((branch) => (
             <div className="branch-row" key={branch.name}>
               <code>{branch.name}</code>
               {branch.default && <Badge>default</Badge>}
-              <time>{branch.updated}</time>
+              <time>{branch.sha || branch.updated}</time>
             </div>
           ))}
+          {!repoDetailsLoading && !repoDetailsError && repoDetails?.branches?.length === 0 && <RepoDataMessage title="No branches found" text="GitHub did not return any branches for this repository." />}
         </section>
       )}
 
       {activeTab === "Visual Map" && (
         <section className="repo-map-panel">
+          {repoDetailsError && <RepoDataMessage title="Using limited map data" text={repoDetailsError} />}
           <CodebaseMapPanel
             owner={username}
             repo={repo}
+            repoGraph={repoDetails}
             title="A visual map of this repository."
             description="Trace the main branch, active branches, forks, pull requests, and merge points before you open the file tree."
           />
@@ -1217,12 +1252,36 @@ function FileTree() {
   return <aside className="file-tree">{["src", "src/components", "src/App.tsx", "README.md", "package.json", ".gitignore"].map((file) => <button key={file}><FileCode2 size={15} />{file}</button>)}</aside>;
 }
 
-function ReadmePreview({ repo = repos[0] }) {
-  return <MarkdownPreview markdown={`# ${repo.name}\n\n${repo.description}\n\n## Highlights\n\n- Warm project intro\n- Contributor-friendly setup\n- Copyable code samples\n\n\`\`\`bash\nnpm install\nnpm run dev\n\`\`\`\n\nUpdated ${repo.updated} - 128 commits - 5 contributors`} />;
+function ReadmePreview({ repo = repos[0], markdown }) {
+  const fallback = `# ${repo.name}\n\n${repo.description || "No README.md found for this repository."}`;
+  return <MarkdownPreview markdown={markdown || fallback} />;
 }
 
 function MarkdownPreview({ markdown, className = "readme-render" }) {
   return <div className={className} dangerouslySetInnerHTML={{ __html: renderMarkdown(markdown) }} />;
+}
+
+function RepoDataMessage({ title, text }) {
+  return (
+    <Card>
+      <h3>{title}</h3>
+      <p>{text}</p>
+    </Card>
+  );
+}
+
+function RepoListLoading() {
+  return Array.from({ length: 4 }).map((_, index) => (
+    <div className="commit-row" key={index}>
+      <Skeleton className="skeleton-avatar" />
+      <div>
+        <Skeleton className="skeleton-text wide" />
+        <Skeleton className="skeleton-text" />
+      </div>
+      <Skeleton className="skeleton-text" />
+      <Skeleton className="skeleton-text" />
+    </div>
+  ));
 }
 
 function LessonIllustration({ slug, title, description }) {
