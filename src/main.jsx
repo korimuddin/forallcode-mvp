@@ -2,8 +2,6 @@ import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Link, NavLink, Navigate, Route, Routes, useNavigate, useParams } from "react-router-dom";
 import { BrowserRouter } from "react-router-dom";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import {
   BookOpen,
   Check,
@@ -28,6 +26,7 @@ import {
 import CommandPalette from "./components/layout/CommandPalette";
 import TopNav from "./components/layout/TopNav";
 import IllustratedAvatar, { avatarVariants } from "./components/ui/IllustratedAvatar";
+import { renderMarkdown } from "./lib/markdownRenderer";
 import { getCurrentSession, isSupabaseConfigured, signInWithGitHub, signInWithPassword } from "./lib/supabase";
 import "./styles.css";
 
@@ -656,7 +655,7 @@ function ReadmeStudio() {
         <textarea value={markdown} onChange={(event) => setMarkdown(event.target.value)} />
         <section className="readme-render">
           <div className="preview-toggle"><Button variant="soft" onClick={() => setRaw(!raw)}>{raw ? "Preview" : "Raw markdown"}</Button><Button variant="soft">Desktop</Button><Button variant="soft">Mobile</Button></div>
-          {raw ? <pre>{markdown}</pre> : <ReactMarkdown remarkPlugins={[remarkGfm]}>{markdown}</ReactMarkdown>}
+          {raw ? <pre>{markdown}</pre> : <MarkdownPreview markdown={markdown} className="markdown-output" />}
         </section>
       </div>
     </PageFrame>
@@ -982,7 +981,11 @@ function FileTree() {
 }
 
 function ReadmePreview({ repo = repos[0] }) {
-  return <section className="readme-render"><ReactMarkdown remarkPlugins={[remarkGfm]}>{`# ${repo.name}\n\n${repo.description}\n\n## Highlights\n\n- Warm project intro\n- Contributor-friendly setup\n- Copyable code samples\n\n\`\`\`bash\nnpm install\nnpm run dev\n\`\`\`\n\nUpdated ${repo.updated} - 128 commits - 5 contributors`}</ReactMarkdown></section>;
+  return <MarkdownPreview markdown={`# ${repo.name}\n\n${repo.description}\n\n## Highlights\n\n- Warm project intro\n- Contributor-friendly setup\n- Copyable code samples\n\n\`\`\`bash\nnpm install\nnpm run dev\n\`\`\`\n\nUpdated ${repo.updated} - 128 commits - 5 contributors`} />;
+}
+
+function MarkdownPreview({ markdown, className = "readme-render" }) {
+  return <div className={className} dangerouslySetInnerHTML={{ __html: renderMarkdown(markdown) }} />;
 }
 
 function LessonIllustration({ slug, title, description }) {
