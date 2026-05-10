@@ -28,6 +28,7 @@ import TopNav from "./components/layout/TopNav";
 import IllustratedAvatar, { avatarVariants } from "./components/ui/IllustratedAvatar";
 import { renderMarkdown } from "./lib/markdownRenderer";
 import { getCurrentSession, isSupabaseConfigured, signInWithGitHub, signInWithPassword } from "./lib/supabase";
+import ReadmeStudio from "./pages/ReadmeStudio";
 import "./styles.css";
 
 const currentUser = {
@@ -633,32 +634,6 @@ function RepoPage() {
         </section>
       )}
     </div>
-  );
-}
-
-function ReadmeStudio() {
-  const [markdown, setMarkdown] = useState(`# Orbit README\n\n> A friendly project introduction.\n\n## Features\n\n- Beautiful hero banners\n- Badge pills\n- Live preview\n\n\`\`\`ts\nexport const hello = \"ForAllCode\";\n\`\`\``);
-  const [raw, setRaw] = useState(false);
-  return (
-    <PageFrame title="README Studio" eyebrow="Editor">
-      <div className="studio-actions">
-        {["Blank", "Library+package", "Personal project", "Open source", "Portfolio"].map((template) => <Button key={template} variant="soft">{template}</Button>)}
-        <Button variant="soft"><Download size={16} />Export .md</Button>
-        <Button>Save to repo</Button>
-      </div>
-      <div className="studio">
-        <aside className="insert-panel">
-          {["Hero banner", "Badge pills", "Feature grid", "Code block", "Image", "Divider"].map((block) => <button key={block} onClick={() => setMarkdown(`${markdown}\n\n## ${block}\nDescribe this section here.`)}><Plus size={15} />{block}</button>)}
-          <label>Gradient<select><option>Lavender sunrise</option><option>Sage meadow</option><option>Rose amber</option></select></label>
-          <label>Code language<select><option>TypeScript</option><option>Python</option><option>Shell</option></select></label>
-        </aside>
-        <textarea value={markdown} onChange={(event) => setMarkdown(event.target.value)} />
-        <section className="readme-render">
-          <div className="preview-toggle"><Button variant="soft" onClick={() => setRaw(!raw)}>{raw ? "Preview" : "Raw markdown"}</Button><Button variant="soft">Desktop</Button><Button variant="soft">Mobile</Button></div>
-          {raw ? <pre>{markdown}</pre> : <MarkdownPreview markdown={markdown} className="markdown-output" />}
-        </section>
-      </div>
-    </PageFrame>
   );
 }
 

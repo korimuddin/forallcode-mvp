@@ -986,6 +986,264 @@ pre { padding: 14px; overflow: auto; }
 .readme-render h1 { font-size: clamp(2rem, 5vw, 4rem); }
 .readme-render h2 { margin-top: 28px; }
 .readme-render li { color: var(--ink2); margin: 8px 0; }
+
+.readme-studio-page {
+  min-height: calc(100vh - 78px);
+  background: var(--cream);
+}
+
+.readme-studio-header {
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 20px;
+  background: var(--white);
+  border-bottom: 1px solid var(--cream3);
+}
+
+.readme-studio-path,
+.readme-studio-actions,
+.readme-studio-mobile-tabs,
+.readme-ghost-button,
+.readme-save-button {
+  display: flex;
+  align-items: center;
+}
+
+.readme-studio-path {
+  min-width: 0;
+  gap: 8px;
+  color: var(--ink3);
+  font-family: "DM Mono", monospace;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.readme-studio-path a {
+  width: 30px;
+  height: 30px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--cream3);
+  border-radius: 50%;
+  background: var(--cream);
+  color: var(--ink2);
+}
+
+.readme-studio-path strong {
+  color: var(--ink);
+}
+
+.readme-studio-actions {
+  position: relative;
+  gap: 8px;
+}
+
+.readme-template-menu {
+  position: relative;
+}
+
+.readme-ghost-button,
+.readme-save-button {
+  min-height: 32px;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 30px;
+  padding: 7px 12px;
+  font-size: 13px;
+  transition: all .18s ease;
+}
+
+.readme-ghost-button {
+  border: 1px solid var(--cream3);
+  background: var(--white);
+  color: var(--ink2);
+}
+
+.readme-ghost-button:hover {
+  border-color: var(--lavender2);
+  background: var(--cream2);
+}
+
+.readme-save-button {
+  border: 1px solid var(--lavender3);
+  background: var(--lavender3);
+  color: var(--white);
+  font-weight: 700;
+}
+
+.readme-template-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 30;
+  width: 190px;
+  border: 1px solid var(--cream3);
+  border-radius: 12px;
+  background: var(--white);
+  padding: 8px;
+}
+
+.readme-template-dropdown button {
+  width: 100%;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  padding: 9px 10px;
+  color: var(--ink2);
+  text-align: left;
+}
+
+.readme-template-dropdown button:hover {
+  background: var(--cream2);
+  color: var(--ink);
+}
+
+.readme-studio-mobile-tabs {
+  display: none;
+  gap: 4px;
+  border: 1px solid var(--cream3);
+  border-radius: 30px;
+  background: var(--cream);
+  padding: 3px;
+}
+
+.readme-studio-mobile-tabs button {
+  border: 0;
+  border-radius: 20px;
+  background: transparent;
+  padding: 6px 12px;
+  color: var(--ink3);
+  font-size: 12px;
+}
+
+.readme-studio-mobile-tabs .active {
+  background: var(--lavender3);
+  color: var(--white);
+}
+
+.readme-studio-body {
+  display: flex;
+  min-height: calc(100vh - 130px);
+}
+
+.readme-editor-column,
+.readme-preview-column {
+  width: 50%;
+  height: calc(100vh - 130px);
+}
+
+.readme-editor-column {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--cream3);
+  background: var(--white);
+}
+
+.readme-editor-toolbar {
+  display: flex;
+  gap: 4px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--cream3);
+  background: var(--cream);
+  flex-wrap: wrap;
+}
+
+.readme-toolbar-group {
+  display: flex;
+  gap: 4px;
+  padding-right: 7px;
+  margin-right: 3px;
+  border-right: 1px solid var(--cream3);
+}
+
+.readme-toolbar-group:last-of-type {
+  border-right: 0;
+}
+
+.readme-toolbar-group button {
+  width: 28px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink2);
+  padding: 0;
+  font-family: "DM Mono", monospace;
+  font-size: 11px;
+}
+
+.readme-toolbar-group button:hover {
+  border-color: var(--cream3);
+  background: var(--white);
+  color: var(--ink);
+}
+
+.readme-insert-block-button {
+  margin-left: auto;
+  border: 0;
+  border-radius: 8px;
+  background: var(--lavender);
+  color: var(--lavender3);
+  padding: 4px 12px;
+  font-size: 12px;
+  font-family: "DM Sans", sans-serif;
+  font-weight: 700;
+}
+
+.readme-editor-column textarea {
+  flex: 1;
+  width: 100%;
+  border: 0;
+  outline: 0;
+  resize: none;
+  overflow-y: auto;
+  padding: 20px;
+  background: var(--white);
+  color: var(--ink);
+  font-family: "DM Mono", monospace;
+  font-size: 13px;
+  line-height: 1.8;
+  tab-size: 2;
+}
+
+.readme-preview-column {
+  overflow-y: auto;
+  background: var(--white);
+}
+
+.readme-preview-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--cream3);
+  background: var(--cream);
+  color: var(--ink3);
+  font-size: 12px;
+}
+
+.readme-preview-content {
+  padding: 28px 32px;
+}
+
+.readme-studio-status {
+  margin: 0;
+  border-top: 1px solid var(--cream3);
+  background: var(--cream);
+  padding: 8px 20px;
+  color: var(--ink3);
+  font-size: 12px;
+}
+
 .tabs-card { margin-top: 18px; }
 .tab-row { gap: 8px; margin-bottom: 12px; }
 .tab-row button, .control-panel button, .insert-panel button, .lesson-sidebar button, .settings-layout aside a {
@@ -1593,6 +1851,42 @@ footer {
   .phase-file-tree { border-right: 0; border-bottom: 1px solid var(--cream3); }
   .feature-grid, .repo-grid, .roadmap, .steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .studio textarea { min-height: 360px; }
+  .readme-studio-header {
+    height: auto;
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+  .readme-studio-path {
+    flex: 1 1 100%;
+  }
+  .readme-studio-mobile-tabs {
+    display: flex;
+  }
+  .readme-studio-actions {
+    margin-left: auto;
+    flex-wrap: wrap;
+  }
+  .readme-studio-body {
+    display: block;
+    min-height: calc(100vh - 160px);
+  }
+  .readme-editor-column,
+  .readme-preview-column {
+    display: none;
+    width: 100%;
+    height: calc(100vh - 160px);
+    border-right: 0;
+  }
+  .readme-editor-column.mobile-active,
+  .readme-preview-column.mobile-active {
+    display: flex;
+  }
+  .readme-preview-column.mobile-active {
+    display: block;
+  }
+  .readme-insert-block-button {
+    margin-left: 0;
+  }
 }
 
 @media (max-width: 620px) {
