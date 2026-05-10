@@ -2375,6 +2375,142 @@ pre { padding: 14px; overflow: auto; }
 .git-diagram svg { display: block; width: 100%; height: auto; }
 .git-diagram text { font-family: "DM Mono", monospace; fill: var(--ink2); font-size: 18px; }
 
+.about-page {
+  width: min(680px, calc(100vw - 36px));
+  margin: 0 auto;
+  padding: 38px 0 64px;
+}
+
+.about-hero {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--cream3);
+  border-radius: 24px;
+  background: linear-gradient(135deg, var(--lavender), var(--sage));
+  padding: 56px 48px;
+  margin-bottom: 48px;
+  text-align: center;
+}
+
+.about-hero > *:not(.about-hills) {
+  position: relative;
+  z-index: 1;
+}
+
+.about-hills {
+  position: absolute;
+  inset: auto 0 0;
+  width: 100%;
+  height: 70%;
+  pointer-events: none;
+}
+
+.about-rocket {
+  display: block;
+  font-size: 48px;
+  line-height: 1;
+  margin-bottom: 16px;
+}
+
+.about-hero h1 {
+  margin: 0;
+  color: var(--ink);
+  font-family: "Lora", serif;
+  font-size: 36px;
+}
+
+.about-tagline {
+  margin: 8px 0 16px;
+  color: var(--lavender4);
+  font-family: "Lora", serif;
+  font-size: 20px;
+  font-style: italic;
+  font-weight: 700;
+}
+
+.about-hero-copy {
+  max-width: 480px;
+  margin: 0 auto;
+  color: var(--ink2);
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.about-section {
+  margin-bottom: 44px;
+}
+
+.about-section h2,
+.about-cta h2 {
+  margin: 0 0 12px;
+  color: var(--ink);
+  font-family: "Lora", serif;
+  font-size: 22px;
+}
+
+.about-section p {
+  color: var(--ink2);
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.about-section blockquote {
+  border-left: 3px solid var(--lavender3);
+  border-radius: 0 12px 12px 0;
+  background: var(--cream2);
+  padding: 12px 20px;
+  margin: 24px 0;
+  color: var(--ink);
+  font-family: "Lora", serif;
+  font-size: 18px;
+  font-style: italic;
+}
+
+.about-difference-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.about-difference-grid article {
+  border: 1px solid var(--cream3);
+  border-radius: 16px;
+  background: var(--cream2);
+  padding: 20px;
+}
+
+.about-difference-grid span {
+  width: 38px;
+  height: 38px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--lavender);
+  color: var(--lavender4);
+}
+
+.about-difference-grid h3 {
+  margin: 12px 0 6px;
+  color: var(--ink);
+  font-family: "Lora", serif;
+  font-size: 17px;
+}
+
+.about-difference-grid p {
+  margin: 0;
+}
+
+.about-cta {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  border: 1px solid var(--cream3);
+  border-radius: 24px;
+  background: var(--cream2);
+  padding: 34px 24px;
+  text-align: center;
+}
+
 .settings-shell {
   display: flex;
   align-items: flex-start;
@@ -3418,9 +3554,10 @@ footer {
   .brand span:last-child { display: none; }
   .logged-out-actions .nav-ghost-button { display: none; }
   .hero { min-height: auto; padding: 24px; }
-  .feature-grid, .repo-grid, .roadmap, .steps, .stats, .mini-features, .settings-fields, .new-repo-options {
+  .feature-grid, .repo-grid, .roadmap, .steps, .stats, .mini-features, .settings-fields, .new-repo-options, .about-difference-grid {
     grid-template-columns: 1fr;
   }
+  .about-hero { padding: 42px 24px; }
   .repos-page-header, .phase-section-head, .repo-header-actions { align-items: flex-start; flex-direction: column; }
   .phase-dashboard-hero { padding: 26px; }
   .phase-activity-row, .commit-row, .branch-row { grid-template-columns: 1fr; }

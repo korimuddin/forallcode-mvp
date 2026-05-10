@@ -27,6 +27,7 @@ import TopNav from "./components/layout/TopNav";
 import IllustratedAvatar, { avatarVariants } from "./components/ui/IllustratedAvatar";
 import { renderMarkdown } from "./lib/markdownRenderer";
 import { getCurrentSession, isSupabaseConfigured, signInWithGitHub, signInWithPassword, supabase } from "./lib/supabase";
+import About from "./pages/About";
 import LandingDesigner from "./pages/LandingDesigner";
 import ReadmeStudio from "./pages/ReadmeStudio";
 import SettingsAccount from "./pages/settings/SettingsAccount";
@@ -233,7 +234,7 @@ function App() {
         <main>
           <Routes>
             <Route path="/" element={<LandingPage />} />
-            <Route path="/about" element={<AboutPage />} />
+            <Route path="/about" element={<About />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/learn" element={<LearnPage />} />
