@@ -1,12 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { Bell, BookOpen, ChevronDown, Code2, Menu, Search, X } from "lucide-react";
+import IllustratedAvatar from "../ui/IllustratedAvatar";
 import { supabase } from "../../lib/supabase";
 
 const mockUser = {
   displayName: "Mira Patel",
   initials: "MP",
-  avatarUrl: ""
+  avatarUrl: "",
+  avatarStyle: "sage"
 };
 
 const recentRepos = [
@@ -30,6 +32,8 @@ export default function TopNav() {
   const [profile, setProfile] = useState(mockUser);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [avatarOpen, setAvatarOpen] = useState(false);
+  const notificationsRef = useRef(null);
+  const avatarRef = useRef(null);
 
   const loggedIn = Boolean(session);
   const showAppNav = true;
@@ -69,12 +73,26 @@ export default function TopNav() {
       setProfile({
         displayName: data?.display_name || session.user.user_metadata?.name || session.user.email || mockUser.displayName,
         initials: "",
-        avatarUrl: ""
+        avatarUrl: "",
+        avatarStyle: data?.avatar_style || mockUser.avatarStyle
       });
     }
 
     loadProfile();
   }, [session]);
+
+  useEffect(() => {
+    const closeMenusOnOutsideClick = (event) => {
+      const clickedNotifications = notificationsRef.current?.contains(event.target);
+      const clickedAvatar = avatarRef.current?.contains(event.target);
+
+      if (!clickedNotifications) setNotificationsOpen(false);
+      if (!clickedAvatar) setAvatarOpen(false);
+    };
+
+    document.addEventListener("pointerdown", closeMenusOnOutsideClick);
+    return () => document.removeEventListener("pointerdown", closeMenusOnOutsideClick);
+  }, []);
 
   async function handleSignOut() {
     if (supabase) await supabase.auth.signOut();
@@ -127,7 +145,7 @@ export default function TopNav() {
       <div className="top-nav-right">
         {showAppNav ? (
           <>
-            <div className="dropdown click-dropdown">
+            <div className="dropdown click-dropdown" ref={notificationsRef}>
               <button className="nav-icon-button" onClick={() => setNotificationsOpen(!notificationsOpen)} aria-label="Notifications">
                 <Bell size={18} />
                 <b>3</b>
@@ -141,9 +159,11 @@ export default function TopNav() {
                 </div>
               )}
             </div>
-            <div className="dropdown click-dropdown">
+            <div className="dropdown click-dropdown" ref={avatarRef}>
               <button className="avatar-trigger" onClick={() => setAvatarOpen(!avatarOpen)} aria-label="Account menu">
-                {profile.avatarUrl ? <img src={profile.avatarUrl} alt="" /> : <span className="avatar-face">{profile.initials || initials}</span>}
+                <span className="avatar-face">
+                  <IllustratedAvatar size={30} variant={profile.avatarStyle || "sage"} photoUrl={profile.avatarUrl} alt={initials} />
+                </span>
                 <span className="avatar-name">{firstName}</span>
                 <ChevronDown size={14} />
               </button>

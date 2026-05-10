@@ -1,20 +1,24 @@
 import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { Link, NavLink, Navigate, Route, Routes, useParams } from "react-router-dom";
+import { Link, NavLink, Navigate, Route, Routes, useNavigate, useParams } from "react-router-dom";
 import { BrowserRouter } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
   BookOpen,
   Check,
+  ChevronDown,
   Copy,
   Download,
   Eye,
   FileCode2,
+  FileText,
+  Folder,
   Github,
   GitFork,
   Home,
   Lock,
+  MoreHorizontal,
   Palette,
   Plus,
   Settings,
@@ -23,6 +27,7 @@ import {
 } from "lucide-react";
 import CommandPalette from "./components/layout/CommandPalette";
 import TopNav from "./components/layout/TopNav";
+import IllustratedAvatar, { avatarVariants } from "./components/ui/IllustratedAvatar";
 import { getCurrentSession, isSupabaseConfigured, signInWithGitHub, signInWithPassword } from "./lib/supabase";
 import "./styles.css";
 
@@ -128,6 +133,35 @@ const activities = [
   "Mira completed Rebasing",
   "Kai forked first-pr-path",
   "Noor opened a pull request in desk-notes"
+];
+
+const dashboardActivity = [
+  { name: "Mira", initials: "MP", action: "updated orbit-readme with a new README Studio template", time: "4m ago", live: true },
+  { name: "Mira", initials: "MP", action: "pinned desk-notes to the workspace", time: "28m ago", live: false },
+  { name: "Kai", initials: "K", action: "forked first-pr-path for a workshop", time: "2h ago", live: false },
+  { name: "Noor", initials: "N", action: "opened a pull request in soft-cli", time: "Yesterday", live: false }
+];
+
+const fileTreeItems = [
+  { type: "folder", name: "src", indent: 0 },
+  { type: "folder", name: "components", indent: 1 },
+  { type: "file", name: "TopNav.jsx", indent: 2 },
+  { type: "file", name: "CommandPalette.jsx", indent: 2 },
+  { type: "file", name: "main.jsx", indent: 1 },
+  { type: "file", name: "README.md", indent: 0 },
+  { type: "file", name: "package.json", indent: 0 }
+];
+
+const commits = [
+  { hash: "406fa61", message: "Restore top navigation styling", author: "Korim", time: "18 minutes ago" },
+  { hash: "2f1179d", message: "Add Supabase config and Phase 2 navigation", author: "Korim", time: "1 hour ago" },
+  { hash: "fe6bb74", message: "Update branding and appearance settings", author: "Korim", time: "Today" }
+];
+
+const branches = [
+  { name: "main", default: true, updated: "18 minutes ago" },
+  { name: "codex/phase-2-pages", default: false, updated: "1 hour ago" },
+  { name: "studio-redesign", default: false, updated: "Yesterday" }
 ];
 
 function App() {
@@ -302,21 +336,65 @@ function AuthCallback() {
 
 function DashboardPage() {
   return (
-    <PageFrame title={`Welcome back, ${currentUser.name.split(" ")[0]}`} eyebrow="Dashboard">
-      <section className="dashboard-hero">
-        <div><h2>Today's orbit is tidy.</h2><p>Three projects moved, one lesson is waiting, and your workspace is ready.</p></div>
-        <div className="carousel-dots"><span /><span /><span /></div>
+    <PageFrame title="" eyebrow="">
+      <section className="phase-dashboard-hero">
+        <div>
+          <p className="eyebrow">FORALLCODE</p>
+          <h1>Welcome back, {currentUser.name}</h1>
+          <p>Your workspace is ready. Pick up where you left off, follow the work, and keep the useful ideas in sight.</p>
+        </div>
+        <svg viewBox="0 0 420 180" aria-hidden="true">
+          <path d="M16 150c78-86 142-86 220 0s128 54 168-2" />
+          <path d="M80 170c58-52 110-52 160 0s96 26 132-8" />
+        </svg>
+        <div className="carousel-dots phase-dots">{Array.from({ length: 5 }).map((_, index) => <span key={index} className={index === 0 ? "active" : ""} />)}</div>
       </section>
-      <div className="two-column">
+
+      <div className="phase-dashboard-grid">
         <section>
-          <SectionTitle title="Followed activity" />
-          {activities.map((item, index) => <ActivityItem key={item} item={item} time={`${index + 1}h ago`} />)}
+          <div className="phase-section-head">
+            <div><p className="eyebrow">FOLLOWED</p><h2>Users and projects</h2></div>
+            <Link to="/following">Manage</Link>
+          </div>
+          <Card>
+            {dashboardActivity.map((item) => (
+              <div className="phase-activity-row" key={`${item.name}-${item.action}`}>
+                <span className="phase-initials">{item.initials}</span>
+                <div><strong>{item.name}</strong><p>{item.action}</p></div>
+                {item.live && <span className="live-pill">Live</span>}
+                <time>{item.time}</time>
+              </div>
+            ))}
+            <p className="empty-helper">Follow some developers to see their activity here.</p>
+          </Card>
+
+          <div className="phase-section-head compact">
+            <div><p className="eyebrow">EDUCATION</p></div>
+          </div>
+          <Card>
+            <div className="education-callout">
+              <h3>Continue learning</h3>
+              <p>Start with Branching</p>
+              <span><b /></span>
+              <Button to="/learn" variant="soft">Continue →</Button>
+            </div>
+          </Card>
         </section>
+
         <aside>
-          <SectionTitle title="Featured workspaces" />
-          {repos.slice(0, 3).map((repo) => <RepoCard key={repo.name} repo={repo} />)}
-          <Card><h3>Next lesson</h3><p>Pull Requests: turn a branch into a proposal.</p><Button to="/learn" variant="soft">Continue lesson</Button></Card>
-          <div className="button-row"><Button to="/repos"><Plus size={16} />New repo</Button><Button to="/learn" variant="soft">Continue lesson</Button></div>
+          <div className="phase-section-head">
+            <div><p className="eyebrow">FEATURED</p><h2>Workspaces and projects</h2></div>
+            <Link to="/explore">Explore</Link>
+          </div>
+          {repos.slice(0, 2).map((repo, index) => (
+            <Link className={`featured-project-card card-${index + 1}`} key={repo.name} to={`/${repo.owner}/${repo.name}`}>
+              <div>
+                <h3>{repo.name}</h3>
+                <p>{repo.description}</p>
+                <div><span>{repo.stars} stars</span><span>Active</span></div>
+              </div>
+            </Link>
+          ))}
         </aside>
       </div>
     </PageFrame>
@@ -362,17 +440,55 @@ function PublicProfile() {
 function ReposPage() {
   const [query, setQuery] = useState("");
   const [language, setLanguage] = useState("all");
-  const filtered = repos.filter((repo) => (language === "all" || repo.language === language) && repo.name.includes(query));
+  const [visibility, setVisibility] = useState("all");
+  const [sort, setSort] = useState("updated");
+  const languages = [...new Set(repos.map((repo) => repo.language))];
+  const filtered = repos
+    .filter((repo) => (language === "all" || repo.language === language))
+    .filter((repo) => (visibility === "all" || (visibility === "private" ? repo.private : !repo.private)))
+    .filter((repo) => repo.name.toLowerCase().includes(query.toLowerCase()) || repo.description.toLowerCase().includes(query.toLowerCase()))
+    .sort((a, b) => {
+      if (sort === "stars") return b.stars - a.stars;
+      if (sort === "name") return a.name.localeCompare(b.name);
+      return 0;
+    });
+
   return (
-    <PageFrame title="Repositories" eyebrow="Your repos">
-      <div className="filter-bar">
-        <input placeholder="Search within repos" value={query} onChange={(event) => setQuery(event.target.value)} />
-        <select value={language} onChange={(event) => setLanguage(event.target.value)}><option value="all">All languages</option>{Object.keys(languageStyles).map((item) => <option key={item}>{item}</option>)}</select>
-        <select><option>Recently updated</option><option>Stars</option><option>Alphabetical</option></select>
-        <Button><Plus size={16} />New repo</Button>
-        <Button variant="soft"><Github size={16} />Import from GitHub</Button>
+    <PageFrame title="" eyebrow="">
+      <div className="repos-page-header">
+        <h1>Repositories</h1>
+        <div>
+          <Button variant="soft"><Github size={16} />Import from GitHub</Button>
+          <Button to="/repos/new"><Plus size={16} />New repository</Button>
+        </div>
       </div>
-      <div className="repo-grid">{filtered.map((repo) => <RepoCard key={repo.name} repo={repo} actions />)}</div>
+      <div className="phase-filter-bar">
+        <input placeholder="Search repositories..." value={query} onChange={(event) => setQuery(event.target.value)} />
+        <select value={language} onChange={(event) => setLanguage(event.target.value)}>
+          <option value="all">All languages</option>
+          {languages.map((item) => <option key={item} value={item}>{item}</option>)}
+        </select>
+        <select value={visibility} onChange={(event) => setVisibility(event.target.value)}>
+          <option value="all">All</option>
+          <option value="public">Public</option>
+          <option value="private">Private</option>
+        </select>
+        <select value={sort} onChange={(event) => setSort(event.target.value)}>
+          <option value="updated">Recently updated</option>
+          <option value="stars">Stars</option>
+          <option value="name">Name (A-Z)</option>
+        </select>
+      </div>
+      {filtered.length > 0 ? (
+        <div className="phase-repo-list">{filtered.map((repo) => <PhaseRepoCard key={repo.name} repo={repo} />)}</div>
+      ) : (
+        <div className="repo-empty-state">
+          <Folder size={54} />
+          <h2>No repositories yet</h2>
+          <p>Create your first repo or import from GitHub to get started.</p>
+          <div className="button-row"><Button to="/repos/new"><Plus size={16} />New repository</Button><Button variant="soft"><Github size={16} />Import from GitHub</Button></div>
+        </div>
+      )}
     </PageFrame>
   );
 }
@@ -380,18 +496,93 @@ function ReposPage() {
 function RepoPage() {
   const { username, repo } = useParams();
   const data = repos.find((item) => item.name === repo) || repos[0];
+  const [activeTab, setActiveTab] = useState("Code");
+  const cloneUrl = `https://github.com/${username}/${repo}.git`;
+
   return (
-    <PageFrame title={`${username}/${repo}`} eyebrow={data.private ? "Private repository" : "Public repository"}>
-      {data.landing && <ProjectLanding repo={data} />}
-      <RepoToolbar repo={data} />
-      <div className="repo-layout">
-        <FileTree />
-        <ReadmePreview />
+    <div className="phase-repo-page">
+      <section className="phase-repo-header">
+        <div className="repo-breadcrumb"><span>{username}</span><b>/</b><strong>{repo}</strong></div>
+        <p>{data.description}</p>
+        <div className="phase-repo-meta">
+          <LanguagePill language={data.language} />
+          <span><Star size={14} />{data.stars}</span>
+          <span><GitFork size={14} />{data.forks}</span>
+          <span>Updated {data.updated}</span>
+        </div>
+        <div className="repo-header-actions">
+          <Button variant="soft"><Star size={16} />Star</Button>
+          <Button variant="soft"><GitFork size={16} />Fork</Button>
+          <div className="clone-control">
+            <button>Clone <ChevronDown size={14} /></button>
+            <div><input readOnly value={cloneUrl} /><Button variant="soft"><Copy size={16} /></Button></div>
+          </div>
+        </div>
+      </section>
+
+      <div className="repo-tab-bar">
+        {["Code", "Commits", "Branches", "Settings"].map((tab) => (
+          <button className={activeTab === tab ? "active" : ""} key={tab} onClick={() => setActiveTab(tab)}>{tab}</button>
+        ))}
       </div>
-      <div className="tabs-card">
-        <Tabs tabs={["Code", "Commits", "Branches", "Settings"]} />
-      </div>
-    </PageFrame>
+
+      {activeTab === "Code" && (
+        <section className="phase-code-tab">
+          <aside className="phase-file-tree">
+            <select><option>main</option><option>codex/phase-2-pages</option><option>studio-redesign</option></select>
+            {fileTreeItems.map((item) => (
+              <button key={`${item.name}-${item.indent}`} style={{ paddingLeft: `${12 + item.indent * 18}px` }}>
+                {item.type === "folder" ? <Folder size={15} /> : <FileText size={15} />}
+                {item.name}
+              </button>
+            ))}
+          </aside>
+          <ReadmePreview repo={data} />
+        </section>
+      )}
+
+      {activeTab === "Commits" && (
+        <section className="phase-list-panel">
+          {commits.map((commit) => (
+            <div className="commit-row" key={commit.hash}>
+              <span className="phase-initials">{commit.author[0]}</span>
+              <div><strong>{commit.message}</strong><p>{commit.author}</p></div>
+              <code>{commit.hash}</code>
+              <time>{commit.time}</time>
+            </div>
+          ))}
+        </section>
+      )}
+
+      {activeTab === "Branches" && (
+        <section className="phase-list-panel">
+          {branches.map((branch) => (
+            <div className="branch-row" key={branch.name}>
+              <code>{branch.name}</code>
+              {branch.default && <Badge>default</Badge>}
+              <time>{branch.updated}</time>
+            </div>
+          ))}
+        </section>
+      )}
+
+      {activeTab === "Settings" && (
+        <section className="repo-settings-panel">
+          <Card large>
+            <h2>Repository settings</h2>
+            <label>Rename repo<input defaultValue={repo} /></label>
+            <label>Visibility<select defaultValue={data.private ? "private" : "public"}><option value="public">Public</option><option value="private">Private</option></select></label>
+            <Button>Save changes</Button>
+          </Card>
+          <Card large>
+            <h2>Danger zone</h2>
+            <p>Delete repo requires typing <strong>{repo}</strong> to confirm.</p>
+            <label>Confirmation<input placeholder={repo} /></label>
+            <Button variant="soft">Delete repo</Button>
+          </Card>
+        </section>
+      )}
+    </div>
   );
 }
 
@@ -666,13 +857,40 @@ function RepoCard({ repo, actions = false }) {
   );
 }
 
+function PhaseRepoCard({ repo }) {
+  const navigate = useNavigate();
+
+  return (
+    <article className="phase-repo-card" onClick={() => navigate(`/${repo.owner}/${repo.name}`)}>
+      <div className="phase-repo-title">
+        <h3>{repo.name}</h3>
+        <span>{repo.private ? "Private" : "Public"}</span>
+      </div>
+      <p>{repo.description}</p>
+      <div className="phase-repo-meta">
+        <LanguagePill language={repo.language} />
+        <span><Star size={14} />{repo.stars}</span>
+        <span>Updated {repo.updated}</span>
+      </div>
+      <div className="phase-repo-actions" onClick={(event) => event.stopPropagation()}>
+        <button type="button">Pin to workspace</button>
+        <button type="button">★ Star</button>
+        <Link to={`/${repo.owner}/${repo.name}/readme`}>README Studio</Link>
+        <Link to={`/${repo.owner}/${repo.name}/landing`}>Landing Designer</Link>
+        <button type="button" aria-label="Repo settings"><MoreHorizontal size={16} /></button>
+      </div>
+    </article>
+  );
+}
+
 function LanguagePill({ language }) {
   const [bg, color] = languageStyles[language] || languageStyles.TypeScript;
   return <span className="language-pill" style={{ backgroundColor: bg, color }}><span style={{ backgroundColor: color }} />{language}</span>;
 }
 
 function Avatar({ size = "normal" }) {
-  return <span className={`avatar ${size}`}><svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="38" fill="#c8d8c4" stroke="#e8e0d4" /><circle cx="40" cy="34" r="16" fill="#7aaa72" /><path d="M18 70c6-18 38-18 44 0" fill="#ddd5f0" /><circle cx="34" cy="34" r="3" fill="#3d3530" /><circle cx="46" cy="34" r="3" fill="#3d3530" /><path d="M34 44c4 4 8 4 12 0" stroke="#3d3530" strokeWidth="3" fill="none" strokeLinecap="round" /></svg></span>;
+  const sizes = { tiny: 28, normal: 44, large: 112 };
+  return <span className={`avatar ${size}`}><IllustratedAvatar size={sizes[size] || sizes.normal} variant={currentUser.avatarStyle} /></span>;
 }
 
 function ProfileHeader({ editable = false, publicView = false }) {
@@ -711,8 +929,8 @@ function FileTree() {
   return <aside className="file-tree">{["src", "src/components", "src/App.tsx", "README.md", "package.json", ".gitignore"].map((file) => <button key={file}><FileCode2 size={15} />{file}</button>)}</aside>;
 }
 
-function ReadmePreview() {
-  return <section className="readme-render"><ReactMarkdown remarkPlugins={[remarkGfm]}>{`# Orbit README\n\nA beautiful README rendered by ForAllCode Studio.\n\n## Highlights\n\n- Warm project intro\n- Contributor-friendly setup\n- Copyable code samples\n\n\`\`\`bash\nnpm install\nnpm run dev\n\`\`\`\n\nUpdated 12 minutes ago - 128 commits - 5 contributors`}</ReactMarkdown></section>;
+function ReadmePreview({ repo = repos[0] }) {
+  return <section className="readme-render"><ReactMarkdown remarkPlugins={[remarkGfm]}>{`# ${repo.name}\n\n${repo.description}\n\n## Highlights\n\n- Warm project intro\n- Contributor-friendly setup\n- Copyable code samples\n\n\`\`\`bash\nnpm install\nnpm run dev\n\`\`\`\n\nUpdated ${repo.updated} - 128 commits - 5 contributors`}</ReactMarkdown></section>;
 }
 
 function GitDiagram() {
@@ -774,11 +992,11 @@ function Roadmap() {
 }
 
 function AvatarPicker() {
-  return <div className="avatar-picker">{["sage", "lavender", "rose", "sky", "amber", "cream", "mint", "plum"].map((style) => <button key={style} className={style}><Avatar size="tiny" /></button>)}</div>;
+  return <div className="avatar-picker">{avatarVariants.map((style) => <button key={style} className={style} aria-label={`${style} avatar`}><IllustratedAvatar size={44} variant={style} /></button>)}</div>;
 }
 
 function PageFrame({ title, eyebrow, children }) {
-  return <div className="page-frame"><div className="page-heading"><p className="eyebrow">{eyebrow}</p><h1>{title}</h1></div>{children}</div>;
+  return <div className="page-frame">{(title || eyebrow) && <div className="page-heading"><p className="eyebrow">{eyebrow}</p><h1>{title}</h1></div>}{children}</div>;
 }
 
 function Footer() {
