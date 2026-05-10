@@ -18,73 +18,12 @@ import {
   Save,
   Strikethrough
 } from "lucide-react";
+import BlockInserter from "../components/readme/BlockInserter";
+import { readmeTemplateOptions, readmeTemplates } from "../data/readmeTemplates";
 import { renderMarkdown } from "../lib/markdownRenderer";
 import { getCurrentSession, supabase } from "../lib/supabase";
 
 const ownerUsername = "mira";
-
-const templates = {
-  blank: `# Orbit README
-
-> A friendly project introduction.
-
-## Features
-
-- Beautiful hero banners
-- Badge pills
-- Live preview
-
-\`\`\`ts
-export const hello = "ForAllCode";
-\`\`\`
-`,
-  package: `# Package README
-
-Install, import, and ship with a project page that explains the useful parts first.
-
-## Install
-
-\`\`\`bash
-npm install package-name
-\`\`\`
-
-## Usage
-
-\`\`\`ts
-import { createThing } from "package-name";
-\`\`\`
-`,
-  project: `# Personal Project
-
-A gentle overview of what this project does, why it exists, and how to run it.
-
-## Getting started
-
-1. Clone the repo
-2. Install dependencies
-3. Run the app locally
-`,
-  openSource: `# Open Source Project
-
-Thanks for visiting. This README explains how to use the project and how to contribute.
-
-## Contributing
-
-- Pick an issue
-- Start a focused branch
-- Open a thoughtful pull request
-`,
-  portfolio: `# Portfolio Project
-
-A polished case study for a project worth showing.
-
-## Highlights
-
-- Problem solved
-- Design decisions
-- Technical details
-`
-};
 
 const toolbarGroups = [
   [
@@ -115,10 +54,11 @@ const toolbarGroups = [
 export default function ReadmeStudio() {
   const { username = ownerUsername, repo = "orbit-readme" } = useParams();
   const textareaRef = useRef(null);
-  const [markdown, setMarkdown] = useState(templates.blank);
-  const [renderedMarkdown, setRenderedMarkdown] = useState(templates.blank);
+  const [markdown, setMarkdown] = useState(readmeTemplates.blank);
+  const [renderedMarkdown, setRenderedMarkdown] = useState(readmeTemplates.blank);
   const [mobileView, setMobileView] = useState("edit");
   const [templatesOpen, setTemplatesOpen] = useState(false);
+  const [blockInserterOpen, setBlockInserterOpen] = useState(false);
   const [status, setStatus] = useState("Ready");
 
   const isOwner = username === ownerUsername;
@@ -160,10 +100,10 @@ export default function ReadmeStudio() {
           }
         }
 
-        setMarkdown(templates.blank.replace("Orbit README", repo));
+        setMarkdown(readmeTemplates.blank.replace("Project Name", repo));
         setStatus("Starter template loaded");
       } catch {
-        setMarkdown(templates.blank.replace("Orbit README", repo));
+        setMarkdown(readmeTemplates.blank.replace("Project Name", repo));
         setStatus("Starter template loaded");
       }
     }
@@ -227,6 +167,27 @@ export default function ReadmeStudio() {
     window.setTimeout(() => textarea.focus(), 0);
   }
 
+  function insertGeneratedBlock(blockMarkdown) {
+    const textarea = textareaRef.current;
+    if (!textarea) {
+      setMarkdown((current) => `${current}${blockMarkdown}`);
+      return;
+    }
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const nextMarkdown = `${textarea.value.substring(0, start)}${blockMarkdown}${textarea.value.substring(end)}`;
+    setMarkdown(nextMarkdown);
+    setStatus("Block inserted");
+
+    window.setTimeout(() => {
+      const cursor = start + blockMarkdown.length;
+      textarea.selectionStart = cursor;
+      textarea.selectionEnd = cursor;
+      textarea.focus();
+    }, 0);
+  }
+
   function applyToolbarAction(action) {
     const actions = {
       bold: () => wrapSelection("**"),
@@ -258,8 +219,10 @@ export default function ReadmeStudio() {
     setStatus("Exported README.md");
   }
 
-  function applyTemplate(template) {
-    setMarkdown(template.replace("Orbit README", repo));
+  function applyTemplate(templateKey) {
+    if (markdown.trim() && !window.confirm("Replace the current README content with this template?")) return;
+
+    setMarkdown(readmeTemplates[templateKey].replace("Project Name", repo));
     setTemplatesOpen(false);
     setStatus("Template loaded");
   }
@@ -287,11 +250,9 @@ export default function ReadmeStudio() {
             </button>
             {templatesOpen && (
               <div className="readme-template-dropdown">
-                <button type="button" onClick={() => applyTemplate(templates.blank)}>Blank</button>
-                <button type="button" onClick={() => applyTemplate(templates.package)}>Library+package</button>
-                <button type="button" onClick={() => applyTemplate(templates.project)}>Personal project</button>
-                <button type="button" onClick={() => applyTemplate(templates.openSource)}>Open source</button>
-                <button type="button" onClick={() => applyTemplate(templates.portfolio)}>Portfolio</button>
+                {readmeTemplateOptions.map((template) => (
+                  <button type="button" key={template.key} onClick={() => applyTemplate(template.key)}>{template.label}</button>
+                ))}
               </div>
             )}
           </div>
@@ -315,15 +276,26 @@ export default function ReadmeStudio() {
                 })}
               </div>
             ))}
-            <button className="readme-insert-block-button" type="button" aria-haspopup="true">+ Insert block</button>
+            <button className="readme-insert-block-button" type="button" aria-haspopup="true" onClick={() => setBlockInserterOpen(!blockInserterOpen)}>
+              + Insert block
+            </button>
           </div>
-          <textarea
-            aria-label="README markdown"
-            ref={textareaRef}
-            value={markdown}
-            onChange={(event) => setMarkdown(event.target.value)}
-            spellCheck="false"
-          />
+          <div className="readme-editor-workspace">
+            <textarea
+              aria-label="README markdown"
+              ref={textareaRef}
+              value={markdown}
+              onChange={(event) => setMarkdown(event.target.value)}
+              spellCheck="false"
+            />
+            <BlockInserter
+              open={blockInserterOpen}
+              onClose={() => setBlockInserterOpen(false)}
+              onInsert={insertGeneratedBlock}
+              githubUsername={username}
+              repoName={repo}
+            />
+          </div>
         </section>
 
         <section className={`readme-preview-column ${mobileView === "preview" ? "mobile-active" : ""}`} aria-label="Live README preview">
