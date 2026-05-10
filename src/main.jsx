@@ -241,6 +241,7 @@ function App() {
             <Route path="/workspace" element={<WorkspacePage />} />
             <Route path="/profile" element={<MyProfilePage />} />
             <Route path="/repos" element={<ReposPage />} />
+            <Route path="/repos/new" element={<NewRepoPage />} />
             <Route path="/explore" element={<ExplorePage />} />
             <Route path="/settings" element={<SettingsLayout />}>
               <Route index element={<Navigate to="/settings/account" replace />} />
@@ -562,6 +563,149 @@ function ReposPage() {
   );
 }
 
+function NewRepoPage() {
+  const [visibility, setVisibility] = useState("public");
+  const [template, setTemplate] = useState("starter");
+
+  return (
+    <PageFrame title="Create a new repository" eyebrow="New repo">
+      <section className="new-repo-layout">
+        <div className="new-repo-form">
+          <Card large>
+            <h2>Repository details</h2>
+            <label className="new-repo-field">
+              <span>Repository name</span>
+              <input placeholder="my-warm-project" />
+            </label>
+            <label className="new-repo-field">
+              <span>Description</span>
+              <textarea placeholder="A short, welcoming description for contributors." rows={4} />
+            </label>
+            <div className="new-repo-options">
+              {[
+                ["public", "Public", "Anyone can see this repository."],
+                ["private", "Private", "Only people you invite can see it."]
+              ].map(([value, title, text]) => (
+                <button className={visibility === value ? "active" : ""} key={value} onClick={() => setVisibility(value)} type="button">
+                  <strong>{title}</strong>
+                  <small>{text}</small>
+                </button>
+              ))}
+            </div>
+            <label className="new-repo-field">
+              <span>Starter template</span>
+              <select value={template} onChange={(event) => setTemplate(event.target.value)}>
+                <option value="starter">Starter README + folders</option>
+                <option value="web">Pastel web app</option>
+                <option value="docs">Documentation site</option>
+                <option value="empty">Empty repository</option>
+              </select>
+            </label>
+            <div className="button-row">
+              <Button>Create repository</Button>
+              <Button to="/repos" variant="soft">Cancel</Button>
+            </div>
+          </Card>
+        </div>
+
+        <CodebaseMapPanel owner="origin" repo="new-repo" />
+      </section>
+    </PageFrame>
+  );
+}
+
+function CodebaseMapPanel({
+  owner,
+  repo,
+  title = "See the shape of the work before it grows.",
+  description = "ForAllCode shows the main branch, feature branches, forks, pull requests, and merges as a living diagram."
+}) {
+  return (
+    <section className="codebase-map-section">
+      <div className="codebase-map-copy">
+        <p className="eyebrow">Visual codebase map</p>
+        <h2>{title}</h2>
+        <p>{description}</p>
+      </div>
+      <CodebaseDiagram owner={owner} repo={repo} />
+      <div className="codebase-map-legend">
+        <span><i className="main" /> Main branch</span>
+        <span><i className="branch" /> Feature branch</span>
+        <span><i className="fork" /> Fork</span>
+        <span><i className="merge" /> Merge</span>
+      </div>
+    </section>
+  );
+}
+
+function CodebaseDiagram({ owner = "origin", repo = "forallcode" }) {
+  const commits = [
+    { x: 90, y: 170, label: "init" },
+    { x: 210, y: 170, label: "README" },
+    { x: 330, y: 170, label: "app" },
+    { x: 460, y: 170, label: "review" },
+    { x: 590, y: 170, label: "merge" },
+    { x: 710, y: 170, label: "launch" }
+  ];
+  const feature = [
+    { x: 330, y: 92, label: "auth" },
+    { x: 460, y: 92, label: "tests" }
+  ];
+  const fork = [
+    { x: 210, y: 260, label: "fork" },
+    { x: 350, y: 300, label: "patch" },
+    { x: 500, y: 260, label: "PR" }
+  ];
+
+  return (
+    <div className="codebase-diagram" aria-label="Visual diagram of main branch, forks, feature branches, and merges">
+      <svg viewBox="0 0 800 380" role="img">
+        <defs>
+          <marker id="arrow-soft" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3">
+            <path d="M0,0 L0,6 L7,3 z" fill="#9c918c" />
+          </marker>
+        </defs>
+
+        <path className="map-line main-line" d="M90 170 H710" />
+        <path className="map-line branch-line" d="M330 170 C340 120 370 92 410 92 H460 C506 92 530 124 590 170" />
+        <path className="map-line fork-line" d="M210 170 C212 225 260 258 350 300 C432 332 492 302 590 170" />
+        <path className="map-line pr-line" d="M500 260 C545 244 570 212 590 170" markerEnd="url(#arrow-soft)" />
+
+        <rect x="54" y="26" width="196" height="54" rx="16" fill="#fffdf9" stroke="#e8e0d4" />
+        <text x="74" y="58">{owner}/{repo}</text>
+
+        <rect x="586" y="244" width="146" height="54" rx="16" fill="#f5e4c4" stroke="#e8e0d4" />
+        <text x="606" y="276">open pull request</text>
+
+        {commits.map((commit, index) => (
+          <g key={commit.label}>
+            <circle className={index === 4 ? "merge-node" : "main-node"} cx={commit.x} cy={commit.y} r="14" />
+            <text x={commit.x} y="210" textAnchor="middle">{commit.label}</text>
+          </g>
+        ))}
+
+        {feature.map((commit) => (
+          <g key={commit.label}>
+            <circle className="branch-node" cx={commit.x} cy={commit.y} r="13" />
+            <text x={commit.x} y="66" textAnchor="middle">{commit.label}</text>
+          </g>
+        ))}
+
+        {fork.map((commit) => (
+          <g key={commit.label}>
+            <circle className="fork-node" cx={commit.x} cy={commit.y} r="13" />
+            <text x={commit.x} y={commit.y + 40} textAnchor="middle">{commit.label}</text>
+          </g>
+        ))}
+
+        <text className="map-label" x="650" y="142">main</text>
+        <text className="map-label" x="380" y="122">feature/login</text>
+        <text className="map-label" x="286" y="246">noor/forallcode fork</text>
+      </svg>
+    </div>
+  );
+}
+
 function RepoPage() {
   const { username, repo } = useParams();
   const data = repos.find((item) => item.name === repo) || repos[0];
@@ -606,6 +750,13 @@ function RepoPage() {
           </div>
         </div>
       </section>
+
+      <CodebaseMapPanel
+        owner={username}
+        repo={repo}
+        title="A visual map of this repository."
+        description="Trace the main branch, active branches, forks, pull requests, and merge points before you open the file tree."
+      />
 
       <div className="repo-tab-bar">
         {["Code", "Commits", "Branches", "Settings"].map((tab) => (

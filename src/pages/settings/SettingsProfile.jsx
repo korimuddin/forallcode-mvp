@@ -126,13 +126,18 @@ export default function SettingsProfile() {
           </div>
         </div>
         {pickerOpen && (
-          <div className="settings-avatar-picker">
-            {avatarVariants.map((variant) => (
-              <button className={profile.avatarStyle === variant ? "active" : ""} key={variant} onClick={() => updateProfile("avatarStyle", variant)} type="button">
-                <IllustratedAvatar size={64} variant={variant} />
-              </button>
-            ))}
-          </div>
+          <>
+            <div className="settings-avatar-picker">
+              {avatarVariants.map((variant) => (
+                <button className={profile.avatarStyle === variant ? "active" : ""} key={variant} onClick={() => updateProfile("avatarStyle", variant)} type="button">
+                  <IllustratedAvatar size={64} variant={variant} />
+                </button>
+              ))}
+            </div>
+            <div className="settings-actions inline">
+              <SettingsSaveButton status={status} onClick={handleSave}>Use this avatar</SettingsSaveButton>
+            </div>
+          </>
         )}
       </SettingsSection>
 

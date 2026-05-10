@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import SettingsSection from "../../components/settings/SettingsSection";
-import { SettingsActions, SettingsPageHeader, SettingsRadioCards, SettingsSaveButton, SettingsSwatches, SettingsToggle } from "../../components/settings/SettingsControls";
+import { FocusToggle, SettingsActions, SettingsPageHeader, SettingsRadioCards, SettingsSaveButton, SettingsSwatches } from "../../components/settings/SettingsControls";
 import { supabase } from "../../lib/supabase";
 
 const noteColours = [
@@ -88,12 +88,12 @@ export default function SettingsWorkspace() {
       </SettingsSection>
 
       <SettingsSection title="Decorations">
-        <SettingsToggle label="Show clock" checked={settings.showClock} onChange={(value) => updateSetting("showClock", value)} />
-        <SettingsToggle label="Show plant and mug" checked={settings.showDecorations} onChange={(value) => updateSetting("showDecorations", value)} />
+        <FocusToggle label="Show clock" checked={settings.showClock} onChange={(value) => updateSetting("showClock", value)} />
+        <FocusToggle label="Show plant and mug" checked={settings.showDecorations} onChange={(value) => updateSetting("showDecorations", value)} />
       </SettingsSection>
 
       <SettingsSection title="Focus mode">
-        <SettingsToggle label={`Focus mode currently: ${settings.focusMode ? "ON" : "OFF"}`} checked={settings.focusMode} onChange={(value) => updateSetting("focusMode", value)} />
+        <FocusToggle label={`Focus mode currently: ${settings.focusMode ? "ON" : "OFF"}`} checked={settings.focusMode} onChange={(value) => updateSetting("focusMode", value)} />
         <div className="settings-inline-options">
           <label><input checked={settings.focusSchedule === "manual"} onChange={() => updateSetting("focusSchedule", "manual")} type="radio" /> Manual only</label>
           <label className="disabled"><input disabled type="radio" /> Scheduled <span>Coming soon</span></label>

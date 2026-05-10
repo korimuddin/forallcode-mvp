@@ -45,6 +45,25 @@ export function SettingsToggle({ label, description, checked, onChange, disabled
   );
 }
 
+export function FocusToggle({ label, description, checked, onChange, disabled = false }) {
+  return (
+    <button
+      className={`settings-focus-toggle ${checked ? "on" : ""} ${disabled ? "disabled" : ""}`}
+      disabled={disabled}
+      onClick={() => onChange?.(!checked)}
+      type="button"
+    >
+      <span className="settings-focus-toggle-copy">
+        <strong>{label}</strong>
+        {description && <small>{description}</small>}
+      </span>
+      <span className="settings-focus-toggle-track">
+        <i />
+      </span>
+    </button>
+  );
+}
+
 export function SettingsRadioCards({ value, options, onChange }) {
   return (
     <div className="settings-radio-cards">
