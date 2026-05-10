@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { lazy, Suspense, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Link, Navigate, Route, Routes, useNavigate, useParams } from "react-router-dom";
 import { BrowserRouter } from "react-router-dom";
@@ -24,22 +24,30 @@ import {
 } from "lucide-react";
 import CommandPalette from "./components/layout/CommandPalette";
 import TopNav from "./components/layout/TopNav";
+import ErrorBoundary from "./components/ui/ErrorBoundary";
 import IllustratedAvatar, { avatarVariants } from "./components/ui/IllustratedAvatar";
+import Skeleton from "./components/ui/Skeleton";
+import { useDocumentTitle, useIsMobile } from "./lib/hooks";
 import { renderMarkdown } from "./lib/markdownRenderer";
+import { createNotification } from "./lib/notifications";
 import { getCurrentSession, isSupabaseConfigured, signInWithGitHub, signInWithPassword, supabase } from "./lib/supabase";
-import About from "./pages/About";
-import LandingDesigner from "./pages/LandingDesigner";
-import ReadmeStudio from "./pages/ReadmeStudio";
-import SettingsAccount from "./pages/settings/SettingsAccount";
-import SettingsAppearance from "./pages/settings/SettingsAppearance";
-import SettingsDanger from "./pages/settings/SettingsDanger";
-import SettingsIntegrations from "./pages/settings/SettingsIntegrations";
-import SettingsLayout from "./pages/settings/SettingsLayout";
-import SettingsNotifications from "./pages/settings/SettingsNotifications";
-import SettingsPrivacy from "./pages/settings/SettingsPrivacy";
-import SettingsProfile from "./pages/settings/SettingsProfile";
-import SettingsWorkspace from "./pages/settings/SettingsWorkspace";
 import "./styles.css";
+import "./styles/mobile.css";
+
+const About = lazy(() => import("./pages/About"));
+const Explore = lazy(() => import("./pages/Explore"));
+const LandingDesigner = lazy(() => import("./pages/LandingDesigner"));
+const Notifications = lazy(() => import("./pages/Notifications"));
+const ReadmeStudio = lazy(() => import("./pages/ReadmeStudio"));
+const SettingsAccount = lazy(() => import("./pages/settings/SettingsAccount"));
+const SettingsAppearance = lazy(() => import("./pages/settings/SettingsAppearance"));
+const SettingsDanger = lazy(() => import("./pages/settings/SettingsDanger"));
+const SettingsIntegrations = lazy(() => import("./pages/settings/SettingsIntegrations"));
+const SettingsLayout = lazy(() => import("./pages/settings/SettingsLayout"));
+const SettingsNotifications = lazy(() => import("./pages/settings/SettingsNotifications"));
+const SettingsPrivacy = lazy(() => import("./pages/settings/SettingsPrivacy"));
+const SettingsProfile = lazy(() => import("./pages/settings/SettingsProfile"));
+const SettingsWorkspace = lazy(() => import("./pages/settings/SettingsWorkspace"));
 
 const currentUser = {
   username: "mira",
@@ -225,49 +233,76 @@ const branches = [
   { name: "studio-redesign", default: false, updated: "Yesterday" }
 ];
 
+function useInitialLoading(delay = 420) {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setLoading(false), delay);
+    return () => window.clearTimeout(timer);
+  }, [delay]);
+
+  return loading;
+}
+
 function App() {
   return (
-    <BrowserRouter>
-      <CommandPalette />
-      <div className="app-shell">
-        <TopNav />
-        <main>
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/auth/callback" element={<AuthCallback />} />
-            <Route path="/learn" element={<LearnPage />} />
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/workspace" element={<WorkspacePage />} />
-            <Route path="/profile" element={<MyProfilePage />} />
-            <Route path="/repos" element={<ReposPage />} />
-            <Route path="/repos/new" element={<NewRepoPage />} />
-            <Route path="/explore" element={<ExplorePage />} />
-            <Route path="/settings" element={<SettingsLayout />}>
-              <Route index element={<Navigate to="/settings/account" replace />} />
-              <Route path="account" element={<SettingsAccount />} />
-              <Route path="profile" element={<SettingsProfile />} />
-              <Route path="workspace" element={<SettingsWorkspace />} />
-              <Route path="appearance" element={<SettingsAppearance />} />
-              <Route path="notifications" element={<SettingsNotifications />} />
-              <Route path="integrations" element={<SettingsIntegrations />} />
-              <Route path="privacy" element={<SettingsPrivacy />} />
-              <Route path="danger" element={<SettingsDanger />} />
-            </Route>
-            <Route path="/:username/:repo/readme" element={<ReadmeStudio />} />
-            <Route path="/:username/:repo/landing" element={<LandingDesigner />} />
-            <Route path="/:username/:repo" element={<RepoPage />} />
-            <Route path="/:username" element={<PublicProfile />} />
-          </Routes>
-        </main>
-        <Footer />
-      </div>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <CommandPalette />
+        <div className="app-shell">
+          <TopNav />
+          <main>
+            <Suspense fallback={<RouteFallback />}>
+              <Routes>
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/auth/callback" element={<AuthCallback />} />
+                <Route path="/learn" element={<LearnPage />} />
+                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/workspace" element={<WorkspacePage />} />
+                <Route path="/profile" element={<MyProfilePage />} />
+                <Route path="/repos" element={<ReposPage />} />
+                <Route path="/repos/new" element={<NewRepoPage />} />
+                <Route path="/explore" element={<Explore />} />
+                <Route path="/notifications" element={<Notifications />} />
+                <Route path="/settings" element={<SettingsLayout />}>
+                  <Route index element={<Navigate to="/settings/account" replace />} />
+                  <Route path="account" element={<SettingsAccount />} />
+                  <Route path="profile" element={<SettingsProfile />} />
+                  <Route path="workspace" element={<SettingsWorkspace />} />
+                  <Route path="appearance" element={<SettingsAppearance />} />
+                  <Route path="notifications" element={<SettingsNotifications />} />
+                  <Route path="integrations" element={<SettingsIntegrations />} />
+                  <Route path="privacy" element={<SettingsPrivacy />} />
+                  <Route path="danger" element={<SettingsDanger />} />
+                </Route>
+                <Route path="/:username/:repo/readme" element={<ReadmeStudio />} />
+                <Route path="/:username/:repo/landing" element={<LandingDesigner />} />
+                <Route path="/:username/:repo" element={<RepoPage />} />
+                <Route path="/:username" element={<PublicProfile />} />
+              </Routes>
+            </Suspense>
+          </main>
+          <Footer />
+        </div>
+      </BrowserRouter>
+    </ErrorBoundary>
+  );
+}
+
+function RouteFallback() {
+  return (
+    <div className="route-skeleton" aria-label="Loading page">
+      <Skeleton className="route-skeleton-title" />
+      <Skeleton className="route-skeleton-line" />
+      <Skeleton className="route-skeleton-card" />
+    </div>
   );
 }
 
 function LandingPage() {
+  useDocumentTitle("Home · ForAllCode");
   return (
     <>
       <section className="hero landing-hero">
@@ -308,6 +343,7 @@ function LandingPage() {
 }
 
 function AboutPage() {
+  useDocumentTitle("About");
   return (
     <PageFrame title="For all people who code" eyebrow="About">
       <div className="split">
@@ -333,6 +369,7 @@ function AboutPage() {
 }
 
 function LoginPage() {
+  useDocumentTitle("Sign in");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -384,6 +421,7 @@ function LoginPage() {
 }
 
 function AuthCallback() {
+  useDocumentTitle("Signing in");
   const [message, setMessage] = useState("Completing sign in...");
 
   useEffect(() => {
@@ -406,6 +444,8 @@ function AuthCallback() {
 }
 
 function DashboardPage() {
+  useDocumentTitle("Dashboard");
+  const loadingActivity = useInitialLoading();
   return (
     <PageFrame title="" eyebrow="">
       <section className="phase-dashboard-hero">
@@ -428,7 +468,7 @@ function DashboardPage() {
             <Link to="/following">Manage</Link>
           </div>
           <Card>
-            {dashboardActivity.map((item) => (
+            {loadingActivity ? <DashboardActivitySkeleton /> : dashboardActivity.map((item) => (
               <div className="phase-activity-row" key={`${item.name}-${item.action}`}>
                 <span className="phase-initials">{item.initials}</span>
                 <div><strong>{item.name}</strong><p>{item.action}</p></div>
@@ -473,6 +513,7 @@ function DashboardPage() {
 }
 
 function WorkspacePage() {
+  useDocumentTitle("Workspace");
   return (
     <PageFrame title="My Workspace" eyebrow="Private desk">
       <Workspace interactive />
@@ -481,6 +522,7 @@ function WorkspacePage() {
 }
 
 function MyProfilePage() {
+  useDocumentTitle("Profile");
   return (
     <PageFrame title="My Profile" eyebrow="Profile">
       <ProfileHeader editable />
@@ -495,6 +537,7 @@ function MyProfilePage() {
 
 function PublicProfile() {
   const { username } = useParams();
+  useDocumentTitle(`${username}`);
   return (
     <PageFrame title={username === currentUser.username ? currentUser.name : "Lena Kim"} eyebrow={`@${username}`}>
       <ProfileHeader publicView />
@@ -509,6 +552,8 @@ function PublicProfile() {
 }
 
 function ReposPage() {
+  useDocumentTitle("Repositories");
+  const loadingRepos = useInitialLoading();
   const [query, setQuery] = useState("");
   const [language, setLanguage] = useState("all");
   const [visibility, setVisibility] = useState("all");
@@ -550,7 +595,9 @@ function ReposPage() {
           <option value="name">Name (A-Z)</option>
         </select>
       </div>
-      {filtered.length > 0 ? (
+      {loadingRepos ? (
+        <RepoListSkeleton />
+      ) : filtered.length > 0 ? (
         <div className="phase-repo-list">{filtered.map((repo) => <PhaseRepoCard key={repo.name} repo={repo} />)}</div>
       ) : (
         <div className="repo-empty-state">
@@ -565,6 +612,7 @@ function ReposPage() {
 }
 
 function NewRepoPage() {
+  useDocumentTitle("New repository");
   const [visibility, setVisibility] = useState("public");
   const [template, setTemplate] = useState("starter");
 
@@ -709,9 +757,11 @@ function CodebaseDiagram({ owner = "origin", repo = "forallcode" }) {
 
 function RepoPage() {
   const { username, repo } = useParams();
+  useDocumentTitle(`${repo} · ${username}`);
   const data = repos.find((item) => item.name === repo) || repos[0];
   const [activeTab, setActiveTab] = useState("Code");
   const [landingHtml, setLandingHtml] = useState("");
+  const loadingRepoContent = useInitialLoading();
   const cloneUrl = `https://github.com/${username}/${repo}.git`;
 
   useEffect(() => {
@@ -730,6 +780,32 @@ function RepoPage() {
     loadPublishedLanding();
   }, [repo]);
 
+  async function handleStarRepo() {
+    if (!supabase) return;
+    const session = await getCurrentSession();
+    if (!session?.user?.id) return;
+
+    const { data: repository } = await supabase
+      .from("repositories")
+      .select("id, owner_id")
+      .eq("name", repo)
+      .maybeSingle();
+    const { data: actor } = await supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("id", session.user.id)
+      .maybeSingle();
+
+    if (!repository?.owner_id || repository.owner_id === session.user.id) return;
+    await createNotification(supabase, {
+      userId: repository.owner_id,
+      type: "star",
+      actorId: session.user.id,
+      repoId: repository.id,
+      message: `${actor?.display_name || "Someone"} starred your repo ${repo}`
+    });
+  }
+
   return (
     <div className="phase-repo-page">
       {landingHtml && <PublishedLanding html={landingHtml} />}
@@ -743,7 +819,7 @@ function RepoPage() {
           <span>Updated {data.updated}</span>
         </div>
         <div className="repo-header-actions">
-          <Button variant="soft"><Star size={16} />Star</Button>
+          <Button variant="soft" onClick={handleStarRepo}><Star size={16} />Star</Button>
           <Button variant="soft"><GitFork size={16} />Fork</Button>
           <div className="clone-control">
             <button>Clone <ChevronDown size={14} /></button>
@@ -767,16 +843,25 @@ function RepoPage() {
 
       {activeTab === "Code" && (
         <section className="phase-code-tab">
-          <aside className="phase-file-tree">
-            <select><option>main</option><option>codex/phase-2-pages</option><option>studio-redesign</option></select>
-            {fileTreeItems.map((item) => (
-              <button key={`${item.name}-${item.indent}`} style={{ paddingLeft: `${12 + item.indent * 18}px` }}>
-                {item.type === "folder" ? <Folder size={15} /> : <FileText size={15} />}
-                {item.name}
-              </button>
-            ))}
-          </aside>
-          <ReadmePreview repo={data} />
+          {loadingRepoContent ? (
+            <>
+              <RepoFileTreeSkeleton />
+              <ReadmeSkeleton />
+            </>
+          ) : (
+            <>
+              <aside className="phase-file-tree">
+                <select><option>main</option><option>codex/phase-2-pages</option><option>studio-redesign</option></select>
+                {fileTreeItems.map((item) => (
+                  <button key={`${item.name}-${item.indent}`} style={{ paddingLeft: `${12 + item.indent * 18}px` }}>
+                    {item.type === "folder" ? <Folder size={15} /> : <FileText size={15} />}
+                    {item.name}
+                  </button>
+                ))}
+              </aside>
+              <ReadmePreview repo={data} />
+            </>
+          )}
         </section>
       )}
 
@@ -826,11 +911,20 @@ function RepoPage() {
 }
 
 function LearnPage() {
+  useDocumentTitle("Learn");
+  const isMobile = useIsMobile();
   const [active, setActive] = useState(lessons[0][0]);
   const lesson = lessons.find((item) => item[0] === active);
   const detail = lessonDetails[active] || lessonDetails.branching;
   return (
     <PageFrame title="Learn Git visually" eyebrow="Learn">
+      {isMobile && (
+        <select className="learn-mobile-select" value={active} onChange={(event) => setActive(event.target.value)} aria-label="Choose lesson">
+          {lessons.map(([slug, title, level]) => (
+            <option key={slug} value={slug}>{title} - {level}</option>
+          ))}
+        </select>
+      )}
       <div className="learn-layout">
         <aside className="lesson-sidebar">
           {["New to Git", "Getting comfortable", "Going further"].map((track) => <h3 key={track}>{track}</h3>)}
@@ -856,6 +950,7 @@ function LearnPage() {
 }
 
 function ExplorePage() {
+  useDocumentTitle("Explore");
   return (
     <PageFrame title="Explore" eyebrow="Public discovery">
       <div className="filter-bar"><input placeholder="Search public repos and users" /><select><option>All languages</option><option>TypeScript</option><option>Python</option></select><select><option>Trending this week</option><option>Featured</option></select></div>
@@ -954,18 +1049,66 @@ function DeskIllustration() {
 }
 
 function RepoCard({ repo, actions = false }) {
+  async function handleStarClick() {
+    if (!supabase) return;
+    const session = await getCurrentSession();
+    if (!session?.user?.id) return;
+    const { data: repository } = await supabase
+      .from("repositories")
+      .select("id, owner_id")
+      .eq("name", repo.name)
+      .maybeSingle();
+    const { data: actor } = await supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("id", session.user.id)
+      .maybeSingle();
+    if (!repository?.owner_id || repository.owner_id === session.user.id) return;
+    await createNotification(supabase, {
+      userId: repository.owner_id,
+      type: "star",
+      actorId: session.user.id,
+      repoId: repository.id,
+      message: `${actor?.display_name || "Someone"} starred your repo ${repo.name}`
+    });
+  }
+
   return (
     <Card>
       <div className="repo-card-head"><h3><Link to={`/${repo.owner}/${repo.name}`}>{repo.name}</Link></h3>{repo.private && <Lock size={15} />}</div>
       <p>{repo.description}</p>
       <div className="repo-meta"><LanguagePill language={repo.language} /><span><Star size={14} />{repo.stars}</span><span><GitFork size={14} />{repo.forks}</span><span>{repo.updated}</span></div>
-      {actions && <div className="card-actions"><Button variant="soft"><Home size={15} />Pin</Button><Button variant="soft"><Star size={15} />Star</Button><Button to={`/${repo.owner}/${repo.name}/readme`} variant="soft">README</Button><Button to={`/${repo.owner}/${repo.name}/landing`} variant="soft">Landing</Button><Button variant="soft"><Settings size={15} /></Button></div>}
+      {actions && <div className="card-actions"><Button variant="soft"><Home size={15} />Pin</Button><Button variant="soft" onClick={handleStarClick}><Star size={15} />Star</Button><Button to={`/${repo.owner}/${repo.name}/readme`} variant="soft">README</Button><Button to={`/${repo.owner}/${repo.name}/landing`} variant="soft">Landing</Button><Button variant="soft"><Settings size={15} /></Button></div>}
     </Card>
   );
 }
 
 function PhaseRepoCard({ repo }) {
   const navigate = useNavigate();
+
+  async function handleStarClick() {
+    if (!supabase) return;
+    const session = await getCurrentSession();
+    if (!session?.user?.id) return;
+    const { data: repository } = await supabase
+      .from("repositories")
+      .select("id, owner_id")
+      .eq("name", repo.name)
+      .maybeSingle();
+    const { data: actor } = await supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("id", session.user.id)
+      .maybeSingle();
+    if (!repository?.owner_id || repository.owner_id === session.user.id) return;
+    await createNotification(supabase, {
+      userId: repository.owner_id,
+      type: "star",
+      actorId: session.user.id,
+      repoId: repository.id,
+      message: `${actor?.display_name || "Someone"} starred your repo ${repo.name}`
+    });
+  }
 
   return (
     <article className="phase-repo-card" onClick={() => navigate(`/${repo.owner}/${repo.name}`)}>
@@ -981,7 +1124,7 @@ function PhaseRepoCard({ repo }) {
       </div>
       <div className="phase-repo-actions" onClick={(event) => event.stopPropagation()}>
         <button type="button">Pin to workspace</button>
-        <button type="button">★ Star</button>
+        <button onClick={handleStarClick} type="button">★ Star</button>
         <Link to={`/${repo.owner}/${repo.name}/readme`}>README Studio</Link>
         <Link to={`/${repo.owner}/${repo.name}/landing`}>Landing Designer</Link>
         <button type="button" aria-label="Repo settings"><MoreHorizontal size={16} /></button>
@@ -1001,15 +1144,44 @@ function Avatar({ size = "normal" }) {
 }
 
 function ProfileHeader({ editable = false, publicView = false }) {
+  const loadingStats = useInitialLoading();
+
+  async function handleFollow() {
+    if (!supabase) return;
+    const session = await getCurrentSession();
+    if (!session?.user?.id) return;
+    const { data: followedUser } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("username", currentUser.username)
+      .maybeSingle();
+    const { data: actor } = await supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("id", session.user.id)
+      .maybeSingle();
+    if (!followedUser?.id || followedUser.id === session.user.id) return;
+    await createNotification(supabase, {
+      userId: followedUser.id,
+      type: "follow",
+      actorId: session.user.id,
+      message: `${actor?.display_name || "Someone"} followed you`
+    });
+  }
+
   return (
     <section className="profile-header">
       <div className="cover" />
       <div className="profile-content">
         <Avatar size="large" />
         <div><h2>{currentUser.name}</h2><p>@{currentUser.username} - {currentUser.pronouns}</p><p>{currentUser.bio}</p><p>{currentUser.location} - {currentUser.website} - Joined {currentUser.joinDate}</p></div>
-        <div className="profile-actions">{editable && <Button>Edit profile</Button>}{publicView && <Button>Follow</Button>}<Button variant="soft">Message</Button></div>
+        <div className="profile-actions">{editable && <Button>Edit profile</Button>}{publicView && <Button onClick={handleFollow}>Follow</Button>}<Button variant="soft">Message</Button></div>
       </div>
-      <div className="stats profile-stats"><Stat value={currentUser.repos} label="repos" /><Stat value={currentUser.followers} label="followers" /><Stat value={currentUser.following} label="following" /><Stat value={currentUser.stars} label="stars" /></div>
+      {loadingStats ? (
+        <ProfileStatsSkeleton />
+      ) : (
+        <div className="stats profile-stats"><Stat value={currentUser.repos} label="repos" /><Stat value={currentUser.followers} label="followers" /><Stat value={currentUser.following} label="following" /><Stat value={currentUser.stars} label="stars" /></div>
+      )}
     </section>
   );
 }
@@ -1261,6 +1433,76 @@ function FeatureCard({ title, text, icon }) {
 
 function Stat({ value, label }) {
   return <div className="stat"><strong>{value}</strong><span>{label}</span></div>;
+}
+
+function DashboardActivitySkeleton() {
+  return (
+    <div className="dashboard-activity-skeleton">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <div className="phase-activity-row" key={index}>
+          <Skeleton className="skeleton-avatar" />
+          <div>
+            <Skeleton className="skeleton-text medium" />
+            <Skeleton className="skeleton-text wide" />
+          </div>
+          <Skeleton className="skeleton-pill" />
+          <Skeleton className="skeleton-text short" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function RepoListSkeleton() {
+  return (
+    <div className="phase-repo-list" aria-label="Loading repositories">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <article className="phase-repo-card" key={index}>
+          <Skeleton className="skeleton-text medium" />
+          <Skeleton className="skeleton-text wide" />
+          <div className="phase-repo-meta">
+            <Skeleton className="skeleton-pill" />
+            <Skeleton className="skeleton-text short" />
+            <Skeleton className="skeleton-text short" />
+          </div>
+        </article>
+      ))}
+    </div>
+  );
+}
+
+function RepoFileTreeSkeleton() {
+  return (
+    <aside className="phase-file-tree repo-file-tree-skeleton" aria-label="Loading file tree">
+      <Skeleton className="skeleton-input" />
+      {Array.from({ length: 7 }).map((_, index) => <Skeleton className="skeleton-text wide" key={index} />)}
+    </aside>
+  );
+}
+
+function ReadmeSkeleton() {
+  return (
+    <div className="readme-render readme-render-skeleton" aria-label="Loading README">
+      <Skeleton className="skeleton-heading" />
+      <Skeleton lines={3} />
+      <Skeleton className="skeleton-text medium" />
+      <Skeleton lines={4} />
+      <Skeleton className="skeleton-code" />
+    </div>
+  );
+}
+
+function ProfileStatsSkeleton() {
+  return (
+    <div className="stats profile-stats profile-stats-skeleton" aria-label="Loading profile stats">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <div className="stat" key={index}>
+          <Skeleton className="skeleton-stat-number" />
+          <Skeleton className="skeleton-text short" />
+        </div>
+      ))}
+    </div>
+  );
 }
 
 function SectionTitle({ title }) {

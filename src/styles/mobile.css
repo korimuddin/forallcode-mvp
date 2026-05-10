@@ -1,0 +1,309 @@
+@media (max-width: 900px) {
+  .two-column,
+  .split,
+  .auth-panel,
+  .repo-layout,
+  .phase-dashboard-grid,
+  .phase-code-tab,
+  .repo-settings-panel,
+  .new-repo-layout,
+  .explore-main-grid,
+  .designer-layout,
+  .landing-designer-body {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-designer-body {
+    display: flex;
+    flex-direction: column-reverse;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .landing-designer-panel {
+    width: 100%;
+    height: 300px;
+    overflow-y: auto;
+    border-right: 0;
+    border-top: 1px solid var(--cream3);
+  }
+
+  .designer-preview-shell {
+    min-height: 400px;
+  }
+
+  .explore-workspaces {
+    position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  html,
+  body {
+    overflow-x: hidden;
+  }
+
+  .top-nav {
+    min-height: 64px;
+    padding-inline: 14px;
+  }
+
+  .top-nav-center {
+    display: none;
+  }
+
+  .top-nav-center.open {
+    display: none;
+  }
+
+  .page-frame,
+  .page-content,
+  .phase-repo-page,
+  .explore-page,
+  .notifications-page,
+  .about-page {
+    width: min(100%, calc(100vw - 28px));
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .hero {
+    grid-template-columns: 1fr;
+    min-height: auto;
+    padding: 24px;
+  }
+
+  .hero h1,
+  .hero-title {
+    font-size: 28px;
+  }
+
+  .hero-btns,
+  .hero .button-row,
+  .about-cta .button-row,
+  .button-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .hero-btns .btn,
+  .button-row .button,
+  .button-row button,
+  .button-row a {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .feature-grid,
+  .repo-grid,
+  .roadmap,
+  .steps,
+  .stats,
+  .mini-features,
+  .settings-fields,
+  .new-repo-options,
+  .about-difference-grid,
+  .explore-featured-grid,
+  .explore-repo-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-shell,
+  .settings-layout {
+    display: block;
+  }
+
+  .settings-sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+    top: auto;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    overflow-x: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--cream3);
+    padding: 8px;
+  }
+
+  .settings-sidebar h1,
+  .settings-sidebar nav > p {
+    display: none;
+  }
+
+  .settings-sidebar nav,
+  .settings-sidebar nav + nav {
+    display: flex;
+    gap: 4px;
+    margin: 0;
+  }
+
+  .settings-nav-item {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  .settings-content {
+    max-width: none;
+    padding: 20px 14px 40px;
+  }
+
+  .settings-actions {
+    justify-content: stretch;
+  }
+
+  .settings-save-button {
+    width: 100%;
+  }
+
+  .settings-connected-card,
+  .settings-integration-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .settings-connected-card > div,
+  .settings-integration-card > div,
+  .settings-connected-actions,
+  .settings-button-row {
+    flex-wrap: wrap;
+  }
+
+  .learn-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .lesson-sidebar {
+    display: none;
+  }
+
+  .learn-mobile-select {
+    width: 100%;
+    min-height: 44px;
+    border: 1px solid var(--cream3);
+    border-radius: 12px;
+    background: var(--white);
+    padding: 11px 14px;
+    margin-bottom: 16px;
+    color: var(--ink);
+    font-family: "DM Sans", sans-serif;
+  }
+
+  .phase-code-tab {
+    display: block;
+    min-height: auto;
+  }
+
+  .phase-file-tree,
+  .file-tree {
+    display: none;
+  }
+
+  .readme-studio-body {
+    display: flex;
+    flex-direction: column;
+    min-height: auto;
+  }
+
+  .readme-studio-header,
+  .landing-designer-header {
+    height: auto;
+    min-height: 52px;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .readme-studio-path,
+  .landing-designer-path {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .readme-studio-actions,
+  .landing-designer-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-left: 0;
+  }
+
+  .readme-studio-actions button,
+  .landing-designer-actions button,
+  .readme-template-menu,
+  .readme-template-menu > button {
+    width: 100%;
+  }
+
+  .readme-template-dropdown {
+    position: static;
+    width: 100%;
+    margin-top: 8px;
+  }
+
+  .readme-editor-column,
+  .readme-preview-column,
+  .readme-editor-column.mobile-active,
+  .readme-preview-column.mobile-active {
+    display: flex;
+    width: 100%;
+    height: 50vh;
+    min-height: 50vh;
+    border-right: 0;
+    border-bottom: 1px solid var(--cream3);
+  }
+
+  .readme-preview-column,
+  .readme-preview-column.mobile-active {
+    display: block;
+  }
+
+  .readme-studio-mobile-tabs {
+    display: none;
+  }
+
+  .landing-designer-body {
+    display: flex;
+    flex-direction: column-reverse;
+  }
+
+  .landing-designer-panel {
+    width: 100%;
+    height: 300px;
+    overflow-y: auto;
+  }
+
+  .designer-preview-shell {
+    width: 100%;
+    max-width: 100%;
+    height: 400px;
+    min-height: 400px;
+    box-sizing: border-box;
+  }
+
+  .designer-browser-frame,
+  .designer-browser-frame.mobile,
+  .landing-page-preview {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .landing-page-preview {
+    overflow-x: hidden;
+  }
+
+  .landing-designer-actions,
+  .readme-studio-actions,
+  .repos-page-header,
+  .phase-section-head,
+  .repo-header-actions,
+  .notifications-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

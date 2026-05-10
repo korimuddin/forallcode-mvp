@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
+import { formatDistanceToNow } from "date-fns";
 import { Bell, BookOpen, ChevronDown, Code2, Menu, Search, X } from "lucide-react";
 import IllustratedAvatar from "../ui/IllustratedAvatar";
 import { supabase } from "../../lib/supabase";
@@ -17,12 +18,28 @@ const recentRepos = [
   { name: "first-pr-path", language: "Python", colour: "#0C447C", path: "/mira/first-pr-path" }
 ];
 
-const notifications = [
-  "Lena starred orbit-readme",
-  "Dev Collective published a workspace",
-  "Mira completed Rebasing",
-  "Kai forked first-pr-path",
-  "Noor opened a pull request"
+const fallbackNotifications = [
+  {
+    id: "fallback-star",
+    message: "Lena starred orbit-readme",
+    read: false,
+    created_at: new Date(Date.now() - 1000 * 60 * 8).toISOString(),
+    actor: { avatar_style: "rose" }
+  },
+  {
+    id: "fallback-follow",
+    message: "Kai followed you",
+    read: false,
+    created_at: new Date(Date.now() - 1000 * 60 * 42).toISOString(),
+    actor: { avatar_style: "sky" }
+  },
+  {
+    id: "fallback-system",
+    message: "README Studio draft saved",
+    read: true,
+    created_at: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
+    actor: { avatar_style: "lavender" }
+  }
 ];
 
 export default function TopNav() {
@@ -31,6 +48,9 @@ export default function TopNav() {
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(mockUser);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [notificationItems, setNotificationItems] = useState(fallbackNotifications);
+  const [unreadCount, setUnreadCount] = useState(2);
+  const [toastMessage, setToastMessage] = useState("");
   const [avatarOpen, setAvatarOpen] = useState(false);
   const notificationsRef = useRef(null);
   const avatarRef = useRef(null);
@@ -56,6 +76,59 @@ export default function TopNav() {
 
     return () => listener.subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    async function loadNotifications() {
+      if (!supabase || !session?.user?.id) {
+        setNotificationItems(fallbackNotifications);
+        setUnreadCount(fallbackNotifications.filter((item) => !item.read).length);
+        return undefined;
+      }
+
+      const { count } = await supabase
+        .from("notifications")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", session.user.id)
+        .eq("read", false);
+      setUnreadCount(count || 0);
+
+      const { data } = await supabase
+        .from("notifications")
+        .select("*, actor:profiles!notifications_actor_id_fkey(username, display_name, avatar_style)")
+        .eq("user_id", session.user.id)
+        .order("created_at", { ascending: false })
+        .limit(5);
+      if (data) setNotificationItems(data);
+
+      const channel = supabase
+        .channel("notifications")
+        .on("postgres_changes", {
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${session.user.id}`
+        }, (payload) => {
+          setUnreadCount((current) => current + 1);
+          setNotificationItems((current) => [payload.new, ...current].slice(0, 5));
+          setToastMessage(payload.new.message || "New notification");
+        })
+        .subscribe();
+
+      return () => supabase.removeChannel(channel);
+    }
+
+    let cleanup;
+    loadNotifications().then((value) => {
+      cleanup = value;
+    });
+    return () => cleanup?.();
+  }, [session]);
+
+  useEffect(() => {
+    if (!toastMessage) return undefined;
+    const timeout = window.setTimeout(() => setToastMessage(""), 2600);
+    return () => window.clearTimeout(timeout);
+  }, [toastMessage]);
 
   useEffect(() => {
     async function loadProfile() {
@@ -100,8 +173,20 @@ export default function TopNav() {
     navigate("/login");
   }
 
+  async function markAllNotificationsRead() {
+    setUnreadCount(0);
+    setNotificationItems((current) => current.map((item) => ({ ...item, read: true })));
+    if (!supabase || !session?.user?.id) return;
+    await supabase
+      .from("notifications")
+      .update({ read: true })
+      .eq("user_id", session.user.id)
+      .eq("read", false);
+  }
+
   return (
     <header className="top-nav">
+      {toastMessage && <div className="notification-toast" role="status">{toastMessage}</div>}
       <div className="top-nav-left">
         <Link className="brand" to={loggedIn ? "/dashboard" : "/"} aria-label="ForAllCode home">
           <span className="brand-mark"><img src="/forallcode-logo.png" alt="" /></span>
@@ -148,13 +233,14 @@ export default function TopNav() {
             <div className="dropdown click-dropdown" ref={notificationsRef}>
               <button className="nav-icon-button" onClick={() => setNotificationsOpen(!notificationsOpen)} aria-label="Notifications">
                 <Bell size={18} />
-                <b>3</b>
+                {unreadCount > 0 && <b aria-label={`${unreadCount} unread notifications`} />}
                 <ChevronDown size={14} />
               </button>
               {notificationsOpen && (
                 <div className="dropdown-menu notification-menu">
-                  {notifications.map((item) => <p key={item}>{item}</p>)}
-                  <button>Mark all read</button>
+                  {notificationItems.slice(0, 5).map((item) => <NotificationDropdownItem item={item} key={item.id || item.created_at} />)}
+                  {notificationItems.length === 0 && <p>No notifications yet.</p>}
+                  <button onClick={markAllNotificationsRead}>Mark all as read</button>
                   <Link to="/notifications">View all notifications</Link>
                 </div>
               )}
@@ -195,6 +281,19 @@ export default function TopNav() {
         )}
       </div>
     </header>
+  );
+}
+
+function NotificationDropdownItem({ item }) {
+  const actor = item.actor || {};
+  return (
+    <div className={`notification-dropdown-item ${item.read ? "" : "unread"}`}>
+      <IllustratedAvatar size={28} variant={actor.avatar_style || "sage"} />
+      <span>
+        <strong>{item.message}</strong>
+        <small>{formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}</small>
+      </span>
+    </div>
   );
 }
 

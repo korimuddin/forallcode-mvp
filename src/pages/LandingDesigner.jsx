@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { ArrowLeft, Download, Rocket } from "lucide-react";
 import DesignerPreview from "../components/landing-designer/DesignerPreview";
+import { useDocumentTitle, useIsMobile } from "../lib/hooks";
 import { getCurrentSession, supabase } from "../lib/supabase";
 
 const ownerUsername = "mira";
@@ -71,6 +72,8 @@ const fontOptions = [
 
 export default function LandingDesigner() {
   const { username = ownerUsername, repo = "orbit-readme" } = useParams();
+  useDocumentTitle(`${repo} Landing Designer`);
+  const isMobile = useIsMobile();
   const userIdRef = useRef(null);
   const [activeSection, setActiveSection] = useState("navigation");
   const [theme, setTheme] = useState(landingThemes[0]);
@@ -88,6 +91,7 @@ export default function LandingDesigner() {
 
   const isOwner = username === ownerUsername;
   const selectedPreset = stylePresets[stylePreset];
+  const effectiveViewport = isMobile ? "mobile" : viewport;
 
   const currentConfig = useMemo(() => ({
     projectName: content.projectName,
@@ -118,9 +122,9 @@ export default function LandingDesigner() {
       theme={designerState.theme}
       style={designerState.preset}
       username={username}
-      viewport={designerState.viewport}
+      viewport={effectiveViewport}
     />
-  ), [designerState, repo, username]);
+  ), [designerState, effectiveViewport, repo, username]);
 
   useEffect(() => {
     async function loadSession() {
@@ -315,8 +319,8 @@ export default function LandingDesigner() {
 
         <div className="landing-designer-actions">
           <div className="designer-device-toggle" aria-label="Preview size">
-            <button className={viewport === "desktop" ? "active" : ""} onClick={() => setViewport("desktop")} type="button">Desktop</button>
-            <button className={viewport === "mobile" ? "active" : ""} onClick={() => setViewport("mobile")} type="button">Mobile</button>
+            <button className={effectiveViewport === "desktop" ? "active" : ""} onClick={() => setViewport("desktop")} type="button">Desktop</button>
+            <button className={effectiveViewport === "mobile" ? "active" : ""} onClick={() => setViewport("mobile")} type="button">Mobile</button>
           </div>
           <button className="designer-ghost-button" type="button" onClick={handleExport}><Download size={14} />Export HTML</button>
           <button className={`designer-publish-button ${publishState}`} type="button" onClick={handlePublish} disabled={publishState === "publishing"}>

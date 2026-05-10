@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 import {
   Bell,
   Brush,
@@ -10,6 +10,7 @@ import {
   User,
   UserCircle
 } from "lucide-react";
+import { useDocumentTitle } from "../../lib/hooks";
 
 const settingsGroups = [
   {
@@ -33,6 +34,11 @@ const settingsGroups = [
 ];
 
 export default function SettingsLayout() {
+  const location = useLocation();
+  const activeSegment = location.pathname.split("/").filter(Boolean).pop() || "account";
+  const title = activeSegment.split("-").map((part) => part[0].toUpperCase() + part.slice(1)).join(" ");
+  useDocumentTitle(`${title} settings`);
+
   return (
     <div className="settings-shell">
       <aside className="settings-sidebar" aria-label="Settings navigation">

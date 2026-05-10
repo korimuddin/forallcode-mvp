@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { BookOpen, Home, Palette, Sparkles } from "lucide-react";
+import { useDocumentTitle } from "../lib/hooks";
 
 const differences = [
   {
@@ -25,6 +26,8 @@ const differences = [
 ];
 
 export default function About() {
+  useDocumentTitle("About");
+
   return (
     <main className="about-page">
       <section className="about-hero">

@@ -64,16 +64,27 @@ export default function LandingPagePreview({
         </h1>
         <p
           style={{
-            fontSize: 17,
+            fontSize: isMobile ? 15 : 17,
             color: style.bodyColor,
             marginBottom: 32,
-            maxWidth: 520,
+            maxWidth: isMobile ? 270 : 520,
             margin: "0 auto 32px"
           }}
         >
           {tagline}
         </p>
-        <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: isMobile ? "column" : "row",
+            alignItems: isMobile ? "stretch" : "center",
+            gap: 12,
+            justifyContent: "center",
+            flexWrap: "wrap",
+            maxWidth: isMobile ? 240 : "none",
+            margin: isMobile ? "0 auto" : 0
+          }}
+        >
           <a
             href="#"
             style={{
@@ -83,7 +94,10 @@ export default function LandingPagePreview({
               borderRadius: 30,
               fontSize: 14,
               fontWeight: 700,
-              textDecoration: "none"
+              textDecoration: "none",
+              textAlign: "center",
+              boxSizing: "border-box",
+              width: isMobile ? "100%" : "auto"
             }}
           >
             {ctaText}
@@ -98,7 +112,10 @@ export default function LandingPagePreview({
                 borderRadius: 30,
                 fontSize: 14,
                 border: `1.5px solid ${isBold ? "#fffdf9" : theme.accent}`,
-                textDecoration: "none"
+                textDecoration: "none",
+                textAlign: "center",
+                boxSizing: "border-box",
+                width: isMobile ? "100%" : "auto"
               }}
             >
               {secondaryCta}

@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import BlockInserter from "../components/readme/BlockInserter";
 import { readmeTemplateOptions, readmeTemplates } from "../data/readmeTemplates";
+import { useDocumentTitle } from "../lib/hooks";
 import { renderMarkdown } from "../lib/markdownRenderer";
 import { getCurrentSession, supabase } from "../lib/supabase";
 
@@ -53,6 +54,7 @@ const toolbarGroups = [
 
 export default function ReadmeStudio() {
   const { username = ownerUsername, repo = "orbit-readme" } = useParams();
+  useDocumentTitle(`${repo} README Studio`);
   const textareaRef = useRef(null);
   const sessionRef = useRef(null);
   const userIdRef = useRef(null);

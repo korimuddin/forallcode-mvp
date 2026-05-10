@@ -1,0 +1,1 @@
+ALTER TABLE repositories ADD COLUMN IF NOT EXISTS is_featured BOOLEAN DEFAULT false;
