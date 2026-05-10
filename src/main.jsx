@@ -7,7 +7,6 @@ import {
   Check,
   ChevronDown,
   Copy,
-  Download,
   Eye,
   FileCode2,
   FileText,
@@ -28,6 +27,7 @@ import TopNav from "./components/layout/TopNav";
 import IllustratedAvatar, { avatarVariants } from "./components/ui/IllustratedAvatar";
 import { renderMarkdown } from "./lib/markdownRenderer";
 import { getCurrentSession, isSupabaseConfigured, signInWithGitHub, signInWithPassword } from "./lib/supabase";
+import LandingDesigner from "./pages/LandingDesigner";
 import ReadmeStudio from "./pages/ReadmeStudio";
 import "./styles.css";
 
@@ -634,33 +634,6 @@ function RepoPage() {
         </section>
       )}
     </div>
-  );
-}
-
-function LandingDesigner() {
-  const [state, setState] = useState({ colour: "lavender", style: "Cosy", name: "Orbit README", tagline: "Readable projects from the first scroll.", cta: "Read the docs", font: "Lora" });
-  const update = (key, value) => setState({ ...state, [key]: value });
-  return (
-    <PageFrame title="Landing Page Designer" eyebrow="Live builder">
-      <div className="designer">
-        <aside className="control-panel">
-          {["Nav", "Hero", "Features", "CTA", "Footer"].map((section) => <button key={section}>{section}</button>)}
-          <label>Project name<input value={state.name} onChange={(event) => update("name", event.target.value)} /></label>
-          <label>Tagline<input value={state.tagline} onChange={(event) => update("tagline", event.target.value)} /></label>
-          <label>CTA text<input value={state.cta} onChange={(event) => update("cta", event.target.value)} /></label>
-          <label>Style preset<select value={state.style} onChange={(event) => update("style", event.target.value)}><option>Cosy</option><option>Bold</option><option>Minimal</option></select></label>
-          <label>Font<select value={state.font} onChange={(event) => update("font", event.target.value)}><option>Lora</option><option>DM Sans</option></select></label>
-          <div className="swatches">{["lavender", "sage", "rose", "sky", "amber"].map((colour) => <button className={colour} key={colour} onClick={() => update("colour", colour)} aria-label={colour} />)}</div>
-          <Button variant="soft"><Download size={16} />Export HTML</Button>
-          <Button>Publish</Button>
-        </aside>
-        <section className={`landing-preview ${state.colour}`}>
-          <nav><strong>{state.name}</strong><span>Docs</span><span>Examples</span><Button variant="soft">{state.cta}</Button></nav>
-          <div><h2 style={{ fontFamily: state.font }}>{state.name}</h2><p>{state.tagline}</p><Button>{state.cta}</Button></div>
-          <div className="mini-features"><Card>Fast setup</Card><Card>Clear examples</Card><Card>Friendly docs</Card></div>
-        </section>
-      </div>
-    </PageFrame>
   );
 }
 

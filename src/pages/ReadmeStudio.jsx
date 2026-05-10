@@ -54,11 +54,15 @@ const toolbarGroups = [
 export default function ReadmeStudio() {
   const { username = ownerUsername, repo = "orbit-readme" } = useParams();
   const textareaRef = useRef(null);
+  const sessionRef = useRef(null);
+  const userIdRef = useRef(null);
   const [markdown, setMarkdown] = useState(readmeTemplates.blank);
   const [renderedMarkdown, setRenderedMarkdown] = useState(readmeTemplates.blank);
   const [mobileView, setMobileView] = useState("edit");
   const [templatesOpen, setTemplatesOpen] = useState(false);
   const [blockInserterOpen, setBlockInserterOpen] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+  const [saveState, setSaveState] = useState("idle");
   const [status, setStatus] = useState("Ready");
 
   const isOwner = username === ownerUsername;
@@ -69,6 +73,8 @@ export default function ReadmeStudio() {
 
       try {
         const session = await getCurrentSession();
+        sessionRef.current = session;
+        userIdRef.current = session?.user?.id || null;
 
         if (supabase && session?.user?.id) {
           const { data } = await supabase
@@ -80,6 +86,7 @@ export default function ReadmeStudio() {
 
           if (data?.readme_content) {
             setMarkdown(data.readme_content);
+            setIsDirty(false);
             setStatus("Loaded from ForAllCode");
             return;
           }
@@ -95,15 +102,18 @@ export default function ReadmeStudio() {
 
           if (response.ok) {
             setMarkdown(await response.text());
+            setIsDirty(false);
             setStatus("Loaded from GitHub");
             return;
           }
         }
 
         setMarkdown(readmeTemplates.blank.replace("Project Name", repo));
+        setIsDirty(false);
         setStatus("Starter template loaded");
       } catch {
         setMarkdown(readmeTemplates.blank.replace("Project Name", repo));
+        setIsDirty(false);
         setStatus("Starter template loaded");
       }
     }
@@ -116,6 +126,25 @@ export default function ReadmeStudio() {
     return () => window.clearTimeout(timer);
   }, [markdown]);
 
+  useEffect(() => {
+    const interval = window.setInterval(async () => {
+      if (!isDirty || !supabase || !userIdRef.current) return;
+
+      const { error } = await supabase
+        .from("repositories")
+        .update({ readme_content: markdown })
+        .eq("owner_id", userIdRef.current)
+        .eq("name", repo);
+
+      if (!error) {
+        setIsDirty(false);
+        setStatus("Auto-saved to ForAllCode");
+      }
+    }, 30000);
+
+    return () => window.clearInterval(interval);
+  }, [isDirty, markdown, repo]);
+
   const counts = useMemo(() => {
     const words = markdown.trim() ? markdown.trim().split(/\s+/).length : 0;
     return { words, characters: markdown.length };
@@ -123,6 +152,12 @@ export default function ReadmeStudio() {
 
   if (!isOwner) {
     return <Navigate to={`/${username}/${repo}`} replace />;
+  }
+
+  function updateMarkdown(nextMarkdown) {
+    setMarkdown(nextMarkdown);
+    setIsDirty(true);
+    if (saveState === "saved") setSaveState("idle");
   }
 
   function wrapSelection(before, after = before) {
@@ -134,7 +169,7 @@ export default function ReadmeStudio() {
     const selected = textarea.value.substring(start, end);
     const newText = `${textarea.value.substring(0, start)}${before}${selected}${after}${textarea.value.substring(end)}`;
 
-    setMarkdown(newText);
+    updateMarkdown(newText);
     window.setTimeout(() => {
       textarea.selectionStart = start + before.length;
       textarea.selectionEnd = end + before.length;
@@ -148,7 +183,7 @@ export default function ReadmeStudio() {
 
     const start = textarea.selectionStart;
     const lineStart = textarea.value.lastIndexOf("\n", start - 1) + 1;
-    setMarkdown(`${textarea.value.substring(0, lineStart)}${prefix}${textarea.value.substring(lineStart)}`);
+    updateMarkdown(`${textarea.value.substring(0, lineStart)}${prefix}${textarea.value.substring(lineStart)}`);
     window.setTimeout(() => {
       textarea.selectionStart = start + prefix.length;
       textarea.selectionEnd = start + prefix.length;
@@ -163,21 +198,21 @@ export default function ReadmeStudio() {
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
     const selected = textarea.value.substring(start, end);
-    setMarkdown(`${textarea.value.substring(0, start)}${before}${selected}${after}${textarea.value.substring(end)}`);
+    updateMarkdown(`${textarea.value.substring(0, start)}${before}${selected}${after}${textarea.value.substring(end)}`);
     window.setTimeout(() => textarea.focus(), 0);
   }
 
   function insertGeneratedBlock(blockMarkdown) {
     const textarea = textareaRef.current;
     if (!textarea) {
-      setMarkdown((current) => `${current}${blockMarkdown}`);
+      updateMarkdown(`${markdown}${blockMarkdown}`);
       return;
     }
 
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
     const nextMarkdown = `${textarea.value.substring(0, start)}${blockMarkdown}${textarea.value.substring(end)}`;
-    setMarkdown(nextMarkdown);
+    updateMarkdown(nextMarkdown);
     setStatus("Block inserted");
 
     window.setTimeout(() => {
@@ -208,7 +243,88 @@ export default function ReadmeStudio() {
     actions[action]?.();
   }
 
-  function exportMarkdown() {
+  function encodeBase64(content) {
+    const bytes = new TextEncoder().encode(content);
+    let binary = "";
+    bytes.forEach((byte) => {
+      binary += String.fromCharCode(byte);
+    });
+    return window.btoa(binary);
+  }
+
+  async function saveToSupabase(session) {
+    const userId = session?.user?.id || userIdRef.current;
+    if (!supabase || !userId) return;
+
+    const { error } = await supabase
+      .from("repositories")
+      .update({ readme_content: markdown })
+      .eq("owner_id", userId)
+      .eq("name", repo);
+
+    if (error) throw error;
+  }
+
+  async function handleSave() {
+    setSaveState("saving");
+    setStatus("Saving README");
+
+    try {
+      const session = sessionRef.current || await getCurrentSession();
+      sessionRef.current = session;
+      userIdRef.current = session?.user?.id || null;
+
+      if (!session?.provider_token) {
+        throw new Error("Missing GitHub provider token. Sign in with GitHub again before saving.");
+      }
+
+      await saveToSupabase(session);
+
+      const contentsUrl = `https://api.github.com/repos/${username}/${repo}/contents/README.md`;
+      const shaResponse = await fetch(contentsUrl, {
+        headers: {
+          Authorization: `Bearer ${session.provider_token}`,
+          Accept: "application/vnd.github+json"
+        }
+      });
+
+      let sha;
+      if (shaResponse.ok) {
+        const shaData = await shaResponse.json();
+        sha = shaData.sha;
+      } else if (shaResponse.status !== 404) {
+        throw new Error("Could not read the current README from GitHub.");
+      }
+
+      const saveResponse = await fetch(contentsUrl, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${session.provider_token}`,
+          Accept: "application/vnd.github+json",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          message: "docs: update README via ForAllCode README Studio",
+          content: encodeBase64(markdown),
+          ...(sha ? { sha } : {})
+        })
+      });
+
+      if (!saveResponse.ok) {
+        throw new Error("GitHub rejected the README update.");
+      }
+
+      setIsDirty(false);
+      setSaveState("saved");
+      setStatus("README saved to GitHub");
+      window.setTimeout(() => setSaveState("idle"), 2000);
+    } catch (error) {
+      setSaveState("idle");
+      setStatus(error.message || "Failed to save - check your GitHub connection");
+    }
+  }
+
+  function handleExport() {
     const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -222,10 +338,16 @@ export default function ReadmeStudio() {
   function applyTemplate(templateKey) {
     if (markdown.trim() && !window.confirm("Replace the current README content with this template?")) return;
 
-    setMarkdown(readmeTemplates[templateKey].replace("Project Name", repo));
+    updateMarkdown(readmeTemplates[templateKey].replace("Project Name", repo));
     setTemplatesOpen(false);
     setStatus("Template loaded");
   }
+
+  const saveButtonContent = {
+    idle: <><Save size={14} />Save to repo</>,
+    saving: "Saving…",
+    saved: "✓ Saved"
+  };
 
   return (
     <section className="readme-studio-page">
@@ -256,8 +378,10 @@ export default function ReadmeStudio() {
               </div>
             )}
           </div>
-          <button className="readme-ghost-button" type="button" onClick={exportMarkdown}><Download size={14} />Export .md</button>
-          <button className="readme-save-button" type="button"><Save size={14} />Save to repo</button>
+          <button className="readme-ghost-button" type="button" onClick={handleExport}><Download size={14} />Export .md</button>
+          <button className={`readme-save-button ${saveState}`} type="button" onClick={handleSave} disabled={saveState === "saving"}>
+            {saveButtonContent[saveState]}
+          </button>
         </div>
       </header>
 
@@ -285,7 +409,7 @@ export default function ReadmeStudio() {
               aria-label="README markdown"
               ref={textareaRef}
               value={markdown}
-              onChange={(event) => setMarkdown(event.target.value)}
+              onChange={(event) => updateMarkdown(event.target.value)}
               spellCheck="false"
             />
             <BlockInserter
