@@ -22,7 +22,6 @@ import {
   Menu,
   Palette,
   Plus,
-  Rocket,
   Search,
   Settings,
   Sparkles,
@@ -173,7 +172,7 @@ function TopNav() {
   return (
     <header className="top-nav">
       <Link className="brand" to="/" aria-label="ForAllCode home">
-        <span className="brand-mark"><Rocket size={20} /></span>
+        <span className="brand-mark"><img src="/forallcode-logo.png" alt="" /></span>
         <span>ForAllCode</span>
       </Link>
       <button className="search-box" onClick={() => window.dispatchEvent(new Event("open-command"))}>
@@ -550,6 +549,10 @@ function SettingsPage() {
 }
 
 function SettingsFields({ tab }) {
+  if (tab === "appearance") {
+    return <AppearanceSettings />;
+  }
+
   const common = {
     account: ["Display name", "Email address", "Password", "Connected GitHub account", "Two-factor authentication"],
     profile: ["Avatar style", "Cover image", "Bio", "Pronouns", "Location", "Website", "Social links"],
@@ -561,6 +564,50 @@ function SettingsFields({ tab }) {
     danger: ["Export all data", "Make all repos private", "Delete account"]
   };
   return <div className="settings-fields">{(common[tab] || common.account).map((field) => <label key={field}>{field}<input placeholder={field.includes("Delete") ? "Type confirmation phrase" : field} /></label>)}</div>;
+}
+
+function AppearanceSettings() {
+  const [theme, setTheme] = useState("Light");
+  const themes = [
+    ["Light", "Cream surfaces, warm ink, and the default pastel accents."],
+    ["Dark", "Deep navy surfaces with soft cream text and muted pastels."],
+    ["System", "Follows the user's operating system preference."],
+    ["Cosy", "Warmer cream, sage details, and a softer workspace feel."],
+    ["Night owl", "Low-light workspace palette for evening sessions."],
+    ["Garden", "Fresh sage surfaces, cream panels, and calm green accents."],
+    ["Sunrise", "Amber highlights with rose warmth for an optimistic morning feel."],
+    ["Ocean", "Soft sky blues and cream surfaces for a clearer focus mode."],
+    ["Notebook", "Paper-like creams with ink-forward contrast and quiet controls."],
+    ["Aurora", "Lavender, sky, and sage blended into a more expressive workspace."]
+  ];
+  const activeTheme = themes.find(([name]) => name === theme);
+
+  return (
+    <div className="appearance-settings">
+      <label className="theme-select">
+        Theme
+        <select value={theme} onChange={(event) => setTheme(event.target.value)}>
+          {themes.map(([name]) => <option key={name} value={name}>{name}</option>)}
+        </select>
+      </label>
+      <div className={`theme-preview theme-${theme.toLowerCase().replace(" ", "-")}`}>
+        <div>
+          <Badge>{activeTheme[0]}</Badge>
+          <h3>{activeTheme[0]} theme</h3>
+          <p>{activeTheme[1]}</p>
+        </div>
+        <span />
+        <span />
+        <span />
+      </div>
+      <div className="settings-fields">
+        <label>Accent colour<select><option>Lavender</option><option>Sage</option><option>Rose</option><option>Sky</option><option>Amber</option></select></label>
+        <label>Font size<select><option>Default</option><option>Large</option></select></label>
+        <label>Reduce motion<select><option>Off</option><option>On</option></select></label>
+        <label>Density<select><option>Comfortable</option><option>Compact</option></select></label>
+      </div>
+    </div>
+  );
 }
 
 function Workspace({ compact = false, interactive = false }) {
@@ -776,7 +823,18 @@ function PageFrame({ title, eyebrow, children }) {
 }
 
 function Footer() {
-  return <footer><Link to="/about">About</Link><a href="https://github.com" target="_blank" rel="noreferrer">GitHub</a><Link to="/settings/privacy">Privacy</Link><Link to="/settings/danger">Terms</Link><Link to="/explore">Status</Link></footer>;
+  return (
+    <footer>
+      <div className="footer-links">
+        <Link to="/about">About</Link>
+        <a href="https://github.com" target="_blank" rel="noreferrer">GitHub</a>
+        <Link to="/settings/privacy">Privacy</Link>
+        <Link to="/settings/danger">Terms</Link>
+        <Link to="/explore">Status</Link>
+      </div>
+      <span className="copyright">forallcode2020 copyright</span>
+    </footer>
+  );
 }
 
 createRoot(document.getElementById("root")).render(<App />);
