@@ -27,7 +27,7 @@ import TopNav from "./components/layout/TopNav";
 import ErrorBoundary from "./components/ui/ErrorBoundary";
 import IllustratedAvatar, { avatarVariants } from "./components/ui/IllustratedAvatar";
 import Skeleton from "./components/ui/Skeleton";
-import { useAuthSession, useDocumentTitle, useIsMobile } from "./lib/hooks";
+import { useAuthSession, useDocumentTitle, useIsMobile, useSignedInUserData } from "./lib/hooks";
 import { renderMarkdown } from "./lib/markdownRenderer";
 import { createNotification } from "./lib/notifications";
 import { getCurrentSession, isSupabaseConfigured, signInWithGitHub, signInWithPassword, supabase } from "./lib/supabase";
@@ -468,13 +468,16 @@ function AuthCallback() {
 
 function DashboardPage() {
   useDocumentTitle("Dashboard");
-  const loadingActivity = useInitialLoading();
+  const { profile, repos: userRepos, loading, error } = useSignedInUserData();
+  const displayName = profile?.displayName || "there";
+  const firstName = displayName.split(" ")[0] || displayName;
+  const visibleRepos = userRepos.length > 0 ? userRepos.slice(0, 2) : repos.slice(0, 2);
   return (
     <PageFrame title="" eyebrow="">
       <section className="phase-dashboard-hero">
         <div>
           <p className="eyebrow">FORALLCODE</p>
-          <h1>Welcome back, {currentUser.name}</h1>
+          <h1>Welcome back, {firstName}</h1>
           <p>Your workspace is ready. Pick up where you left off, follow the work, and keep the useful ideas in sight.</p>
         </div>
         <svg viewBox="0 0 420 180" aria-hidden="true">
@@ -491,7 +494,7 @@ function DashboardPage() {
             <Link to="/following">Manage</Link>
           </div>
           <Card>
-            {loadingActivity ? <DashboardActivitySkeleton /> : dashboardActivity.map((item) => (
+            {loading ? <DashboardActivitySkeleton /> : dashboardActivity.map((item) => (
               <div className="phase-activity-row" key={`${item.name}-${item.action}`}>
                 <span className="phase-initials">{item.initials}</span>
                 <div><strong>{item.name}</strong><p>{item.action}</p></div>
@@ -520,7 +523,9 @@ function DashboardPage() {
             <div><p className="eyebrow">FEATURED</p><h2>Workspaces and projects</h2></div>
             <Link to="/explore">Explore</Link>
           </div>
-          {repos.slice(0, 2).map((repo, index) => (
+          {loading && <RepoListSkeleton />}
+          {!loading && error && <p className="auth-error">{error}</p>}
+          {!loading && !error && visibleRepos.map((repo, index) => (
             <Link className={`featured-project-card card-${index + 1}`} key={repo.name} to={`/${repo.owner}/${repo.name}`}>
               <div>
                 <h3>{repo.name}</h3>
@@ -529,6 +534,9 @@ function DashboardPage() {
               </div>
             </Link>
           ))}
+          {!loading && !error && userRepos.length === 0 && (
+            <p className="empty-helper">No GitHub repositories found yet. Make sure you granted repo access when signing in.</p>
+          )}
         </aside>
       </div>
     </PageFrame>
@@ -546,12 +554,17 @@ function WorkspacePage() {
 
 function MyProfilePage() {
   useDocumentTitle("Profile");
+  const { profile, repos: userRepos, loading } = useSignedInUserData();
+  const visibleRepos = userRepos.length > 0 ? userRepos : [];
   return (
     <PageFrame title="My Profile" eyebrow="Profile">
-      <ProfileHeader editable />
+      <ProfileHeader editable profileData={profile} repoCount={userRepos.length} />
       <Workspace compact />
       <div className="two-column">
-        <section>{repos.map((repo) => <RepoCard key={repo.name} repo={repo} actions />)}</section>
+        <section>
+          {loading ? <RepoListSkeleton /> : visibleRepos.map((repo) => <RepoCard key={repo.name} repo={repo} actions />)}
+          {!loading && visibleRepos.length === 0 && <Card><h3>No synced repos yet</h3><p>Sign in with GitHub repo access to fill this profile with your repositories.</p></Card>}
+        </section>
         <aside><ActivityCalendar /><RecentChanges /></aside>
       </div>
     </PageFrame>
@@ -576,13 +589,14 @@ function PublicProfile() {
 
 function ReposPage() {
   useDocumentTitle("Repositories");
-  const loadingRepos = useInitialLoading();
+  const { repos: userRepos, loading: loadingRepos, error } = useSignedInUserData();
   const [query, setQuery] = useState("");
   const [language, setLanguage] = useState("all");
   const [visibility, setVisibility] = useState("all");
   const [sort, setSort] = useState("updated");
-  const languages = [...new Set(repos.map((repo) => repo.language))];
-  const filtered = repos
+  const repoSource = userRepos.length > 0 ? userRepos : [];
+  const languages = [...new Set(repoSource.map((repo) => repo.language))];
+  const filtered = repoSource
     .filter((repo) => (language === "all" || repo.language === language))
     .filter((repo) => (visibility === "all" || (visibility === "private" ? repo.private : !repo.private)))
     .filter((repo) => repo.name.toLowerCase().includes(query.toLowerCase()) || repo.description.toLowerCase().includes(query.toLowerCase()))
@@ -620,14 +634,21 @@ function ReposPage() {
       </div>
       {loadingRepos ? (
         <RepoListSkeleton />
+      ) : error ? (
+        <div className="repo-empty-state">
+          <Github size={54} />
+          <h2>Could not load GitHub repositories</h2>
+          <p>{error}</p>
+          <Button variant="soft" onClick={() => window.location.reload()}>Try again</Button>
+        </div>
       ) : filtered.length > 0 ? (
         <div className="phase-repo-list">{filtered.map((repo) => <PhaseRepoCard key={repo.name} repo={repo} />)}</div>
       ) : (
         <div className="repo-empty-state">
           <Folder size={54} />
-          <h2>No repositories yet</h2>
-          <p>Create your first repo or import from GitHub to get started.</p>
-          <div className="button-row"><Button to="/repos/new"><Plus size={16} />New repository</Button><Button variant="soft"><Github size={16} />Import from GitHub</Button></div>
+          <h2>No GitHub repositories found</h2>
+          <p>ForAllCode did not find repos for this GitHub account yet. If this looks wrong, sign out and sign back in with repo access enabled.</p>
+          <div className="button-row"><Button to="/repos/new"><Plus size={16} />New repository</Button><Button variant="soft" onClick={() => window.location.reload()}><Github size={16} />Sync again</Button></div>
         </div>
       )}
     </PageFrame>
@@ -1161,13 +1182,16 @@ function LanguagePill({ language }) {
   return <span className="language-pill" style={{ backgroundColor: bg, color }}><span style={{ backgroundColor: color }} />{language}</span>;
 }
 
-function Avatar({ size = "normal" }) {
+function Avatar({ size = "normal", variant = currentUser.avatarStyle }) {
   const sizes = { tiny: 28, normal: 44, large: 112 };
-  return <span className={`avatar ${size}`}><IllustratedAvatar size={sizes[size] || sizes.normal} variant={currentUser.avatarStyle} /></span>;
+  return <span className={`avatar ${size}`}><IllustratedAvatar size={sizes[size] || sizes.normal} variant={variant} /></span>;
 }
 
-function ProfileHeader({ editable = false, publicView = false }) {
+function ProfileHeader({ editable = false, publicView = false, profileData = null, repoCount = currentUser.repos }) {
   const loadingStats = useInitialLoading();
+  const displayName = profileData?.displayName || currentUser.name;
+  const username = profileData?.username || currentUser.username;
+  const avatarStyle = profileData?.avatarStyle || currentUser.avatarStyle;
 
   async function handleFollow() {
     if (!supabase) return;
@@ -1196,14 +1220,14 @@ function ProfileHeader({ editable = false, publicView = false }) {
     <section className="profile-header">
       <div className="cover" />
       <div className="profile-content">
-        <Avatar size="large" />
-        <div><h2>{currentUser.name}</h2><p>@{currentUser.username} - {currentUser.pronouns}</p><p>{currentUser.bio}</p><p>{currentUser.location} - {currentUser.website} - Joined {currentUser.joinDate}</p></div>
+        <Avatar size="large" variant={avatarStyle} />
+        <div><h2>{displayName}</h2><p>@{username} - {currentUser.pronouns}</p><p>{currentUser.bio}</p><p>{currentUser.location} - {currentUser.website} - Joined {currentUser.joinDate}</p></div>
         <div className="profile-actions">{editable && <Button>Edit profile</Button>}{publicView && <Button onClick={handleFollow}>Follow</Button>}<Button variant="soft">Message</Button></div>
       </div>
       {loadingStats ? (
         <ProfileStatsSkeleton />
       ) : (
-        <div className="stats profile-stats"><Stat value={currentUser.repos} label="repos" /><Stat value={currentUser.followers} label="followers" /><Stat value={currentUser.following} label="following" /><Stat value={currentUser.stars} label="stars" /></div>
+        <div className="stats profile-stats"><Stat value={repoCount} label="repos" /><Stat value={currentUser.followers} label="followers" /><Stat value={currentUser.following} label="following" /><Stat value={currentUser.stars} label="stars" /></div>
       )}
     </section>
   );

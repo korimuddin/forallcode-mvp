@@ -3,10 +3,11 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { Bell, BookOpen, ChevronDown, Code2, Menu, Search, X } from "lucide-react";
 import IllustratedAvatar from "../ui/IllustratedAvatar";
-import { supabase } from "../../lib/supabase";
+import { syncGitHubReposToSupabase, supabase } from "../../lib/supabase";
 
 const mockUser = {
   displayName: "Mira Patel",
+  username: "mira",
   initials: "MP",
   avatarUrl: "",
   avatarStyle: "sage"
@@ -49,6 +50,7 @@ export default function TopNav() {
   const [profile, setProfile] = useState(mockUser);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notificationItems, setNotificationItems] = useState(fallbackNotifications);
+  const [navRepos, setNavRepos] = useState([]);
   const [unreadCount, setUnreadCount] = useState(2);
   const [toastMessage, setToastMessage] = useState("");
   const [avatarOpen, setAvatarOpen] = useState(false);
@@ -145,6 +147,7 @@ export default function TopNav() {
 
       setProfile({
         displayName: data?.display_name || session.user.user_metadata?.name || session.user.email || mockUser.displayName,
+        username: data?.username || session.user.user_metadata?.user_name || session.user.user_metadata?.preferred_username || mockUser.username,
         initials: "",
         avatarUrl: "",
         avatarStyle: data?.avatar_style || mockUser.avatarStyle
@@ -153,6 +156,43 @@ export default function TopNav() {
 
     loadProfile();
   }, [session]);
+
+  useEffect(() => {
+    async function loadRepos() {
+      if (!session?.user?.id) {
+        setNavRepos([]);
+        return;
+      }
+
+      if (session.provider_token) {
+        const syncedRepos = await syncGitHubReposToSupabase(session);
+        setNavRepos(syncedRepos.slice(0, 3).map((repo) => ({
+          name: repo.name,
+          language: repo.language,
+          colour: languageColour(repo.language),
+          path: `/${repo.owner}/${repo.name}`
+        })));
+        return;
+      }
+
+      if (!supabase) return;
+      const { data } = await supabase
+        .from("repositories")
+        .select("name, language, profiles(username)")
+        .eq("owner_id", session.user.id)
+        .order("updated_at", { ascending: false })
+        .limit(3);
+
+      setNavRepos((data || []).map((repo) => ({
+        name: repo.name,
+        language: repo.language || "Code",
+        colour: languageColour(repo.language),
+        path: `/${repo.profiles?.username || profile.username || "me"}/${repo.name}`
+      })));
+    }
+
+    loadRepos().catch(() => setNavRepos([]));
+  }, [profile.username, session]);
 
   useEffect(() => {
     const closeMenusOnOutsideClick = (event) => {
@@ -207,7 +247,7 @@ export default function TopNav() {
             <Link to="/repos?filter=starred">Starred</Link>
             <Link to="/repos/new">+ New repository</Link>
             <span className="dropdown-divider" />
-            {recentRepos.map((repo) => (
+            {(navRepos.length ? navRepos : recentRepos).map((repo) => (
               <Link className="repo-dropdown-item" key={repo.name} to={repo.path}>
                 <span className="language-dot" style={{ backgroundColor: repo.colour }} />
                 {repo.name}
@@ -303,4 +343,17 @@ function NavDropdown({ label, icon, children }) {
       <div className="dropdown-menu">{children}</div>
     </div>
   );
+}
+
+function languageColour(language) {
+  const colours = {
+    TypeScript: "#534AB7",
+    JavaScript: "#633806",
+    Python: "#0C447C",
+    CSS: "#27500A",
+    Rust: "#72243E",
+    Shell: "#633806",
+    Go: "#0C447C"
+  };
+  return colours[language] || "#7a6dc4";
 }

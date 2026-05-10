@@ -60,3 +60,102 @@ export async function syncGitHubRepos(githubAccessToken) {
 
   return response.json();
 }
+
+export function getSessionIdentity(session) {
+  const metadata = session?.user?.user_metadata || {};
+  const emailName = session?.user?.email?.split("@")[0] || "";
+  const username = metadata.user_name || metadata.preferred_username || metadata.login || emailName || "user";
+  const displayName = metadata.full_name || metadata.name || username;
+
+  return {
+    username,
+    displayName,
+    avatarUrl: metadata.avatar_url || "",
+    email: session?.user?.email || ""
+  };
+}
+
+export async function upsertProfileFromSession(session) {
+  if (!supabase || !session?.user?.id) return null;
+
+  const identity = getSessionIdentity(session);
+  const { data, error } = await supabase
+    .from("profiles")
+    .upsert({
+      id: session.user.id,
+      username: identity.username,
+      display_name: identity.displayName,
+      github_username: identity.username
+    }, { onConflict: "id" })
+    .select("username, display_name, avatar_style, github_username")
+    .maybeSingle();
+
+  if (error) {
+    console.warn("Could not persist profile in Supabase.", error);
+    return null;
+  }
+  return data;
+}
+
+export function mapGitHubRepo(repo, ownerUsername) {
+  return {
+    githubRepoId: repo.id,
+    name: repo.name,
+    owner: ownerUsername || repo.owner?.login || "",
+    description: repo.description || "No description yet.",
+    language: repo.language || "Code",
+    private: Boolean(repo.private),
+    stars: repo.stargazers_count || 0,
+    forks: repo.forks_count || 0,
+    updated: formatRelativeDate(repo.updated_at),
+    updatedAt: repo.updated_at,
+    createdAt: repo.created_at,
+    pinned: false,
+    topic: repo.topics?.[0] || "repo",
+    landing: false
+  };
+}
+
+export async function syncGitHubReposToSupabase(session) {
+  if (!session?.provider_token) return [];
+
+  const profile = await upsertProfileFromSession(session);
+  const identity = getSessionIdentity(session);
+  const githubRepos = await syncGitHubRepos(session.provider_token);
+  const mappedRepos = githubRepos.map((repo) => mapGitHubRepo(repo, profile?.username || identity.username));
+
+  if (supabase && session?.user?.id && mappedRepos.length > 0) {
+    const { error } = await supabase
+      .from("repositories")
+      .upsert(mappedRepos.map((repo) => ({
+        owner_id: session.user.id,
+        github_repo_id: repo.githubRepoId,
+        name: repo.name,
+        description: repo.description,
+        language: repo.language,
+        is_private: repo.private,
+        stars_count: repo.stars,
+        forks_count: repo.forks,
+        updated_at: repo.updatedAt,
+        created_at: repo.createdAt
+      })), { onConflict: "github_repo_id" });
+
+    if (error) console.warn("Could not persist repositories in Supabase.", error);
+  }
+
+  return mappedRepos;
+}
+
+function formatRelativeDate(value) {
+  if (!value) return "Recently";
+  const timestamp = new Date(value).getTime();
+  const diff = Date.now() - timestamp;
+  const minute = 60 * 1000;
+  const hour = 60 * minute;
+  const day = 24 * hour;
+
+  if (diff < hour) return `${Math.max(1, Math.round(diff / minute))} minutes ago`;
+  if (diff < day) return `${Math.round(diff / hour)} hours ago`;
+  if (diff < 2 * day) return "Yesterday";
+  return `${Math.round(diff / day)} days ago`;
+}
