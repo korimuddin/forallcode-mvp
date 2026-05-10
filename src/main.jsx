@@ -26,7 +26,7 @@ import CommandPalette from "./components/layout/CommandPalette";
 import TopNav from "./components/layout/TopNav";
 import IllustratedAvatar, { avatarVariants } from "./components/ui/IllustratedAvatar";
 import { renderMarkdown } from "./lib/markdownRenderer";
-import { getCurrentSession, isSupabaseConfigured, signInWithGitHub, signInWithPassword } from "./lib/supabase";
+import { getCurrentSession, isSupabaseConfigured, signInWithGitHub, signInWithPassword, supabase } from "./lib/supabase";
 import LandingDesigner from "./pages/LandingDesigner";
 import ReadmeStudio from "./pages/ReadmeStudio";
 import "./styles.css";
@@ -548,10 +548,28 @@ function RepoPage() {
   const { username, repo } = useParams();
   const data = repos.find((item) => item.name === repo) || repos[0];
   const [activeTab, setActiveTab] = useState("Code");
+  const [landingHtml, setLandingHtml] = useState("");
   const cloneUrl = `https://github.com/${username}/${repo}.git`;
+
+  useEffect(() => {
+    async function loadPublishedLanding() {
+      if (!supabase) return;
+
+      const { data: repository } = await supabase
+        .from("repositories")
+        .select("landing_page_html")
+        .eq("name", repo)
+        .maybeSingle();
+
+      if (repository?.landing_page_html) setLandingHtml(repository.landing_page_html);
+    }
+
+    loadPublishedLanding();
+  }, [repo]);
 
   return (
     <div className="phase-repo-page">
+      {landingHtml && <PublishedLanding html={landingHtml} />}
       <section className="phase-repo-header">
         <div className="repo-breadcrumb"><span>{username}</span><b>/</b><strong>{repo}</strong></div>
         <p>{data.description}</p>
@@ -908,6 +926,14 @@ function ProfileHeader({ editable = false, publicView = false }) {
 
 function ProjectLanding({ repo }) {
   return <section className="project-landing"><h2>{repo.name}</h2><p>{repo.description}</p><Button>Open project</Button></section>;
+}
+
+function PublishedLanding({ html }) {
+  return (
+    <section className="published-landing-frame" aria-label="Published landing page">
+      <iframe title="Published landing page" srcDoc={html} sandbox="" />
+    </section>
+  );
 }
 
 function RepoToolbar({ repo }) {
