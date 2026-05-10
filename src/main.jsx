@@ -127,6 +127,57 @@ const lessons = [
   ["licences", "Licences explained simply", "beginner", "Pick a licence without getting lost in legal fog."]
 ];
 
+const lessonDetails = {
+  branching: {
+    label: "A feature branch splits from main and returns later.",
+    steps: ["Start from main", "Create a new branch", "Make a focused change", "Compare your work"]
+  },
+  merging: {
+    label: "Two lines of work combine into one finished history.",
+    steps: ["Review both branches", "Bring changes together", "Resolve the merge", "Check the result"]
+  },
+  forking: {
+    label: "A project is copied into your account before you contribute.",
+    steps: ["Find the upstream project", "Create your fork", "Clone your copy", "Send improvements back"]
+  },
+  commits: {
+    label: "Checkpoints stack into a clear project timeline.",
+    steps: ["Stage the right files", "Describe the change", "Create the checkpoint", "Review the timeline"]
+  },
+  "pull-requests": {
+    label: "A branch becomes a reviewed proposal with comments.",
+    steps: ["Open the proposal", "Explain the change", "Respond to review", "Merge when ready"]
+  },
+  rebasing: {
+    label: "Local commits replay on top of a fresher main branch.",
+    steps: ["Fetch the newest main", "Replay your commits", "Fix any stops", "Push the tidy history"]
+  },
+  conflicts: {
+    label: "Competing edits meet in one file and need a human choice.",
+    steps: ["Find conflict markers", "Choose the final text", "Remove the markers", "Commit the resolution"]
+  },
+  gitignore: {
+    label: "Generated files and secrets are filtered before they enter Git.",
+    steps: ["Spot noisy files", "Write ignore rules", "Check ignored paths", "Commit the clean list"]
+  },
+  stashing: {
+    label: "Unfinished work goes onto a shelf while you switch tasks.",
+    steps: ["Save work in progress", "Switch context", "Finish the urgent task", "Pop the stash back"]
+  },
+  "commit-messages": {
+    label: "A commit gets a clear subject and helpful details.",
+    steps: ["Name the intent", "Add useful context", "Keep it readable", "Help future readers"]
+  },
+  "open-source": {
+    label: "An issue moves through discussion, contribution, and review.",
+    steps: ["Choose a good issue", "Talk before building", "Submit the change", "Follow through kindly"]
+  },
+  licences: {
+    label: "A licence document clarifies how others can use the work.",
+    steps: ["Compare permissions", "Pick a licence", "Add it to the repo", "Make terms visible"]
+  }
+};
+
 const activities = [
   "Lena starred orbit-readme",
   "Dev Collective published a workspace",
@@ -642,6 +693,7 @@ function LandingDesigner() {
 function LearnPage() {
   const [active, setActive] = useState(lessons[0][0]);
   const lesson = lessons.find((item) => item[0] === active);
+  const detail = lessonDetails[active] || lessonDetails.branching;
   return (
     <PageFrame title="Learn Git visually" eyebrow="Learn">
       <div className="learn-layout">
@@ -657,9 +709,9 @@ function LearnPage() {
           <Badge>{lesson[2]}</Badge>
           <h2>{lesson[1]}</h2>
           <p>{lesson[3]}</p>
-          <GitDiagram />
+          <LessonIllustration slug={active} title={lesson[1]} description={detail.label} />
           <div className="steps">
-            {["Start from main", "Make a focused change", "Compare your work", "Complete the lesson"].map((step) => <Card key={step}><h3>{step}</h3><p>Each step connects the diagram to the command and the reason behind it.</p></Card>)}
+            {detail.steps.map((step) => <Card key={step}><h3>{step}</h3><p>Each step connects the illustration to the command and the reason behind it.</p></Card>)}
           </div>
           <Button><Check size={16} />Mark as complete</Button>
         </article>
@@ -933,15 +985,193 @@ function ReadmePreview({ repo = repos[0] }) {
   return <section className="readme-render"><ReactMarkdown remarkPlugins={[remarkGfm]}>{`# ${repo.name}\n\n${repo.description}\n\n## Highlights\n\n- Warm project intro\n- Contributor-friendly setup\n- Copyable code samples\n\n\`\`\`bash\nnpm install\nnpm run dev\n\`\`\`\n\nUpdated ${repo.updated} - 128 commits - 5 contributors`}</ReactMarkdown></section>;
 }
 
-function GitDiagram() {
+function LessonIllustration({ slug, title, description }) {
+  const diagrams = {
+    branching: <BranchingArt />,
+    merging: <MergingArt />,
+    forking: <ForkingArt />,
+    commits: <CommitsArt />,
+    "pull-requests": <PullRequestArt />,
+    rebasing: <RebasingArt />,
+    conflicts: <ConflictsArt />,
+    gitignore: <GitignoreArt />,
+    stashing: <StashingArt />,
+    "commit-messages": <CommitMessagesArt />,
+    "open-source": <OpenSourceArt />,
+    licences: <LicencesArt />
+  };
+
   return (
-    <svg className="git-diagram" viewBox="0 0 760 260" role="img" aria-label="Interactive Git graph">
-      <path d="M80 172 C220 172 270 172 390 172 S560 172 680 172" stroke="#7aaa72" strokeWidth="9" fill="none" strokeLinecap="round" />
-      <path d="M224 172 C290 82 390 82 476 172" stroke="#9b8fd4" strokeWidth="9" fill="none" strokeLinecap="round" />
-      {[80, 220, 390, 540, 680].map((x) => <circle key={x} cx={x} cy="172" r="22" fill="#fffdf9" stroke="#7aaa72" strokeWidth="8" />)}
-      {[300, 400].map((x) => <circle key={x} cx={x} cy="92" r="22" fill="#fffdf9" stroke="#9b8fd4" strokeWidth="8" />)}
-      <text x="66" y="224">main</text><text x="286" y="52">feature</text><text x="520" y="224">merge</text>
-    </svg>
+    <figure className="git-diagram">
+      <svg viewBox="0 0 760 300" role="img" aria-label={`${title} lesson illustration`}>
+        <title>{title}</title>
+        <desc>{description}</desc>
+        <rect x="0" y="0" width="760" height="300" rx="28" fill="#f4efe6" />
+        <circle cx="660" cy="58" r="58" fill="#ddd5f0" opacity="0.72" />
+        <circle cx="92" cy="235" r="72" fill="#c8d8c4" opacity="0.55" />
+        <path d="M60 252 C188 198 292 274 430 218 S620 206 704 142" stroke="#fffdf9" strokeWidth="26" fill="none" strokeLinecap="round" opacity="0.72" />
+        {diagrams[slug] || diagrams.branching}
+      </svg>
+    </figure>
+  );
+}
+
+function GitNode({ x, y, fill = "#fffdf9", stroke = "#7aaa72", label }) {
+  return (
+    <>
+      <circle cx={x} cy={y} r="20" fill={fill} stroke={stroke} strokeWidth="7" />
+      {label && <text x={x} y={y + 52} textAnchor="middle">{label}</text>}
+    </>
+  );
+}
+
+function BranchingArt() {
+  return (
+    <>
+      <path d="M100 190 C240 190 326 190 660 190" stroke="#7aaa72" strokeWidth="9" fill="none" strokeLinecap="round" />
+      <path d="M230 190 C292 92 418 92 506 190" stroke="#9b8fd4" strokeWidth="9" fill="none" strokeLinecap="round" />
+      {[100, 230, 380, 530, 660].map((x) => <GitNode key={x} x={x} y={190} />)}
+      {[326, 430].map((x) => <GitNode key={x} x={x} y={104} stroke="#9b8fd4" />)}
+      <text x="98" y="244">main</text><text x="320" y="64">feature branch</text>
+    </>
+  );
+}
+
+function MergingArt() {
+  return (
+    <>
+      <path d="M96 205 C220 205 354 205 640 205" stroke="#7aaa72" strokeWidth="9" fill="none" strokeLinecap="round" />
+      <path d="M188 205 C284 100 420 100 532 205" stroke="#d4848c" strokeWidth="9" fill="none" strokeLinecap="round" />
+      {[96, 188, 330, 532, 640].map((x) => <GitNode key={x} x={x} y={205} />)}
+      {[286, 410].map((x) => <GitNode key={x} x={x} y={112} stroke="#d4848c" />)}
+      <circle cx="532" cy="205" r="34" fill="none" stroke="#9b8fd4" strokeWidth="4" strokeDasharray="8 8" />
+      <text x="490" y="258">merge commit</text>
+    </>
+  );
+}
+
+function ForkingArt() {
+  return (
+    <>
+      <rect x="110" y="92" width="190" height="132" rx="22" fill="#fffdf9" stroke="#9b8fd4" strokeWidth="6" />
+      <rect x="460" y="92" width="190" height="132" rx="22" fill="#fffdf9" stroke="#7aaa72" strokeWidth="6" />
+      <path d="M300 158 C360 116 404 116 460 158" stroke="#6aa8d4" strokeWidth="8" fill="none" strokeLinecap="round" markerEnd="url(#forkArrow)" />
+      <defs><marker id="forkArrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0 0 L8 3 L0 6 Z" fill="#6aa8d4" /></marker></defs>
+      <text x="205" y="142" textAnchor="middle">upstream</text><text x="555" y="142" textAnchor="middle">your fork</text>
+      <path d="M156 184 h98 M506 184 h98" stroke="#e8e0d4" strokeWidth="10" strokeLinecap="round" />
+    </>
+  );
+}
+
+function CommitsArt() {
+  return (
+    <>
+      <path d="M126 158 H650" stroke="#7aaa72" strokeWidth="9" strokeLinecap="round" />
+      {[126, 238, 350, 462, 574, 650].map((x, index) => <GitNode key={x} x={x} y={158} stroke={index % 2 ? "#9b8fd4" : "#7aaa72"} label={`c${index + 1}`} />)}
+      <rect x="245" y="70" width="270" height="54" rx="16" fill="#fffdf9" stroke="#e8e0d4" />
+      <text x="380" y="104" textAnchor="middle">clear checkpoint</text>
+    </>
+  );
+}
+
+function PullRequestArt() {
+  return (
+    <>
+      <rect x="116" y="72" width="528" height="156" rx="24" fill="#fffdf9" stroke="#e8e0d4" />
+      <path d="M174 150 H370" stroke="#7aaa72" strokeWidth="9" strokeLinecap="round" />
+      <path d="M390 150 H588" stroke="#9b8fd4" strokeWidth="9" strokeLinecap="round" />
+      <GitNode x="174" y="150" /><GitNode x="370" y="150" /><GitNode x="588" y="150" stroke="#9b8fd4" />
+      <path d="M398 106 h128 M398 132 h162" stroke="#d7cde8" strokeWidth="10" strokeLinecap="round" />
+      <circle cx="176" cy="98" r="12" fill="#d4848c" /><text x="206" y="104">review</text>
+    </>
+  );
+}
+
+function RebasingArt() {
+  return (
+    <>
+      <path d="M104 212 H640" stroke="#7aaa72" strokeWidth="9" strokeLinecap="round" />
+      {[104, 240, 376, 512, 640].map((x) => <GitNode key={x} x={x} y={212} />)}
+      <path d="M238 86 C318 46 416 46 520 86" stroke="#9b8fd4" strokeWidth="8" fill="none" strokeLinecap="round" strokeDasharray="2 16" />
+      <path d="M238 118 C338 156 420 156 520 118" stroke="#9b8fd4" strokeWidth="8" fill="none" strokeLinecap="round" />
+      <GitNode x={238} y={86} stroke="#9b8fd4" /><GitNode x={378} y={64} stroke="#9b8fd4" /><GitNode x={520} y={86} stroke="#9b8fd4" />
+      <text x="340" y="132">replay commits</text>
+    </>
+  );
+}
+
+function ConflictsArt() {
+  return (
+    <>
+      <rect x="190" y="58" width="380" height="190" rx="20" fill="#fffdf9" stroke="#e8e0d4" />
+      <path d="M230 108 h190 M230 148 h120 M230 188 h190" stroke="#7aaa72" strokeWidth="10" strokeLinecap="round" />
+      <path d="M230 128 h240 M230 168 h170" stroke="#d4848c" strokeWidth="10" strokeLinecap="round" />
+      <text x="464" y="130">&lt;&lt;&lt;</text><text x="464" y="170">===</text><text x="464" y="210">&gt;&gt;&gt;</text>
+      <circle cx="570" cy="86" r="26" fill="#f5d5d8" /><text x="570" y="94" textAnchor="middle">!</text>
+    </>
+  );
+}
+
+function GitignoreArt() {
+  return (
+    <>
+      <rect x="140" y="72" width="260" height="160" rx="20" fill="#fffdf9" stroke="#e8e0d4" />
+      {["node_modules/", ".env", "dist/", "*.log"].map((line, index) => <text key={line} x="178" y={118 + index * 30}>{line}</text>)}
+      <path d="M484 84 L642 216" stroke="#d4848c" strokeWidth="14" strokeLinecap="round" />
+      <path d="M642 84 L484 216" stroke="#d4848c" strokeWidth="14" strokeLinecap="round" />
+      <text x="270" y="262" textAnchor="middle">ignored before commit</text>
+    </>
+  );
+}
+
+function StashingArt() {
+  return (
+    <>
+      <path d="M126 206 H624" stroke="#7aaa72" strokeWidth="9" strokeLinecap="round" />
+      {[126, 270, 414, 624].map((x) => <GitNode key={x} x={x} y={206} />)}
+      <rect x="292" y="70" width="176" height="86" rx="18" fill="#fffdf9" stroke="#9b8fd4" strokeWidth="6" />
+      <path d="M326 110 h108 M326 132 h82" stroke="#d7cde8" strokeWidth="9" strokeLinecap="round" />
+      <path d="M380 158 V206" stroke="#9b8fd4" strokeWidth="8" strokeLinecap="round" strokeDasharray="8 10" />
+      <text x="380" y="54" textAnchor="middle">stash shelf</text>
+    </>
+  );
+}
+
+function CommitMessagesArt() {
+  return (
+    <>
+      <rect x="154" y="66" width="452" height="166" rx="22" fill="#fffdf9" stroke="#e8e0d4" />
+      <path d="M200 112 h214" stroke="#3d3530" strokeWidth="12" strokeLinecap="round" />
+      <path d="M200 150 h330 M200 182 h286" stroke="#9b8fd4" strokeWidth="10" strokeLinecap="round" opacity="0.75" />
+      <circle cx="542" cy="112" r="28" fill="#c8d8c4" />
+      <path d="M528 112 l10 10 l20-24" stroke="#7aaa72" strokeWidth="7" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <text x="380" y="264" textAnchor="middle">subject + context</text>
+    </>
+  );
+}
+
+function OpenSourceArt() {
+  return (
+    <>
+      <circle cx="202" cy="126" r="44" fill="#fffdf9" stroke="#7aaa72" strokeWidth="7" />
+      <circle cx="380" cy="176" r="44" fill="#fffdf9" stroke="#9b8fd4" strokeWidth="7" />
+      <circle cx="558" cy="126" r="44" fill="#fffdf9" stroke="#d4848c" strokeWidth="7" />
+      <path d="M242 140 C292 162 318 170 336 176 M424 176 C472 158 500 146 518 136" stroke="#6aa8d4" strokeWidth="8" fill="none" strokeLinecap="round" />
+      <text x="202" y="132" textAnchor="middle">issue</text><text x="380" y="182" textAnchor="middle">PR</text><text x="558" y="132" textAnchor="middle">review</text>
+      <text x="380" y="250" textAnchor="middle">collaborate in the open</text>
+    </>
+  );
+}
+
+function LicencesArt() {
+  return (
+    <>
+      <rect x="244" y="52" width="272" height="198" rx="20" fill="#fffdf9" stroke="#e8e0d4" />
+      <path d="M304 112 h152 M304 148 h118 M304 184 h152" stroke="#c8a055" strokeWidth="10" strokeLinecap="round" />
+      <circle cx="288" cy="112" r="8" fill="#7aaa72" /><circle cx="288" cy="148" r="8" fill="#7aaa72" /><circle cx="288" cy="184" r="8" fill="#7aaa72" />
+      <path d="M418 52 v58 h58" fill="#f5e4c4" stroke="#e8e0d4" />
+      <text x="380" y="278" textAnchor="middle">permissions made visible</text>
+    </>
   );
 }
 
