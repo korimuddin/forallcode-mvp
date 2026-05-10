@@ -5,31 +5,25 @@ import { BrowserRouter } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
-  Bell,
   BookOpen,
   Check,
-  ChevronDown,
-  Code2,
   Copy,
   Download,
-  ExternalLink,
   Eye,
   FileCode2,
   Github,
   GitFork,
   Home,
   Lock,
-  Menu,
   Palette,
   Plus,
-  Search,
   Settings,
   Sparkles,
   Star,
-  User,
-  X
 } from "lucide-react";
-import { signInWithGitHub } from "./lib/supabase";
+import CommandPalette from "./components/layout/CommandPalette";
+import TopNav from "./components/layout/TopNav";
+import { getCurrentSession, isSupabaseConfigured, signInWithGitHub, signInWithPassword } from "./lib/supabase";
 import "./styles.css";
 
 const currentUser = {
@@ -147,6 +141,7 @@ function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/learn" element={<LearnPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/workspace" element={<WorkspacePage />} />
@@ -164,80 +159,6 @@ function App() {
         <Footer />
       </div>
     </BrowserRouter>
-  );
-}
-
-function TopNav() {
-  const [mobile, setMobile] = useState(false);
-  return (
-    <header className="top-nav">
-      <Link className="brand" to="/" aria-label="ForAllCode home">
-        <span className="brand-mark"><img src="/forallcode-logo.png" alt="" /></span>
-        <span>ForAllCode</span>
-      </Link>
-      <button className="search-box" onClick={() => window.dispatchEvent(new Event("open-command"))}>
-        <Search size={17} />
-        <span>Search repos, users, lessons</span>
-        <kbd>⌘K</kbd>
-      </button>
-      <button className="icon-button mobile-only" onClick={() => setMobile(!mobile)} aria-label="Menu">
-        {mobile ? <X size={18} /> : <Menu size={18} />}
-      </button>
-      <nav className={mobile ? "nav-links open" : "nav-links"}>
-        <Dropdown label="Repos" icon={<Code2 size={16} />} items={[["/repos", "Your repos"], ["/repos?starred=1", "Starred"], ["/repos?new=1", "New repo"], ["/repos", "Full repos list"]]} />
-        <Dropdown label="Learn" icon={<BookOpen size={16} />} items={[["/learn", "42% through Git foundations"], ["/learn", "Continue: Pull Requests"]]} />
-        <NavLink to="/explore">Explore</NavLink>
-        <Dropdown label="" icon={<Bell size={17} />} badge="3" items={activities.slice(0, 5).map((item) => ["/dashboard", item])} />
-        <Dropdown label={currentUser.name.split(" ")[0]} icon={<Avatar size="tiny" />} items={[["/profile", "My profile"], ["/workspace", "My workspace"], ["/repos", "My repos"], ["/settings/account", "Settings"], ["/login", "Sign out"]]} />
-      </nav>
-    </header>
-  );
-}
-
-function Dropdown({ label, icon, items, badge }) {
-  return (
-    <div className="dropdown">
-      <button className="nav-trigger">
-        {icon}
-        {label && <span>{label}</span>}
-        {badge && <b>{badge}</b>}
-        <ChevronDown size={14} />
-      </button>
-      <div className="dropdown-menu">
-        {items.map(([href, text]) => <Link key={text} to={href}>{text}</Link>)}
-      </div>
-    </div>
-  );
-}
-
-function CommandPalette() {
-  const [open, setOpen] = useState(false);
-  useEffect(() => {
-    const openCommand = () => setOpen(true);
-    const key = (event) => {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
-        event.preventDefault();
-        setOpen(true);
-      }
-      if (event.key === "Escape") setOpen(false);
-    };
-    window.addEventListener("open-command", openCommand);
-    window.addEventListener("keydown", key);
-    return () => {
-      window.removeEventListener("open-command", openCommand);
-      window.removeEventListener("keydown", key);
-    };
-  }, []);
-  if (!open) return null;
-  return (
-    <div className="modal-backdrop" onClick={() => setOpen(false)}>
-      <section className="command-palette" onClick={(event) => event.stopPropagation()}>
-        <div className="command-input"><Search size={18} /><input autoFocus placeholder="Search everything warm and useful..." /></div>
-        {[...repos.map((repo) => `Repo: ${repo.name}`), "User: Lena Kim", ...lessons.slice(0, 4).map((lesson) => `Lesson: ${lesson[1]}`)].map((item) => (
-          <button key={item} onClick={() => setOpen(false)}>{item}<ExternalLink size={14} /></button>
-        ))}
-      </section>
-    </div>
   );
 }
 
@@ -307,11 +228,25 @@ function AboutPage() {
 }
 
 function LoginPage() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("");
   const githubSignIn = async () => {
     try {
+      setMessage("");
       await signInWithGitHub();
     } catch (error) {
-      window.alert(error.message);
+      setMessage(error.message);
+    }
+  };
+  const passwordSignIn = async () => {
+    try {
+      setMessage("");
+      const { error } = await signInWithPassword(email, password);
+      if (error) throw error;
+      window.location.assign("/dashboard");
+    } catch (error) {
+      setMessage(error.message);
     }
   };
 
@@ -319,11 +254,13 @@ function LoginPage() {
     <PageFrame title="Welcome to ForAllCode" eyebrow="Sign in">
       <section className="auth-panel">
         <Card large>
+          {!isSupabaseConfigured && <p className="auth-note">Supabase env vars are missing. Add them to `.env` to enable live sign in.</p>}
           <Button full onClick={githubSignIn}><Github size={18} />Continue with GitHub</Button>
           <div className="divider">or</div>
-          <label>Email<input placeholder="you@example.com" /></label>
-          <label>Password<input type="password" placeholder="password" /></label>
-          <Button variant="soft" full>Continue with email</Button>
+          <label>Email<input placeholder="you@example.com" value={email} onChange={(event) => setEmail(event.target.value)} /></label>
+          <label>Password<input type="password" placeholder="password" value={password} onChange={(event) => setPassword(event.target.value)} /></label>
+          {message && <p className="auth-error">{message}</p>}
+          <Button variant="soft" full onClick={passwordSignIn}>Continue with email</Button>
           <Link to="/login">Forgot password?</Link>
         </Card>
         <Card large>
@@ -337,6 +274,28 @@ function LoginPage() {
           <AvatarPicker />
         </Card>
       </section>
+    </PageFrame>
+  );
+}
+
+function AuthCallback() {
+  const [message, setMessage] = useState("Completing sign in...");
+
+  useEffect(() => {
+    getCurrentSession()
+      .then((session) => {
+        if (session) {
+          window.location.replace("/dashboard");
+        } else {
+          setMessage("No Supabase session was found. Please try signing in again.");
+        }
+      })
+      .catch((error) => setMessage(error.message));
+  }, []);
+
+  return (
+    <PageFrame title="Signing you in" eyebrow="Auth">
+      <Card large><p>{message}</p></Card>
     </PageFrame>
   );
 }
