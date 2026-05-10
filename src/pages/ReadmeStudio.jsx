@@ -24,7 +24,7 @@ import { useDocumentTitle } from "../lib/hooks";
 import { renderMarkdown } from "../lib/markdownRenderer";
 import { getCurrentSession, supabase } from "../lib/supabase";
 
-const ownerUsername = "mira";
+const ownerUsername = "";
 
 const toolbarGroups = [
   [
@@ -53,7 +53,7 @@ const toolbarGroups = [
 ];
 
 export default function ReadmeStudio() {
-  const { username = ownerUsername, repo = "orbit-readme" } = useParams();
+  const { username = ownerUsername, repo = "" } = useParams();
   useDocumentTitle(`${repo} README Studio`);
   const textareaRef = useRef(null);
   const sessionRef = useRef(null);

@@ -1,13 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
-
-const defaultRepos = [
-  { name: "orbit-readme", path: "/mira/orbit-readme", language: "TypeScript" },
-  { name: "desk-notes", path: "/mira/desk-notes", language: "CSS" },
-  { name: "first-pr-path", path: "/mira/first-pr-path", language: "Python" },
-  { name: "soft-cli", path: "/mira/soft-cli", language: "Rust" }
-];
+import { useSignedInUserData } from "../../lib/hooks";
 
 const defaultLessons = [
   { title: "Branching", path: "/learn/branching" },
@@ -16,13 +10,9 @@ const defaultLessons = [
   { title: "Rebasing", path: "/learn/rebasing" }
 ];
 
-const users = [
-  { title: "Mira Patel", path: "/mira" },
-  { title: "Lena Kim", path: "/lena" }
-];
-
-export default function CommandPalette({ repos = defaultRepos, lessons = defaultLessons }) {
+export default function CommandPalette({ lessons = defaultLessons }) {
   const navigate = useNavigate();
+  const { profile, repos } = useSignedInUserData();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
@@ -36,11 +26,13 @@ export default function CommandPalette({ repos = defaultRepos, lessons = default
         label: "Repos",
         items: repos
           .filter((repo) => matches(repo.name))
-          .map((repo) => ({ title: repo.name, meta: repo.language, path: repo.path }))
+          .map((repo) => ({ title: repo.name, meta: repo.language, path: `/${repo.owner}/${repo.name}` }))
       },
       {
         label: "Users",
-        items: users.filter((user) => matches(user.title))
+        items: profile && matches(profile.displayName)
+          ? [{ title: profile.displayName, meta: `@${profile.username}`, path: `/${profile.username}` }]
+          : []
       },
       {
         label: "Lessons",

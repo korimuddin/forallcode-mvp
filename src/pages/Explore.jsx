@@ -18,57 +18,6 @@ const languageStyles = {
   Go: ["#cce0f0", "#0C447C"]
 };
 
-const fallbackRepos = [
-  {
-    id: "orbit-readme",
-    name: "orbit-readme",
-    description: "README templates with visual onboarding blocks and launch-day polish.",
-    language: "TypeScript",
-    stars_count: 821,
-    updated_at: "2026-05-10T10:00:00Z",
-    created_at: "2026-04-20T10:00:00Z",
-    is_featured: true,
-    profiles: { username: "mira", display_name: "Mira Patel", avatar_style: "sage" }
-  },
-  {
-    id: "first-pr-path",
-    name: "first-pr-path",
-    description: "Interactive Git lessons for people making their first open-source contribution.",
-    language: "Python",
-    stars_count: 692,
-    updated_at: "2026-05-09T10:00:00Z",
-    created_at: "2026-04-12T10:00:00Z",
-    is_featured: true,
-    profiles: { username: "mira", display_name: "Mira Patel", avatar_style: "lavender" }
-  },
-  {
-    id: "desk-notes",
-    name: "desk-notes",
-    description: "A Supabase-backed workspace desk for personal project planning.",
-    language: "CSS",
-    stars_count: 344,
-    updated_at: "2026-05-08T10:00:00Z",
-    created_at: "2026-04-04T10:00:00Z",
-    profiles: { username: "lena", display_name: "Lena Okafor", avatar_style: "rose" }
-  },
-  {
-    id: "soft-cli",
-    name: "soft-cli",
-    description: "A command-line Git helper that explains what it is about to do.",
-    language: "Rust",
-    stars_count: 493,
-    updated_at: "2026-05-07T10:00:00Z",
-    created_at: "2026-03-29T10:00:00Z",
-    profiles: { username: "kai", display_name: "Kai Morgan", avatar_style: "sky" }
-  }
-];
-
-const fallbackWorkspaces = [
-  { id: "mira", username: "mira", display_name: "Mira Patel", avatar_style: "sage", repos_count: 18, followers_count: 428 },
-  { id: "lena", username: "lena", display_name: "Lena Okafor", avatar_style: "rose", repos_count: 12, followers_count: 230 },
-  { id: "kai", username: "kai", display_name: "Kai Morgan", avatar_style: "sky", repos_count: 9, followers_count: 184 }
-];
-
 const filters = ["All", "Repos", "Workspaces", "Developers"];
 
 export default function Explore() {
@@ -115,7 +64,7 @@ export default function Explore() {
 
   async function loadFeatured() {
     if (!supabase) {
-      setFeatured(fallbackRepos.filter((repo) => repo.is_featured).slice(0, 2));
+      setFeatured([]);
       return;
     }
 
@@ -127,7 +76,7 @@ export default function Explore() {
       .order("stars_count", { ascending: false })
       .limit(2);
 
-    setFeatured(data?.length ? data : fallbackRepos.filter((repo) => repo.is_featured).slice(0, 2));
+    setFeatured(data || []);
   }
 
   async function loadRepos(nextPage = page, replace = false) {
@@ -136,11 +85,8 @@ export default function Explore() {
     const end = start + PAGE_SIZE - 1;
 
     if (!supabase) {
-      const sorted = sortRepos(fallbackRepos, sort);
-      const filtered = filterRepos(sorted);
-      const slice = filtered.slice(start, end + 1);
-      setRepos((current) => replace ? slice : [...current, ...slice]);
-      setHasMore(end + 1 < filtered.length);
+      setRepos([]);
+      setHasMore(false);
       setLoading(false);
       return;
     }
@@ -160,7 +106,7 @@ export default function Explore() {
     if (sort === "newest") query = query.order("created_at", { ascending: false });
 
     const { data } = await query.range(start, end);
-    const nextRepos = data?.length ? data : (nextPage === 0 ? filterRepos(sortRepos(fallbackRepos, sort)).slice(0, PAGE_SIZE) : []);
+    const nextRepos = data || [];
     setRepos((current) => replace ? nextRepos : [...current, ...nextRepos]);
     setHasMore((data || []).length === PAGE_SIZE);
     setLoading(false);
@@ -168,7 +114,7 @@ export default function Explore() {
 
   async function loadWorkspaces() {
     if (!supabase) {
-      setWorkspaces(fallbackWorkspaces);
+      setWorkspaces([]);
       return;
     }
 
@@ -184,7 +130,7 @@ export default function Explore() {
     }
 
     const { data } = await query;
-    setWorkspaces(data?.length ? data : fallbackWorkspaces);
+    setWorkspaces(data || []);
   }
 
   function filterRepos(items) {
@@ -204,8 +150,7 @@ export default function Explore() {
   }
 
   const languages = useMemo(() => {
-    const source = repos.length ? repos : fallbackRepos;
-    return ["All languages", ...Array.from(new Set(source.map((repo) => repo.language).filter(Boolean))).sort()];
+    return ["All languages", ...Array.from(new Set(repos.map((repo) => repo.language).filter(Boolean))).sort()];
   }, [repos]);
 
   const visibleRepos = activeFilter === "Workspaces" || activeFilter === "Developers" ? [] : repos;
@@ -320,7 +265,7 @@ function sortRepos(items, sort) {
 function FeaturedCard({ repo, index }) {
   const owner = repo.profiles || {};
   return (
-    <Link className={`explore-featured-card card-${index + 1}`} to={`/${owner.username || "mira"}/${repo.name}`}>
+    <Link className={`explore-featured-card card-${index + 1}`} to={`/${owner.username || "unknown"}/${repo.name}`}>
       <span>{owner.display_name || owner.username || "ForAllCode"}</span>
       <h2>{repo.name}</h2>
       <p>{repo.description}</p>
@@ -331,7 +276,7 @@ function FeaturedCard({ repo, index }) {
 
 function ExploreRepoCard({ repo }) {
   const owner = repo.profiles || {};
-  const username = owner.username || "mira";
+  const username = owner.username || "unknown";
   return (
     <article className="explore-repo-card">
       <Link className="explore-owner-row" to={`/${username}`}>

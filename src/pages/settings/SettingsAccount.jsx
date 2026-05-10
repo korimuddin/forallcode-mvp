@@ -7,9 +7,9 @@ import IllustratedAvatar from "../../components/ui/IllustratedAvatar";
 import { signInWithGitHub, supabase } from "../../lib/supabase";
 
 const defaultAccount = {
-  displayName: "Mira Patel",
-  email: "mira@forallcode.dev",
-  githubUsername: "mira",
+  displayName: "",
+  email: "",
+  githubUsername: "",
   avatarStyle: "sage"
 };
 
@@ -61,7 +61,7 @@ export default function SettingsAccount() {
 
       const metadata = nextSession.user.user_metadata || {};
       const nextAccount = {
-        displayName: profile?.display_name || metadata.name || defaultAccount.displayName,
+        displayName: profile?.display_name || metadata.full_name || metadata.name || metadata.user_name || defaultAccount.displayName,
         email: nextSession.user.email || defaultAccount.email,
         githubUsername: metadata.user_name || metadata.preferred_username || profile?.username || "",
         avatarStyle: profile?.avatar_style || defaultAccount.avatarStyle

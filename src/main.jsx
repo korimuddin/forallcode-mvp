@@ -50,18 +50,18 @@ const SettingsProfile = lazy(() => import("./pages/settings/SettingsProfile"));
 const SettingsWorkspace = lazy(() => import("./pages/settings/SettingsWorkspace"));
 
 const currentUser = {
-  username: "mira",
-  name: "Mira Patel",
-  pronouns: "she/her",
-  bio: "Building gentler tools for first-time contributors and curious teams.",
-  location: "London, UK",
-  email: "mira@forallcode.dev",
-  website: "mira.dev",
+  username: "",
+  name: "",
+  pronouns: "",
+  bio: "",
+  location: "",
+  email: "",
+  website: "",
   joinDate: "March 2026",
-  followers: 428,
-  following: 91,
-  stars: 2350,
-  repos: 18,
+  followers: 0,
+  following: 0,
+  stars: 0,
+  repos: 0,
   avatarStyle: "sage"
 };
 
@@ -75,60 +75,7 @@ const languageStyles = {
   Go: ["#cce0f0", "#0C447C"]
 };
 
-const repos = [
-  {
-    name: "orbit-readme",
-    owner: "mira",
-    description: "README templates with visual onboarding blocks and launch-day polish.",
-    language: "TypeScript",
-    stars: 821,
-    forks: 47,
-    updated: "12 minutes ago",
-    private: false,
-    pinned: true,
-    topic: "readme",
-    landing: true
-  },
-  {
-    name: "desk-notes",
-    owner: "mira",
-    description: "A Supabase-backed workspace desk for personal project planning.",
-    language: "CSS",
-    stars: 344,
-    forks: 19,
-    updated: "2 hours ago",
-    private: false,
-    pinned: true,
-    topic: "workspace",
-    landing: false
-  },
-  {
-    name: "first-pr-path",
-    owner: "mira",
-    description: "Interactive Git lessons for people making their first open-source contribution.",
-    language: "Python",
-    stars: 692,
-    forks: 58,
-    updated: "Yesterday",
-    private: false,
-    pinned: true,
-    topic: "learn",
-    landing: true
-  },
-  {
-    name: "soft-cli",
-    owner: "mira",
-    description: "A command-line Git helper that explains what it is about to do.",
-    language: "Rust",
-    stars: 493,
-    forks: 23,
-    updated: "3 days ago",
-    private: true,
-    pinned: false,
-    topic: "cli",
-    landing: false
-  }
-];
+const repos = [];
 
 const lessons = [
   ["branching", "Branching", "beginner", "Try ideas without disturbing your main line of work."],
@@ -195,21 +142,6 @@ const lessonDetails = {
     steps: ["Compare permissions", "Pick a licence", "Add it to the repo", "Make terms visible"]
   }
 };
-
-const activities = [
-  "Lena starred orbit-readme",
-  "Dev Collective published a workspace",
-  "Mira completed Rebasing",
-  "Kai forked first-pr-path",
-  "Noor opened a pull request in desk-notes"
-];
-
-const dashboardActivity = [
-  { name: "Mira", initials: "MP", action: "updated orbit-readme with a new README Studio template", time: "4m ago", live: true },
-  { name: "Mira", initials: "MP", action: "pinned desk-notes to the workspace", time: "28m ago", live: false },
-  { name: "Kai", initials: "K", action: "forked first-pr-path for a workshop", time: "2h ago", live: false },
-  { name: "Noor", initials: "N", action: "opened a pull request in soft-cli", time: "Yesterday", live: false }
-];
 
 const fileTreeItems = [
   { type: "folder", name: "src", indent: 0 },
@@ -468,10 +400,10 @@ function AuthCallback() {
 
 function DashboardPage() {
   useDocumentTitle("Dashboard");
-  const { profile, repos: userRepos, loading, error } = useSignedInUserData();
+  const { profile, repos: userRepos, activity, loading, error } = useSignedInUserData();
   const displayName = profile?.displayName || "there";
   const firstName = displayName.split(" ")[0] || displayName;
-  const visibleRepos = userRepos.length > 0 ? userRepos.slice(0, 2) : repos.slice(0, 2);
+  const visibleRepos = userRepos.slice(0, 2);
   return (
     <PageFrame title="" eyebrow="">
       <section className="phase-dashboard-hero">
@@ -494,7 +426,7 @@ function DashboardPage() {
             <Link to="/following">Manage</Link>
           </div>
           <Card>
-            {loading ? <DashboardActivitySkeleton /> : dashboardActivity.map((item) => (
+            {loading ? <DashboardActivitySkeleton /> : activity.map((item) => (
               <div className="phase-activity-row" key={`${item.name}-${item.action}`}>
                 <span className="phase-initials">{item.initials}</span>
                 <div><strong>{item.name}</strong><p>{item.action}</p></div>
@@ -502,7 +434,7 @@ function DashboardPage() {
                 <time>{item.time}</time>
               </div>
             ))}
-            <p className="empty-helper">Follow some developers to see their activity here.</p>
+            {!loading && activity.length === 0 && <p className="empty-helper">No GitHub activity from followed accounts yet.</p>}
           </Card>
 
           <div className="phase-section-head compact">
@@ -534,7 +466,7 @@ function DashboardPage() {
               </div>
             </Link>
           ))}
-          {!loading && !error && userRepos.length === 0 && (
+          {!loading && !error && visibleRepos.length === 0 && (
             <p className="empty-helper">No GitHub repositories found yet. Make sure you granted repo access when signing in.</p>
           )}
         </aside>
@@ -565,7 +497,7 @@ function MyProfilePage() {
           {loading ? <RepoListSkeleton /> : visibleRepos.map((repo) => <RepoCard key={repo.name} repo={repo} actions />)}
           {!loading && visibleRepos.length === 0 && <Card><h3>No synced repos yet</h3><p>Sign in with GitHub repo access to fill this profile with your repositories.</p></Card>}
         </section>
-        <aside><ActivityCalendar /><RecentChanges /></aside>
+        <aside><ActivityCalendar /><RecentChanges repos={visibleRepos} /></aside>
       </div>
     </PageFrame>
   );
@@ -574,13 +506,19 @@ function MyProfilePage() {
 function PublicProfile() {
   const { username } = useParams();
   useDocumentTitle(`${username}`);
+  const { profile, repos: userRepos, activity } = useSignedInUserData();
+  const isOwnProfile = username === profile?.username;
+  const profileRepos = isOwnProfile ? userRepos : [];
   return (
-    <PageFrame title={username === currentUser.username ? currentUser.name : "Lena Kim"} eyebrow={`@${username}`}>
-      <ProfileHeader publicView />
+    <PageFrame title={isOwnProfile ? profile.displayName : username} eyebrow={`@${username}`}>
+      <ProfileHeader publicView profileData={isOwnProfile ? profile : { username, displayName: username }} repoCount={profileRepos.length} />
       <SectionTitle title="Pinned repos" />
-      <div className="repo-grid">{repos.filter((repo) => repo.pinned).map((repo) => <RepoCard key={repo.name} repo={{ ...repo, owner: username }} />)}</div>
+      <div className="repo-grid">
+        {profileRepos.filter((repo) => repo.pinned).map((repo) => <RepoCard key={repo.name} repo={{ ...repo, owner: username }} />)}
+        {profileRepos.filter((repo) => repo.pinned).length === 0 && <Card><h3>No pinned GitHub repos yet</h3><p>Pinned repositories will appear here once they are selected.</p></Card>}
+      </div>
       <div className="two-column">
-        <Card><h3>Public activity</h3>{activities.map((item) => <p key={item}>{item}</p>)}</Card>
+        <Card><h3>Public activity</h3>{activity.map((item) => <p key={item.id}>{item.name} {item.action}</p>)}{activity.length === 0 && <p>No public GitHub activity synced yet.</p>}</Card>
         <Card><h3>Skills and badges</h3><div className="tag-row">{["Git mentoring", "TypeScript", "Design systems", "Open source guide"].map((tag) => <Badge key={tag}>{tag}</Badge>)}</div></Card>
       </div>
     </PageFrame>
@@ -802,7 +740,19 @@ function CodebaseDiagram({ owner = "origin", repo = "forallcode" }) {
 function RepoPage() {
   const { username, repo } = useParams();
   useDocumentTitle(`${repo} · ${username}`);
-  const data = repos.find((item) => item.name === repo) || repos[0];
+  const { repos: userRepos } = useSignedInUserData();
+  const data = userRepos.find((item) => item.name === repo && item.owner === username)
+    || userRepos.find((item) => item.name === repo)
+    || {
+      name: repo,
+      owner: username,
+      description: "GitHub repository",
+      language: "Code",
+      stars: 0,
+      forks: 0,
+      updated: "Recently",
+      private: false
+    };
   const [activeTab, setActiveTab] = useState("Code");
   const [landingHtml, setLandingHtml] = useState("");
   const loadingRepoContent = useInitialLoading();
@@ -1005,7 +955,7 @@ function ExplorePage() {
       <SectionTitle title="Featured repos" />
       <div className="repo-grid">{repos.map((repo) => <RepoCard key={repo.name} repo={repo} />)}</div>
       <SectionTitle title="Active public workspaces" />
-      <div className="feature-grid">{["Lena's docs table", "Kai's CSS lab", "Noor's first PR path"].map((item) => <Card key={item}><DeskPreview compact /><h3>{item}</h3></Card>)}</div>
+      <div className="feature-grid">{["Shared workspace", "Project desk", "Learning path"].map((item) => <Card key={item}><DeskPreview compact /><h3>{item}</h3></Card>)}</div>
     </PageFrame>
   );
 }
@@ -1038,7 +988,7 @@ function Workspace({ compact = false, interactive = false }) {
             value={note.content}
             style={{ left: `${note.x}%`, top: `${note.y}%` }}
             onChange={(event) => setNotes(notes.map((item) => item.id === note.id ? { ...item, content: event.target.value } : item))}
-            onDoubleClick={() => window.location.assign(`/mira/${repos[0].name}`)}
+            onDoubleClick={() => window.location.assign("/repos")}
             readOnly={!interactive}
           />
         ))}
@@ -1568,8 +1518,14 @@ function ActivityCalendar() {
   return <Card><h3>Activity calendar</h3><div className="calendar-grid">{Array.from({ length: 35 }).map((_, index) => <span key={index} className={`level-${index % 5}`} />)}</div></Card>;
 }
 
-function RecentChanges() {
-  return <Card><h3>Recent changes</h3>{repos.map((repo) => <p key={repo.name}>{repo.name}: updated {repo.updated}</p>)}</Card>;
+function RecentChanges({ repos: recentRepos = [] }) {
+  return (
+    <Card>
+      <h3>Recent changes</h3>
+      {recentRepos.map((repo) => <p key={repo.name}>{repo.name}: updated {repo.updated}</p>)}
+      {recentRepos.length === 0 && <p>No GitHub repo changes synced yet.</p>}
+    </Card>
+  );
 }
 
 function Tabs({ tabs }) {

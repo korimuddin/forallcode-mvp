@@ -6,42 +6,12 @@ import IllustratedAvatar from "../ui/IllustratedAvatar";
 import { syncGitHubReposToSupabase, supabase } from "../../lib/supabase";
 
 const mockUser = {
-  displayName: "Mira Patel",
-  username: "mira",
+  displayName: "",
+  username: "",
   initials: "MP",
   avatarUrl: "",
   avatarStyle: "sage"
 };
-
-const recentRepos = [
-  { name: "orbit-readme", language: "TypeScript", colour: "#534AB7", path: "/mira/orbit-readme" },
-  { name: "desk-notes", language: "CSS", colour: "#27500A", path: "/mira/desk-notes" },
-  { name: "first-pr-path", language: "Python", colour: "#0C447C", path: "/mira/first-pr-path" }
-];
-
-const fallbackNotifications = [
-  {
-    id: "fallback-star",
-    message: "Lena starred orbit-readme",
-    read: false,
-    created_at: new Date(Date.now() - 1000 * 60 * 8).toISOString(),
-    actor: { avatar_style: "rose" }
-  },
-  {
-    id: "fallback-follow",
-    message: "Kai followed you",
-    read: false,
-    created_at: new Date(Date.now() - 1000 * 60 * 42).toISOString(),
-    actor: { avatar_style: "sky" }
-  },
-  {
-    id: "fallback-system",
-    message: "README Studio draft saved",
-    read: true,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
-    actor: { avatar_style: "lavender" }
-  }
-];
 
 export default function TopNav() {
   const navigate = useNavigate();
@@ -49,9 +19,9 @@ export default function TopNav() {
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(mockUser);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [notificationItems, setNotificationItems] = useState(fallbackNotifications);
+  const [notificationItems, setNotificationItems] = useState([]);
   const [navRepos, setNavRepos] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(2);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [toastMessage, setToastMessage] = useState("");
   const [avatarOpen, setAvatarOpen] = useState(false);
   const notificationsRef = useRef(null);
@@ -59,8 +29,8 @@ export default function TopNav() {
 
   const loggedIn = Boolean(session);
   const showAppNav = loggedIn;
-  const displayName = profile.displayName || session?.user?.email || mockUser.displayName;
-  const firstName = displayName.split(" ")[0] || "Mira";
+  const displayName = profile.displayName || session?.user?.email || "Account";
+  const firstName = displayName.split(" ")[0] || "Account";
   const initials = displayName
     .split(" ")
     .map((part) => part[0])
@@ -82,8 +52,8 @@ export default function TopNav() {
   useEffect(() => {
     async function loadNotifications() {
       if (!supabase || !session?.user?.id) {
-        setNotificationItems(fallbackNotifications);
-        setUnreadCount(fallbackNotifications.filter((item) => !item.read).length);
+        setNotificationItems([]);
+        setUnreadCount(0);
         return undefined;
       }
 
@@ -247,12 +217,13 @@ export default function TopNav() {
             <Link to="/repos?filter=starred">Starred</Link>
             <Link to="/repos/new">+ New repository</Link>
             <span className="dropdown-divider" />
-            {(navRepos.length ? navRepos : recentRepos).map((repo) => (
+            {navRepos.map((repo) => (
               <Link className="repo-dropdown-item" key={repo.name} to={repo.path}>
                 <span className="language-dot" style={{ backgroundColor: repo.colour }} />
                 {repo.name}
               </Link>
             ))}
+            {navRepos.length === 0 && <p className="dropdown-empty">No GitHub repos synced yet.</p>}
           </NavDropdown>
           <NavDropdown label="Learn" icon={<BookOpen size={16} />}>
             <Link to="/learn/pull-requests">Continue: Pull Requests</Link>

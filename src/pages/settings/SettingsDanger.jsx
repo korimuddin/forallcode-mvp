@@ -7,7 +7,7 @@ import { supabase } from "../../lib/supabase";
 export default function SettingsDanger() {
   const navigate = useNavigate();
   const [session, setSession] = useState(null);
-  const [username, setUsername] = useState("mira");
+  const [username, setUsername] = useState("");
   const [confirmName, setConfirmName] = useState("");
   const [deleteStep, setDeleteStep] = useState(0);
 
@@ -17,6 +17,8 @@ export default function SettingsDanger() {
       const { data } = await supabase.auth.getSession();
       setSession(data.session);
       if (!data.session?.user?.id) return;
+      const metadata = data.session.user.user_metadata || {};
+      setUsername(metadata.user_name || metadata.preferred_username || data.session.user.email?.split("@")[0] || "");
       const { data: profile } = await supabase
         .from("profiles")
         .select("username")

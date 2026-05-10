@@ -5,7 +5,7 @@ import { SettingsPageHeader } from "../../components/settings/SettingsControls";
 import { signInWithGitHub, supabase } from "../../lib/supabase";
 
 export default function SettingsIntegrations() {
-  const [githubUsername, setGithubUsername] = useState("mira");
+  const [githubUsername, setGithubUsername] = useState("");
 
   useEffect(() => {
     async function loadSession() {

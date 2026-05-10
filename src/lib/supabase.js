@@ -61,6 +61,20 @@ export async function syncGitHubRepos(githubAccessToken) {
   return response.json();
 }
 
+export async function fetchGitHubReceivedEvents(username, githubAccessToken) {
+  if (!username || !githubAccessToken) return [];
+
+  const response = await fetch(`https://api.github.com/users/${encodeURIComponent(username)}/received_events?per_page=20`, {
+    headers: { Authorization: `Bearer ${githubAccessToken}` }
+  });
+
+  if (!response.ok) {
+    throw new Error("Could not load GitHub activity from followed accounts.");
+  }
+
+  return response.json();
+}
+
 export function getSessionIdentity(session) {
   const metadata = session?.user?.user_metadata || {};
   const emailName = session?.user?.email?.split("@")[0] || "";
@@ -144,6 +158,51 @@ export async function syncGitHubReposToSupabase(session) {
   }
 
   return mappedRepos;
+}
+
+export async function syncGitHubActivity(session) {
+  if (!session?.provider_token) return [];
+
+  const identity = getSessionIdentity(session);
+  const events = await fetchGitHubReceivedEvents(identity.username, session.provider_token);
+
+  return events
+    .filter((event) => event?.actor?.login && event?.repo?.name)
+    .slice(0, 10)
+    .map((event) => mapGitHubEvent(event));
+}
+
+function mapGitHubEvent(event) {
+  const actor = event.actor?.display_login || event.actor?.login || "Someone";
+  const repoName = event.repo?.name || "a repository";
+  const action = eventAction(event);
+
+  return {
+    id: event.id,
+    name: actor,
+    initials: actor.slice(0, 2).toUpperCase(),
+    action: `${action} ${repoName}`,
+    time: formatRelativeDate(event.created_at),
+    live: false
+  };
+}
+
+function eventAction(event) {
+  const actions = {
+    CommitCommentEvent: "commented on",
+    CreateEvent: "created something in",
+    DeleteEvent: "deleted something in",
+    ForkEvent: "forked",
+    IssuesEvent: `${event.payload?.action || "updated"} an issue in`,
+    IssueCommentEvent: `${event.payload?.action || "commented on"} an issue in`,
+    PullRequestEvent: `${event.payload?.action || "updated"} a pull request in`,
+    PullRequestReviewEvent: `${event.payload?.action || "reviewed"} a pull request in`,
+    PushEvent: "pushed to",
+    ReleaseEvent: `${event.payload?.action || "published"} a release in`,
+    WatchEvent: "starred"
+  };
+
+  return actions[event.type] || "updated";
 }
 
 function formatRelativeDate(value) {

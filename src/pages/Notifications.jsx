@@ -11,37 +11,10 @@ const filters = [
   { label: "Follows", value: "follow" }
 ];
 
-const fallbackNotifications = [
-  {
-    id: "n1",
-    type: "star",
-    message: "Lena Okafor starred your repo orbit-readme",
-    read: false,
-    created_at: new Date(Date.now() - 1000 * 60 * 8).toISOString(),
-    actor: { display_name: "Lena Okafor", username: "lena", avatar_style: "rose" }
-  },
-  {
-    id: "n2",
-    type: "follow",
-    message: "Kai Morgan followed you",
-    read: false,
-    created_at: new Date(Date.now() - 1000 * 60 * 42).toISOString(),
-    actor: { display_name: "Kai Morgan", username: "kai", avatar_style: "sky" }
-  },
-  {
-    id: "n3",
-    type: "system",
-    message: "Your README Studio draft auto-saved successfully",
-    read: true,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
-    actor: { display_name: "ForAllCode", username: "forallcode", avatar_style: "lavender" }
-  }
-];
-
 export default function Notifications() {
   useDocumentTitle("Notifications");
   const [session, setSession] = useState(null);
-  const [items, setItems] = useState(fallbackNotifications);
+  const [items, setItems] = useState([]);
   const [activeFilter, setActiveFilter] = useState("all");
 
   useEffect(() => {

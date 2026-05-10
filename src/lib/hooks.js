@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getSessionIdentity, syncGitHubReposToSupabase, supabase, upsertProfileFromSession } from "./supabase";
+import { getSessionIdentity, syncGitHubActivity, syncGitHubReposToSupabase, supabase, upsertProfileFromSession } from "./supabase";
 
 export function useAuthSession() {
   const [session, setSession] = useState(null);
@@ -31,6 +31,7 @@ export function useSignedInUserData() {
   const { session, checked, loggedIn } = useAuthSession();
   const [profile, setProfile] = useState(null);
   const [repos, setRepos] = useState([]);
+  const [activity, setActivity] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -42,6 +43,7 @@ export function useSignedInUserData() {
       if (!session?.user?.id) {
         setProfile(null);
         setRepos([]);
+        setActivity([]);
         setLoading(false);
         return;
       }
@@ -69,8 +71,14 @@ export function useSignedInUserData() {
         }
 
         let nextRepos = [];
+        let nextActivity = [];
         if (session.provider_token) {
-          nextRepos = await syncGitHubReposToSupabase(session);
+          const [syncedRepos, syncedActivity] = await Promise.all([
+            syncGitHubReposToSupabase(session),
+            syncGitHubActivity(session).catch(() => [])
+          ]);
+          nextRepos = syncedRepos;
+          nextActivity = syncedActivity;
         } else if (supabase) {
           const { data } = await supabase
             .from("repositories")
@@ -97,6 +105,7 @@ export function useSignedInUserData() {
         }
 
         if (!cancelled) setRepos(nextRepos);
+        if (!cancelled) setActivity(nextActivity);
       } catch (loadError) {
         if (!cancelled) setError(loadError.message || "Could not load your GitHub data.");
       } finally {
@@ -110,7 +119,7 @@ export function useSignedInUserData() {
     };
   }, [checked, session]);
 
-  return { session, checked, loggedIn, profile, repos, loading, error };
+  return { session, checked, loggedIn, profile, repos, activity, loading, error };
 }
 
 export function useIsMobile() {

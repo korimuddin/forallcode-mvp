@@ -5,7 +5,7 @@ import DesignerPreview from "../components/landing-designer/DesignerPreview";
 import { useDocumentTitle, useIsMobile } from "../lib/hooks";
 import { getCurrentSession, supabase } from "../lib/supabase";
 
-const ownerUsername = "mira";
+const ownerUsername = "";
 
 export const landingThemes = [
   { name: "Lavender", key: "lavender", accent: "#9b8fd4", light: "#f0ecff", dark: "#7a6dc4" },
@@ -71,7 +71,7 @@ const fontOptions = [
 ];
 
 export default function LandingDesigner() {
-  const { username = ownerUsername, repo = "orbit-readme" } = useParams();
+  const { username = ownerUsername, repo = "" } = useParams();
   useDocumentTitle(`${repo} Landing Designer`);
   const isMobile = useIsMobile();
   const userIdRef = useRef(null);

@@ -21,13 +21,13 @@ const gradientOptions = gradients.map((colour, index) => ({
 }));
 
 const initialProfile = {
-  displayName: "Mira Patel",
-  username: "mira",
-  bio: "Building gentler tools for first-time contributors and curious teams.",
-  pronouns: "she/her",
-  location: "London, UK",
-  website: "https://mira.dev",
-  github: "https://github.com/mira",
+  displayName: "",
+  username: "",
+  bio: "",
+  pronouns: "",
+  location: "",
+  website: "",
+  github: "",
   twitter: "",
   linkedin: "",
   avatarStyle: "sage",
@@ -50,6 +50,13 @@ export default function SettingsProfile() {
       const nextSession = data.session;
       setSession(nextSession);
       if (!nextSession?.user?.id) return;
+      const metadata = nextSession.user.user_metadata || {};
+      setProfile((current) => ({
+        ...current,
+        displayName: metadata.full_name || metadata.name || metadata.user_name || current.displayName,
+        username: metadata.user_name || metadata.preferred_username || current.username,
+        github: metadata.user_name ? `https://github.com/${metadata.user_name}` : current.github
+      }));
 
       const { data: storedProfile } = await supabase
         .from("profiles")
