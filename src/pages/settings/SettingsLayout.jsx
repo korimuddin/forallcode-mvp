@@ -1,0 +1,68 @@
+import { NavLink, Outlet } from "react-router-dom";
+import {
+  Bell,
+  Brush,
+  Github,
+  Lock,
+  Monitor,
+  Shield,
+  TriangleAlert,
+  User,
+  UserCircle
+} from "lucide-react";
+
+const settingsGroups = [
+  {
+    label: "Your account",
+    items: [
+      { label: "Account", path: "account", icon: UserCircle },
+      { label: "Profile", path: "profile", icon: User },
+      { label: "Workspace", path: "workspace", icon: Monitor },
+      { label: "Appearance", path: "appearance", icon: Brush }
+    ]
+  },
+  {
+    label: "Privacy and data",
+    items: [
+      { label: "Notifications", path: "notifications", icon: Bell },
+      { label: "Integrations", path: "integrations", icon: Github },
+      { label: "Privacy", path: "privacy", icon: Shield },
+      { label: "Danger zone", path: "danger", icon: TriangleAlert, danger: true }
+    ]
+  }
+];
+
+export default function SettingsLayout() {
+  return (
+    <div className="settings-shell">
+      <aside className="settings-sidebar" aria-label="Settings navigation">
+        <h1>Settings</h1>
+        {settingsGroups.map((group) => (
+          <nav key={group.label} aria-label={group.label}>
+            <p>{group.label}</p>
+            {group.items.map((item) => {
+              const Icon = item.icon;
+              return (
+                <NavLink
+                  className={({ isActive }) => [
+                    "settings-nav-item",
+                    item.danger ? "danger" : "",
+                    isActive ? "active" : ""
+                  ].filter(Boolean).join(" ")}
+                  key={item.path}
+                  to={item.path}
+                >
+                  <Icon size={16} />
+                  <span>{item.label}</span>
+                </NavLink>
+              );
+            })}
+          </nav>
+        ))}
+      </aside>
+      <main className="settings-content">
+        <Outlet />
+      </main>
+    </div>
+  );
+}

@@ -2185,6 +2185,151 @@ pre { padding: 14px; overflow: auto; }
 .git-diagram svg { display: block; width: 100%; height: auto; }
 .git-diagram text { font-family: "DM Mono", monospace; fill: var(--ink2); font-size: 18px; }
 
+.settings-shell {
+  display: flex;
+  align-items: flex-start;
+  min-height: calc(100vh - 78px);
+  background: var(--cream);
+}
+
+.settings-sidebar {
+  width: 220px;
+  height: calc(100vh - 78px);
+  position: sticky;
+  top: 78px;
+  overflow-y: auto;
+  flex-shrink: 0;
+  border-right: 1px solid var(--cream3);
+  background: var(--cream);
+  padding: 20px 12px;
+}
+
+.settings-sidebar h1 {
+  padding: 0 12px;
+  margin: 0 0 16px;
+  color: var(--ink);
+  font-family: "Lora", serif;
+  font-size: 18px;
+}
+
+.settings-sidebar nav + nav {
+  margin-top: 16px;
+}
+
+.settings-sidebar nav > p {
+  margin: 16px 0 6px;
+  padding: 0 12px;
+  color: var(--ink3);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.settings-nav-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  padding: 8px 12px;
+  color: var(--ink2);
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+  text-align: left;
+  transition: all .15s ease;
+}
+
+.settings-nav-item:hover {
+  background: var(--cream2);
+  color: var(--ink);
+}
+
+.settings-nav-item.active {
+  background: color-mix(in srgb, var(--lavender3) 12%, transparent);
+  color: var(--lavender3);
+}
+
+.settings-nav-item.danger.active {
+  background: color-mix(in srgb, var(--rose3) 12%, transparent);
+  color: var(--rose3);
+}
+
+.settings-nav-item.danger:hover {
+  background: color-mix(in srgb, var(--rose3) 8%, transparent);
+  color: var(--rose3);
+}
+
+.settings-content {
+  flex: 1;
+  max-width: 680px;
+  padding: 32px 40px;
+}
+
+.settings-placeholder h1 {
+  margin-bottom: 8px;
+  font-size: 24px;
+}
+
+.settings-placeholder > p:not(.eyebrow) {
+  color: var(--ink3);
+  font-size: 14px;
+}
+
+.settings-section {
+  margin-bottom: 32px;
+}
+
+.settings-section h3 {
+  margin-bottom: 4px;
+  color: var(--ink);
+  font-family: "Lora", serif;
+  font-size: 16px;
+}
+
+.settings-section > p {
+  margin-bottom: 16px;
+  color: var(--ink3);
+  font-size: 13px;
+}
+
+.settings-section hr {
+  border: 0;
+  border-top: 1px solid var(--cream3);
+  margin-top: 24px;
+}
+
+.settings-input {
+  display: grid;
+  gap: 7px;
+  margin: 12px 0;
+  color: var(--ink2);
+  font-weight: 700;
+}
+
+.settings-input input {
+  width: 100%;
+  border: 1px solid var(--cream3);
+  border-radius: 12px;
+  background: var(--cream2);
+  padding: 11px 16px;
+  color: var(--ink);
+  font-family: "DM Sans", sans-serif;
+  font-size: 14px;
+}
+
+.settings-input input:focus {
+  border-color: var(--lavender3);
+  outline: none;
+}
+
+.settings-input small {
+  color: var(--ink3);
+  font-weight: 500;
+}
+
 .settings-layout aside a {
   text-transform: capitalize;
 }

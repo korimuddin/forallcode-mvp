@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { Link, NavLink, Navigate, Route, Routes, useNavigate, useParams } from "react-router-dom";
+import { Link, Navigate, Route, Routes, useNavigate, useParams } from "react-router-dom";
 import { BrowserRouter } from "react-router-dom";
 import {
   BookOpen,
@@ -29,6 +29,15 @@ import { renderMarkdown } from "./lib/markdownRenderer";
 import { getCurrentSession, isSupabaseConfigured, signInWithGitHub, signInWithPassword, supabase } from "./lib/supabase";
 import LandingDesigner from "./pages/LandingDesigner";
 import ReadmeStudio from "./pages/ReadmeStudio";
+import SettingsAccount from "./pages/settings/SettingsAccount";
+import SettingsAppearance from "./pages/settings/SettingsAppearance";
+import SettingsDanger from "./pages/settings/SettingsDanger";
+import SettingsIntegrations from "./pages/settings/SettingsIntegrations";
+import SettingsLayout from "./pages/settings/SettingsLayout";
+import SettingsNotifications from "./pages/settings/SettingsNotifications";
+import SettingsPrivacy from "./pages/settings/SettingsPrivacy";
+import SettingsProfile from "./pages/settings/SettingsProfile";
+import SettingsWorkspace from "./pages/settings/SettingsWorkspace";
 import "./styles.css";
 
 const currentUser = {
@@ -233,8 +242,17 @@ function App() {
             <Route path="/profile" element={<MyProfilePage />} />
             <Route path="/repos" element={<ReposPage />} />
             <Route path="/explore" element={<ExplorePage />} />
-            <Route path="/settings" element={<Navigate to="/settings/account" replace />} />
-            <Route path="/settings/:tab" element={<SettingsPage />} />
+            <Route path="/settings" element={<SettingsLayout />}>
+              <Route index element={<Navigate to="/settings/account" replace />} />
+              <Route path="account" element={<SettingsAccount />} />
+              <Route path="profile" element={<SettingsProfile />} />
+              <Route path="workspace" element={<SettingsWorkspace />} />
+              <Route path="appearance" element={<SettingsAppearance />} />
+              <Route path="notifications" element={<SettingsNotifications />} />
+              <Route path="integrations" element={<SettingsIntegrations />} />
+              <Route path="privacy" element={<SettingsPrivacy />} />
+              <Route path="danger" element={<SettingsDanger />} />
+            </Route>
             <Route path="/:username/:repo/readme" element={<ReadmeStudio />} />
             <Route path="/:username/:repo/landing" element={<LandingDesigner />} />
             <Route path="/:username/:repo" element={<RepoPage />} />
@@ -694,86 +712,6 @@ function ExplorePage() {
       <SectionTitle title="Active public workspaces" />
       <div className="feature-grid">{["Lena's docs table", "Kai's CSS lab", "Noor's first PR path"].map((item) => <Card key={item}><DeskPreview compact /><h3>{item}</h3></Card>)}</div>
     </PageFrame>
-  );
-}
-
-function SettingsPage() {
-  const { tab = "account" } = useParams();
-  const tabs = ["account", "profile", "workspace", "notifications", "integrations", "privacy", "appearance", "danger"];
-  return (
-    <PageFrame title="Settings" eyebrow={tab}>
-      <div className="settings-layout">
-        <aside>{tabs.map((item) => <NavLink key={item} to={`/settings/${item}`}>{item}</NavLink>)}</aside>
-        <section>
-          <Card large>
-            <h2>{tab[0].toUpperCase() + tab.slice(1)}</h2>
-            <SettingsFields tab={tab} />
-          </Card>
-        </section>
-      </div>
-    </PageFrame>
-  );
-}
-
-function SettingsFields({ tab }) {
-  if (tab === "appearance") {
-    return <AppearanceSettings />;
-  }
-
-  const common = {
-    account: ["Display name", "Email address", "Password", "Connected GitHub account", "Two-factor authentication"],
-    profile: ["Avatar style", "Cover image", "Bio", "Pronouns", "Location", "Website", "Social links"],
-    workspace: ["Desk theme", "Sticky note colour defaults", "Focus mode", "Show clock", "Show decorations"],
-    notifications: ["Stars", "New followers", "Comments", "Lesson reminders", "Weekly digest", "Security alerts"],
-    integrations: ["GitHub connected", "Netlify deploy", "Vercel deploy", "Slack notifications"],
-    privacy: ["Default repo visibility", "Profile visibility", "Show workspace publicly", "Show activity calendar"],
-    appearance: ["Theme", "Accent colour", "Font size", "Reduce motion", "Density"],
-    danger: ["Export all data", "Make all repos private", "Delete account"]
-  };
-  return <div className="settings-fields">{(common[tab] || common.account).map((field) => <label key={field}>{field}<input placeholder={field.includes("Delete") ? "Type confirmation phrase" : field} /></label>)}</div>;
-}
-
-function AppearanceSettings() {
-  const [theme, setTheme] = useState("Light");
-  const themes = [
-    ["Light", "Cream surfaces, warm ink, and the default pastel accents."],
-    ["Dark", "Deep navy surfaces with soft cream text and muted pastels."],
-    ["System", "Follows the user's operating system preference."],
-    ["Cosy", "Warmer cream, sage details, and a softer workspace feel."],
-    ["Night owl", "Low-light workspace palette for evening sessions."],
-    ["Garden", "Fresh sage surfaces, cream panels, and calm green accents."],
-    ["Sunrise", "Amber highlights with rose warmth for an optimistic morning feel."],
-    ["Ocean", "Soft sky blues and cream surfaces for a clearer focus mode."],
-    ["Notebook", "Paper-like creams with ink-forward contrast and quiet controls."],
-    ["Aurora", "Lavender, sky, and sage blended into a more expressive workspace."]
-  ];
-  const activeTheme = themes.find(([name]) => name === theme);
-
-  return (
-    <div className="appearance-settings">
-      <label className="theme-select">
-        Theme
-        <select value={theme} onChange={(event) => setTheme(event.target.value)}>
-          {themes.map(([name]) => <option key={name} value={name}>{name}</option>)}
-        </select>
-      </label>
-      <div className={`theme-preview theme-${theme.toLowerCase().replace(" ", "-")}`}>
-        <div>
-          <Badge>{activeTheme[0]}</Badge>
-          <h3>{activeTheme[0]} theme</h3>
-          <p>{activeTheme[1]}</p>
-        </div>
-        <span />
-        <span />
-        <span />
-      </div>
-      <div className="settings-fields">
-        <label>Accent colour<select><option>Lavender</option><option>Sage</option><option>Rose</option><option>Sky</option><option>Amber</option></select></label>
-        <label>Font size<select><option>Default</option><option>Large</option></select></label>
-        <label>Reduce motion<select><option>Off</option><option>On</option></select></label>
-        <label>Density<select><option>Comfortable</option><option>Compact</option></select></label>
-      </div>
-    </div>
   );
 }
 
