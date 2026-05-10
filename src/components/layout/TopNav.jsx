@@ -56,7 +56,7 @@ export default function TopNav() {
   const avatarRef = useRef(null);
 
   const loggedIn = Boolean(session);
-  const showAppNav = true;
+  const showAppNav = loggedIn;
   const displayName = profile.displayName || session?.user?.email || mockUser.displayName;
   const firstName = displayName.split(" ")[0] || "Mira";
   const initials = displayName
@@ -228,7 +228,7 @@ export default function TopNav() {
       )}
 
       <div className="top-nav-right">
-        {showAppNav ? (
+        {showAppNav && (
           <>
             <div className="dropdown click-dropdown" ref={notificationsRef}>
               <button className="nav-icon-button" onClick={() => setNotificationsOpen(!notificationsOpen)} aria-label="Notifications">
@@ -268,11 +268,6 @@ export default function TopNav() {
               )}
             </div>
           </>
-        ) : (
-          <div className="logged-out-actions">
-            <Link className="nav-ghost-button" to="/login">Sign in</Link>
-            <Link className="nav-primary-button" to="/login">Get started</Link>
-          </div>
         )}
         {showAppNav && (
           <button className="icon-button mobile-only" onClick={() => setMobileOpen(!mobileOpen)} aria-label="Menu">

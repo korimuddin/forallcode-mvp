@@ -27,7 +27,7 @@ import TopNav from "./components/layout/TopNav";
 import ErrorBoundary from "./components/ui/ErrorBoundary";
 import IllustratedAvatar, { avatarVariants } from "./components/ui/IllustratedAvatar";
 import Skeleton from "./components/ui/Skeleton";
-import { useDocumentTitle, useIsMobile } from "./lib/hooks";
+import { useAuthSession, useDocumentTitle, useIsMobile } from "./lib/hooks";
 import { renderMarkdown } from "./lib/markdownRenderer";
 import { createNotification } from "./lib/notifications";
 import { getCurrentSession, isSupabaseConfigured, signInWithGitHub, signInWithPassword, supabase } from "./lib/supabase";
@@ -303,6 +303,18 @@ function RouteFallback() {
 
 function LandingPage() {
   useDocumentTitle("Home · ForAllCode");
+  const { loggedIn } = useAuthSession();
+  const [message, setMessage] = useState("");
+
+  async function handleGitHubSignIn() {
+    try {
+      setMessage("");
+      await signInWithGitHub();
+    } catch (error) {
+      setMessage(error.message);
+    }
+  }
+
   return (
     <>
       <section className="hero landing-hero">
@@ -311,33 +323,44 @@ function LandingPage() {
           <h1>Code lives here. Understanding does too.</h1>
           <p>ForAllCode turns repositories into friendly workspaces, explains Git visually, and helps projects greet new contributors beautifully.</p>
           <div className="button-row">
-            <Button to="/login">Get started</Button>
-            <Button to="/learn" variant="soft">Explore Learn</Button>
+            {loggedIn ? (
+              <>
+                <Button to="/dashboard">Go to dashboard</Button>
+                <Button to="/learn" variant="soft">Explore Learn</Button>
+              </>
+            ) : (
+              <Button onClick={handleGitHubSignIn}><Github size={18} />Sign in with GitHub</Button>
+            )}
           </div>
+          {!loggedIn && message && <p className="auth-error landing-auth-error">{message}</p>}
         </div>
         <DeskPreview compact />
       </section>
-      <section className="feature-grid">
-        {[
-          ["Workspace", "An illustrated desk where active projects become sticky notes.", <Home />],
-          ["Learn", "Interactive Git diagrams that teach what happened and why.", <BookOpen />],
-          ["README Studio", "A live editor for beautiful project introductions.", <FileCode2 />],
-          ["Landing Designer", "Publish a pastel project page without leaving the repo.", <Palette />]
-        ].map(([title, text, icon]) => <FeatureCard key={title} title={title} text={text} icon={icon} />)}
-      </section>
-      <section className="band">
-        <h2>How it works</h2>
-        <div className="steps">
-          {["Connect GitHub", "Set up workspace", "Start learning"].map((step, index) => (
-            <Card key={step}><span className="step-number">{index + 1}</span><h3>{step}</h3><p>{["Sync repositories securely with OAuth.", "Pin the work that matters today.", "Continue lessons beside real projects."][index]}</p></Card>
-          ))}
-        </div>
-      </section>
-      <section className="stats">
-        <Stat value="12k" label="repos warmed up" />
-        <Stat value="2.8k" label="early users" />
-        <Stat value="36" label="visual lessons" />
-      </section>
+      {loggedIn && (
+        <>
+          <section className="feature-grid">
+            {[
+              ["Workspace", "An illustrated desk where active projects become sticky notes.", <Home />],
+              ["Learn", "Interactive Git diagrams that teach what happened and why.", <BookOpen />],
+              ["README Studio", "A live editor for beautiful project introductions.", <FileCode2 />],
+              ["Landing Designer", "Publish a pastel project page without leaving the repo.", <Palette />]
+            ].map(([title, text, icon]) => <FeatureCard key={title} title={title} text={text} icon={icon} />)}
+          </section>
+          <section className="band">
+            <h2>How it works</h2>
+            <div className="steps">
+              {["Connect GitHub", "Set up workspace", "Start learning"].map((step, index) => (
+                <Card key={step}><span className="step-number">{index + 1}</span><h3>{step}</h3><p>{["Sync repositories securely with OAuth.", "Pin the work that matters today.", "Continue lessons beside real projects."][index]}</p></Card>
+              ))}
+            </div>
+          </section>
+          <section className="stats">
+            <Stat value="12k" label="repos warmed up" />
+            <Stat value="2.8k" label="early users" />
+            <Stat value="36" label="visual lessons" />
+          </section>
+        </>
+      )}
     </>
   );
 }

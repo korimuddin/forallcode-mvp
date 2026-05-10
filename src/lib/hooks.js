@@ -1,4 +1,31 @@
 import { useEffect, useState } from "react";
+import { supabase } from "./supabase";
+
+export function useAuthSession() {
+  const [session, setSession] = useState(null);
+  const [checked, setChecked] = useState(false);
+
+  useEffect(() => {
+    if (!supabase) {
+      setChecked(true);
+      return undefined;
+    }
+
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setChecked(true);
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession);
+      setChecked(true);
+    });
+
+    return () => listener.subscription.unsubscribe();
+  }, []);
+
+  return { session, checked, loggedIn: Boolean(session) };
+}
 
 export function useIsMobile() {
   const [isMobile, setIsMobile] = useState(() => (
