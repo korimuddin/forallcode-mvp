@@ -38,6 +38,12 @@ export default function SettingsAppearance() {
     document.body.classList.toggle("density-compact", appearance.density === "compact");
   }, [appearance]);
 
+  useEffect(() => {
+    if (!notice) return undefined;
+    const timeout = window.setTimeout(() => setNotice(""), 2200);
+    return () => window.clearTimeout(timeout);
+  }, [notice]);
+
   function updateAppearance(key, value) {
     if (key === "theme" && value === "dark") {
       setNotice("Dark mode is coming soon.");
@@ -69,7 +75,7 @@ export default function SettingsAppearance() {
             { value: "dark", label: "Dark", preview: <Moon size={24} /> }
           ]}
         />
-        {notice && <p className="settings-info-note">{notice}</p>}
+        {notice && <div className="settings-toast" role="status">{notice}</div>}
       </SettingsSection>
 
       <SettingsSection title="Accent colour" description="Your accent colour appears on buttons, links, and highlights.">
