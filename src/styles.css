@@ -2702,6 +2702,60 @@ pre { padding: 14px; overflow: auto; }
   background: var(--cream2);
 }
 
+.phase-file-tree button.active {
+  background: var(--lavender1);
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.phase-file-tree button:disabled {
+  cursor: default;
+  opacity: .82;
+}
+
+.phase-file-tree button:disabled:hover {
+  background: transparent;
+}
+
+.file-preview-panel {
+  min-width: 0;
+  background: var(--white);
+}
+
+.file-preview-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid var(--cream3);
+  padding: 18px 22px;
+}
+
+.file-preview-header h2 {
+  margin: 2px 0 6px;
+  font-family: "DM Mono", monospace;
+  font-size: 1rem;
+  overflow-wrap: anywhere;
+}
+
+.file-preview-header span {
+  color: var(--ink3);
+  font-size: .9rem;
+}
+
+.file-code-preview {
+  margin: 0;
+  min-height: 430px;
+  overflow: auto;
+  background: #fffdf9;
+  color: var(--ink);
+  padding: 24px;
+  font-family: "DM Mono", monospace;
+  font-size: .86rem;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
 .phase-list-panel,
 .repo-settings-panel,
 .repo-map-panel {

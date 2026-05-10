@@ -120,6 +120,45 @@ export async function fetchGitHubRepoOverview(owner, repo, githubAccessToken) {
   };
 }
 
+export async function fetchGitHubFileContent(owner, repo, path, githubAccessToken, ref) {
+  if (!owner || !repo || !path || !githubAccessToken) return null;
+
+  const encodedOwner = encodeURIComponent(owner);
+  const encodedRepo = encodeURIComponent(repo);
+  const encodedPath = encodeGitHubPath(path);
+  const refQuery = ref ? `?ref=${encodeURIComponent(ref)}` : "";
+  const file = await fetchGitHubJson(`/repos/${encodedOwner}/${encodedRepo}/contents/${encodedPath}${refQuery}`, githubAccessToken);
+
+  return {
+    name: file.name || path.split("/").pop(),
+    path: file.path || path,
+    size: file.size || 0,
+    encoding: file.encoding || "",
+    downloadUrl: file.download_url || "",
+    content: file.content ? decodeGitHubContent(file.content) : "",
+    type: file.type || "file"
+  };
+}
+
+export async function fetchGitHubRepoArchive(owner, repo, githubAccessToken, ref = "main") {
+  if (!owner || !repo || !githubAccessToken) return null;
+
+  const encodedOwner = encodeURIComponent(owner);
+  const encodedRepo = encodeURIComponent(repo);
+  const response = await fetch(`https://api.github.com/repos/${encodedOwner}/${encodedRepo}/zipball/${encodeURIComponent(ref)}`, {
+    headers: {
+      Authorization: `Bearer ${githubAccessToken}`,
+      Accept: "application/vnd.github+json"
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error("Could not download repository archive from GitHub.");
+  }
+
+  return response.blob();
+}
+
 export function getSessionIdentity(session) {
   const metadata = session?.user?.user_metadata || {};
   const emailName = session?.user?.email?.split("@")[0] || "";
@@ -265,7 +304,9 @@ function mapGitHubTree(tree) {
       path: item.path,
       name: item.path.split("/").pop(),
       indent: Math.min(item.path.split("/").length - 1, 4),
-      type: item.type === "tree" ? "folder" : "file"
+      type: item.type === "tree" ? "folder" : "file",
+      sha: item.sha || "",
+      size: item.size || 0
     }));
 }
 
@@ -318,6 +359,10 @@ function decodeGitHubContent(content) {
   } catch {
     return "";
   }
+}
+
+function encodeGitHubPath(path) {
+  return path.split("/").map((part) => encodeURIComponent(part)).join("/");
 }
 
 function formatRelativeDate(value) {

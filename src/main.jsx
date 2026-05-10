@@ -7,6 +7,7 @@ import {
   Check,
   ChevronDown,
   Copy,
+  Download,
   Eye,
   FileCode2,
   FileText,
@@ -30,7 +31,7 @@ import Skeleton from "./components/ui/Skeleton";
 import { useAuthSession, useDocumentTitle, useIsMobile, useSignedInUserData } from "./lib/hooks";
 import { renderMarkdown } from "./lib/markdownRenderer";
 import { createNotification } from "./lib/notifications";
-import { fetchGitHubRepoOverview, getCurrentSession, isSupabaseConfigured, signInWithGitHub, signInWithPassword, supabase } from "./lib/supabase";
+import { fetchGitHubFileContent, fetchGitHubRepoArchive, fetchGitHubRepoOverview, getCurrentSession, isSupabaseConfigured, signInWithGitHub, signInWithPassword, supabase } from "./lib/supabase";
 import "./styles.css";
 import "./styles/mobile.css";
 
@@ -745,6 +746,11 @@ function RepoPage() {
   const [repoDetails, setRepoDetails] = useState(null);
   const [repoDetailsLoading, setRepoDetailsLoading] = useState(true);
   const [repoDetailsError, setRepoDetailsError] = useState("");
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [openFile, setOpenFile] = useState(null);
+  const [fileLoading, setFileLoading] = useState(false);
+  const [fileError, setFileError] = useState("");
+  const [downloadState, setDownloadState] = useState("");
   const cloneUrl = `https://github.com/${username}/${repo}.git`;
 
   useEffect(() => {
@@ -761,7 +767,17 @@ function RepoPage() {
         }
 
         const details = await fetchGitHubRepoOverview(username, repo, session.provider_token);
-        if (alive) setRepoDetails(details);
+        if (alive) {
+          setRepoDetails(details);
+          const readmeFile = details.files.find((item) => item.type === "file" && item.name.toLowerCase() === "readme.md");
+          setSelectedFile(readmeFile || details.files.find((item) => item.type === "file") || null);
+          setOpenFile(readmeFile ? {
+            name: "README.md",
+            path: readmeFile.path,
+            content: details.readme,
+            size: readmeFile.size || details.readme.length
+          } : null);
+        }
       } catch (error) {
         if (alive) {
           setRepoDetails(null);
@@ -777,6 +793,68 @@ function RepoPage() {
       alive = false;
     };
   }, [username, repo]);
+
+  async function openRepoFile(file) {
+    if (file.type === "folder") return;
+    setSelectedFile(file);
+    setFileLoading(true);
+    setFileError("");
+
+    try {
+      const session = await getCurrentSession();
+      if (!session?.provider_token) {
+        throw new Error("Sign in with GitHub to open files.");
+      }
+
+      const content = await fetchGitHubFileContent(username, repo, file.path, session.provider_token, repoDetails?.defaultBranch);
+      setOpenFile(content);
+    } catch (error) {
+      setOpenFile(null);
+      setFileError(error.message || "Could not open this file from GitHub.");
+    } finally {
+      setFileLoading(false);
+    }
+  }
+
+  async function downloadSelectedFile() {
+    if (!selectedFile || selectedFile.type === "folder") return;
+    setDownloadState("file");
+
+    try {
+      const session = await getCurrentSession();
+      if (!session?.provider_token) {
+        throw new Error("Sign in with GitHub to download files.");
+      }
+
+      const content = openFile?.path === selectedFile.path
+        ? openFile
+        : await fetchGitHubFileContent(username, repo, selectedFile.path, session.provider_token, repoDetails?.defaultBranch);
+      downloadBlob(new Blob([content.content || ""], { type: "text/plain;charset=utf-8" }), content.name || selectedFile.name);
+    } catch (error) {
+      setFileError(error.message || "Could not download this file from GitHub.");
+    } finally {
+      setDownloadState("");
+    }
+  }
+
+  async function downloadRepositoryArchive() {
+    setDownloadState("repo");
+
+    try {
+      const session = await getCurrentSession();
+      if (!session?.provider_token) {
+        throw new Error("Sign in with GitHub to download this repository.");
+      }
+
+      const branch = repoDetails?.defaultBranch || "main";
+      const archive = await fetchGitHubRepoArchive(username, repo, session.provider_token, branch);
+      downloadBlob(archive, `${repo}-${branch}.zip`);
+    } catch (error) {
+      setFileError(error.message || "Could not download this repository from GitHub.");
+    } finally {
+      setDownloadState("");
+    }
+  }
 
   useEffect(() => {
     async function loadPublishedLanding() {
@@ -835,6 +913,9 @@ function RepoPage() {
         <div className="repo-header-actions">
           <Button variant="soft" onClick={handleStarRepo}><Star size={16} />Star</Button>
           <Button variant="soft"><GitFork size={16} />Fork</Button>
+          <Button variant="soft" onClick={downloadRepositoryArchive} disabled={repoDetailsLoading || downloadState === "repo"}>
+            <Download size={16} />{downloadState === "repo" ? "Downloading..." : "Download all"}
+          </Button>
           <div className="clone-control">
             <button>Clone <ChevronDown size={14} /></button>
             <div><input readOnly value={cloneUrl} /><Button variant="soft"><Copy size={16} /></Button></div>
@@ -866,14 +947,29 @@ function RepoPage() {
                   ))}
                 </select>
                 {(repoDetails?.files || []).map((item) => (
-                  <button key={item.path} title={item.path} style={{ paddingLeft: `${12 + item.indent * 18}px` }}>
+                  <button
+                    className={selectedFile?.path === item.path ? "active" : ""}
+                    disabled={item.type === "folder"}
+                    key={item.path}
+                    onClick={() => openRepoFile(item)}
+                    title={item.path}
+                    style={{ paddingLeft: `${12 + item.indent * 18}px` }}
+                  >
                     {item.type === "folder" ? <Folder size={15} /> : <FileText size={15} />}
                     {item.name}
                   </button>
                 ))}
                 {repoDetails?.files?.length === 0 && <p className="empty-state">No files found in this repository.</p>}
               </aside>
-              <ReadmePreview repo={data} markdown={repoDetails?.readme} />
+              <FilePreview
+                error={fileError}
+                file={openFile}
+                loading={fileLoading}
+                onDownload={downloadSelectedFile}
+                repo={data}
+                repoReadme={repoDetails?.readme}
+                downloading={downloadState === "file"}
+              />
             </>
           )}
         </section>
@@ -1261,6 +1357,55 @@ function MarkdownPreview({ markdown, className = "readme-render" }) {
   return <div className={className} dangerouslySetInnerHTML={{ __html: renderMarkdown(markdown) }} />;
 }
 
+function FilePreview({ downloading, error, file, loading, onDownload, repo, repoReadme }) {
+  if (loading) return <ReadmeSkeleton />;
+
+  if (error) return <RepoDataMessage title="Could not open file" text={error} />;
+
+  if (!file) return <ReadmePreview repo={repo} markdown={repoReadme} />;
+
+  const isMarkdown = file.name?.toLowerCase().endsWith(".md") || file.path?.toLowerCase().endsWith(".md");
+
+  return (
+    <section className="file-preview-panel">
+      <div className="file-preview-header">
+        <div>
+          <p className="eyebrow">Open file</p>
+          <h2>{file.path}</h2>
+          <span>{formatFileSize(file.size)}</span>
+        </div>
+        <Button variant="soft" onClick={onDownload}>
+          <Download size={16} />{downloading ? "Downloading..." : "Download file"}
+        </Button>
+      </div>
+      {isMarkdown ? (
+        <MarkdownPreview markdown={file.content || `# ${file.name}\n\nThis file is empty.`} />
+      ) : (
+        <pre className="file-code-preview"><code>{file.content || "This file is empty or could not be previewed as text."}</code></pre>
+      )}
+    </section>
+  );
+}
+
+function downloadBlob(blob, filename) {
+  if (!blob) return;
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+}
+
+function formatFileSize(size = 0) {
+  if (!size) return "0 B";
+  if (size < 1024) return `${size} B`;
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 function RepoDataMessage({ title, text }) {
   return (
     <Card>
@@ -1478,9 +1623,9 @@ function Card({ children, large = false }) {
   return <article className={large ? "card large-card" : "card"}>{children}</article>;
 }
 
-function Button({ children, to, variant = "primary", full = false, onClick }) {
+function Button({ children, disabled = false, to, variant = "primary", full = false, onClick }) {
   const className = `button ${variant} ${full ? "full" : ""}`;
-  return to ? <Link className={className} to={to}>{children}</Link> : <button className={className} onClick={onClick}>{children}</button>;
+  return to ? <Link className={className} to={to}>{children}</Link> : <button className={className} disabled={disabled} onClick={onClick}>{children}</button>;
 }
 
 function Badge({ children }) {
