@@ -1408,13 +1408,13 @@ function PhaseRepoCard({ repo }) {
     >
       <div className="phase-repo-title">
         <h3>{hero.title || repo.name}</h3>
-        <span>{repo.private ? "Private" : "Public"}</span>
       </div>
       <p>{repo.description}</p>
       <div className="phase-repo-meta">
         <LanguagePill language={repo.language} />
         <span><Star size={14} />{repo.stars}</span>
         <span>Updated {repo.updated}</span>
+        <span className="repo-visibility-pill">{repo.private ? "Private" : "Public"}</span>
       </div>
       <div className="phase-repo-actions" onClick={(event) => event.stopPropagation()}>
         <button type="button">Pin to workspace</button>
