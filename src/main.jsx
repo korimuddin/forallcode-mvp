@@ -31,8 +31,8 @@ import Skeleton from "./components/ui/Skeleton";
 import { useAuthSession, useDocumentTitle, useIsMobile, useSignedInUserData } from "./lib/hooks";
 import { renderMarkdown } from "./lib/markdownRenderer";
 import { createNotification } from "./lib/notifications";
-import { compactRepoHeroPreferences, getRepoHeroPreference, getUserPreference, setRepoHeroPreference, setUserPreference } from "./lib/preferences";
-import { fetchGitHubFileContent, fetchGitHubRepoArchive, fetchGitHubRepoOverview, getCurrentSession, isSupabaseConfigured, signInWithGitHub, signInWithPassword, supabase } from "./lib/supabase";
+import { getUserPreference, setUserPreference } from "./lib/preferences";
+import { fetchGitHubFileContent, fetchGitHubRepoArchive, fetchGitHubRepoOverview, getCurrentSession, isSupabaseConfigured, saveRepoHeroToSupabase, signInWithGitHub, signInWithPassword, supabase, uploadRepoHeroImage } from "./lib/supabase";
 import "./styles.css";
 import "./styles/mobile.css";
 
@@ -237,7 +237,7 @@ function EntryPage() {
         <source src="/forallcode-entry.mp4" type="video/mp4" />
       </video>
       <div className="entry-vignette" />
-      <Link className="entry-button" to="/home">enter</Link>
+      <Link className="entry-center-link" to="/home" aria-label="Enter ForAllCode" />
     </section>
   );
 }
@@ -795,15 +795,29 @@ function RepoPage() {
   const [heroEditorOpen, setHeroEditorOpen] = useState(false);
   const [repoHero, setRepoHero] = useState({ title: "", image: "", positionX: 50, positionY: 50, fontFamily: heroFontOptions[0].value });
   const [heroDraft, setHeroDraft] = useState({ title: "", image: "", positionX: 50, positionY: 50, fontFamily: heroFontOptions[0].value });
+  const [heroUploadState, setHeroUploadState] = useState("");
+  const [heroToast, setHeroToast] = useState("");
   const heroPositionerRef = useRef(null);
   const cloneUrl = `https://github.com/${username}/${repo}.git`;
 
   useEffect(() => {
-    const nextHero = getRepoHeroPreference(username, repo, { title: repo, image: "" });
-    const normalizedHero = normalizeRepoHero(nextHero, repo);
+    const normalizedHero = normalizeRepoHero(repoToHero(data), repo);
     setRepoHero(normalizedHero);
     setHeroDraft(normalizedHero);
-  }, [username, repo]);
+  }, [
+    repo,
+    data.heroImageUrl,
+    data.heroPositionX,
+    data.heroPositionY,
+    data.heroTitle,
+    data.heroFont
+  ]);
+
+  useEffect(() => {
+    if (!heroToast) return undefined;
+    const timer = window.setTimeout(() => setHeroToast(""), 4200);
+    return () => window.clearTimeout(timer);
+  }, [heroToast]);
 
   useEffect(() => {
     let alive = true;
@@ -921,9 +935,32 @@ function RepoPage() {
   async function handleHeroImageUpload(event) {
     const file = event.target.files?.[0];
     if (!file) return;
+    setHeroUploadState("uploading");
+    setHeroToast("");
 
-    const image = await compressHeroImage(file);
-    setHeroDraft((current) => ({ ...current, image, positionX: current.positionX ?? 50, positionY: current.positionY ?? 50 }));
+    try {
+      const session = await getCurrentSession();
+      const imageBlob = await compressHeroImageToBlob(file);
+      const image = await uploadRepoHeroImage(session, username, repo, imageBlob);
+      const nextHero = {
+        ...heroDraft,
+        title: heroDraft.title || repo,
+        image,
+        positionX: heroDraft.positionX ?? 50,
+        positionY: heroDraft.positionY ?? 50,
+        fontFamily: heroDraft.fontFamily || heroFontOptions[0].value
+      };
+      await saveRepoHeroToSupabase(session, repo, nextHero);
+      setHeroDraft(nextHero);
+      setRepoHero(nextHero);
+      setHeroToast("Hero image uploaded and saved.");
+      setHeroUploadState("uploaded");
+    } catch (error) {
+      setHeroToast(error.message || "Choose a smaller image and try again.");
+      setHeroUploadState("");
+    } finally {
+      event.target.value = "";
+    }
   }
 
   function moveHeroImage(event) {
@@ -946,14 +983,17 @@ function RepoPage() {
     };
 
     try {
-      setRepoHeroPreference(username, repo, nextHero);
+      setHeroUploadState("saving");
+      const session = await getCurrentSession();
+      await saveRepoHeroToSupabase(session, repo, nextHero);
+      setRepoHero(nextHero);
+      setHeroEditorOpen(false);
+      setHeroToast("Hero saved.");
     } catch (error) {
-      await compactRepoHeroPreferences(compressHeroImage);
-      setRepoHeroPreference(username, repo, nextHero);
+      setHeroToast(error.message || "Could not save this hero.");
+    } finally {
+      setHeroUploadState("");
     }
-
-    setRepoHero(nextHero);
-    setHeroEditorOpen(false);
   }
 
   function clearRepoHeroImage() {
@@ -1055,8 +1095,10 @@ function RepoPage() {
             </label>
             <label>
               Background image
-              <input accept="image/*" type="file" onChange={handleHeroImageUpload} />
+              <input accept="image/*" type="file" onChange={handleHeroImageUpload} disabled={heroUploadState === "uploading" || heroUploadState === "saving"} />
             </label>
+            {heroUploadState === "uploading" && <p className="repo-hero-upload-status">Compressing and uploading image...</p>}
+            {heroToast && <p className="repo-hero-toast" role="status">{heroToast}</p>}
             {heroDraft.image && (
               <div className="repo-hero-position-field">
                 <span>Hero image position</span>
@@ -1081,8 +1123,10 @@ function RepoPage() {
             )}
             {heroDraft.image && <button className="text-button" onClick={clearRepoHeroImage}>Remove image</button>}
             <div className="repo-hero-editor-actions">
-              <Button variant="soft" onClick={() => setHeroEditorOpen(false)}>Cancel</Button>
-              <Button onClick={saveRepoHero}>Save hero</Button>
+              <Button variant="soft" onClick={() => setHeroEditorOpen(false)} disabled={heroUploadState === "uploading" || heroUploadState === "saving"}>Cancel</Button>
+              <Button onClick={saveRepoHero} disabled={heroUploadState === "uploading" || heroUploadState === "saving"}>
+                {heroUploadState === "saving" ? "Saving..." : "Save hero"}
+              </Button>
             </div>
           </div>
         </div>
@@ -1386,11 +1430,7 @@ function DeskIllustration() {
 }
 
 function RepoCard({ repo, actions = false }) {
-  const [hero, setHero] = useState(() => normalizeRepoHero(getRepoHeroPreference(repo.owner, repo.name), repo.name));
-
-  useEffect(() => {
-    setHero(normalizeRepoHero(getRepoHeroPreference(repo.owner, repo.name), repo.name));
-  }, [repo.name, repo.owner]);
+  const hero = normalizeRepoHero(repoToHero(repo), repo.name);
 
   async function handleStarClick() {
     if (!supabase) return;
@@ -1436,11 +1476,7 @@ function RepoCard({ repo, actions = false }) {
 
 function PhaseRepoCard({ repo }) {
   const navigate = useNavigate();
-  const [hero, setHero] = useState(() => normalizeRepoHero(getRepoHeroPreference(repo.owner, repo.name), repo.name));
-
-  useEffect(() => {
-    setHero(normalizeRepoHero(getRepoHeroPreference(repo.owner, repo.name), repo.name));
-  }, [repo.name, repo.owner]);
+  const hero = normalizeRepoHero(repoToHero(repo), repo.name);
 
   async function handleStarClick() {
     if (!supabase) return;
@@ -1601,9 +1637,21 @@ function normalizeRepoHero(hero, repoName) {
   };
 }
 
-function compressHeroImage(input, maxWidth = 1400, quality = 0.72) {
+function repoToHero(repo = {}) {
+  return {
+    title: repo.heroTitle || repo.name || "",
+    image: repo.heroImageUrl || "",
+    positionX: Number.isFinite(Number(repo.heroPositionX)) ? Number(repo.heroPositionX) : 50,
+    positionY: Number.isFinite(Number(repo.heroPositionY)) ? Number(repo.heroPositionY) : 50,
+    fontFamily: repo.heroFont || heroFontOptions[0].value
+  };
+}
+
+function compressHeroImageToBlob(input, maxBytes = 1024 * 1024, maxWidth = 1600) {
   return new Promise((resolve, reject) => {
     const image = new Image();
+    const objectUrl = URL.createObjectURL(input);
+
     image.onload = () => {
       const scale = Math.min(1, maxWidth / image.width);
       const canvas = document.createElement("canvas");
@@ -1611,21 +1659,42 @@ function compressHeroImage(input, maxWidth = 1400, quality = 0.72) {
       canvas.height = Math.max(1, Math.round(image.height * scale));
       const context = canvas.getContext("2d");
       context.drawImage(image, 0, 0, canvas.width, canvas.height);
-      resolve(canvas.toDataURL("image/jpeg", quality));
-    };
-    image.onerror = () => reject(new Error("Could not prepare this hero image."));
 
-    if (typeof input === "string") {
-      image.src = input;
-      return;
-    }
+      const qualities = [0.85, 0.75, 0.65, 0.55, 0.5];
+      let qualityIndex = 0;
+      const tryExport = () => {
+        const quality = qualities[qualityIndex];
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            URL.revokeObjectURL(objectUrl);
+            reject(new Error("Could not prepare this hero image."));
+            return;
+          }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      image.src = String(reader.result || "");
+          if (blob.size <= maxBytes) {
+            URL.revokeObjectURL(objectUrl);
+            resolve(blob);
+            return;
+          }
+
+          qualityIndex += 1;
+          if (qualityIndex >= qualities.length) {
+            URL.revokeObjectURL(objectUrl);
+            reject(new Error("This image is still over 1MB after compression. Please choose a smaller image."));
+            return;
+          }
+
+          tryExport();
+        }, "image/jpeg", quality);
+      };
+
+      tryExport();
     };
-    reader.onerror = () => reject(new Error("Could not read this hero image."));
-    reader.readAsDataURL(input);
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Could not prepare this hero image."));
+    };
+    image.src = objectUrl;
   });
 }
 

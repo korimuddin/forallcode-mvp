@@ -80,40 +80,18 @@ main { flex: 1; }
   pointer-events: none;
 }
 
-.entry-button {
+.entry-center-link {
   position: relative;
   z-index: 1;
-  align-self: end;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 168px;
-  min-height: 56px;
-  border: 1px solid rgba(255, 253, 249, .52);
+  display: block;
+  width: min(560px, 82vw);
+  height: min(220px, 34vh);
   border-radius: 999px;
-  background: rgba(255, 253, 249, .18);
-  box-shadow: 0 24px 70px rgba(10, 16, 28, .28), inset 0 1px 0 rgba(255, 253, 249, .36);
-  backdrop-filter: blur(18px) saturate(150%);
-  color: #fffdf9;
-  font-weight: 800;
-  letter-spacing: .08em;
-  text-transform: lowercase;
-  opacity: 0;
-  transform: translateY(14px);
-  animation: entry-button-in .9s ease 4.1s forwards;
-  transition: background .2s ease, border-color .2s ease;
 }
 
-.entry-button:hover {
-  background: rgba(255, 253, 249, .26);
-  border-color: rgba(255, 253, 249, .72);
-}
-
-@keyframes entry-button-in {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.entry-center-link:focus-visible {
+  outline: 2px solid rgba(255, 253, 249, .86);
+  outline-offset: 10px;
 }
 
 .skeleton {
@@ -2825,6 +2803,23 @@ pre { padding: 14px; overflow: auto; }
   color: var(--ink);
   font-size: 1rem;
   font-weight: 800;
+}
+
+.repo-hero-upload-status,
+.repo-hero-toast {
+  margin: -6px 0 0;
+  border: 1px solid var(--cream3);
+  border-radius: 14px;
+  background: var(--cream);
+  padding: 10px 12px;
+  color: var(--ink2);
+  font-size: .9rem;
+  font-weight: 800;
+}
+
+.repo-hero-toast {
+  border-color: rgba(155, 143, 212, .42);
+  background: rgba(221, 213, 240, .44);
 }
 
 .repo-hero-position-field {

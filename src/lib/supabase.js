@@ -210,7 +210,12 @@ export function mapGitHubRepo(repo, ownerUsername) {
     createdAt: repo.created_at,
     pinned: false,
     topic: repo.topics?.[0] || "repo",
-    landing: false
+    landing: false,
+    heroImageUrl: repo.hero_image_url || "",
+    heroPositionX: repo.hero_position_x ?? 50,
+    heroPositionY: repo.hero_position_y ?? 50,
+    heroTitle: repo.hero_title || "",
+    heroFont: repo.hero_font || ""
   };
 }
 
@@ -241,7 +246,125 @@ export async function syncGitHubReposToSupabase(session) {
     if (error) console.warn("Could not persist repositories in Supabase.", error);
   }
 
-  return mappedRepos;
+  const storedRepos = await fetchStoredRepositoryHeroFields(session);
+  return mergeStoredHeroFields(mappedRepos, storedRepos);
+}
+
+export async function fetchStoredRepositoryHeroFields(session) {
+  if (!supabase || !session?.user?.id) return [];
+
+  const { data, error } = await supabase
+    .from("repositories")
+    .select("github_repo_id, name, hero_image_url, hero_position_x, hero_position_y, hero_title, hero_font")
+    .eq("owner_id", session.user.id);
+
+  if (error) {
+    console.warn("Could not load repository hero settings from Supabase.", error);
+    return [];
+  }
+
+  return data || [];
+}
+
+export function mapStoredRepository(row, ownerUsername) {
+  return {
+    githubRepoId: row.github_repo_id,
+    name: row.name,
+    owner: ownerUsername || "",
+    description: row.description || "No description yet.",
+    language: row.language || "Code",
+    private: Boolean(row.is_private),
+    stars: row.stars_count || 0,
+    forks: row.forks_count || 0,
+    updated: formatRelativeDate(row.updated_at),
+    updatedAt: row.updated_at,
+    createdAt: row.created_at,
+    pinned: false,
+    topic: "repo",
+    landing: false,
+    ...mapRepoHeroFields(row)
+  };
+}
+
+export function mergeStoredHeroFields(repos, storedRepos) {
+  if (!storedRepos?.length) return repos;
+  const byGithubId = new Map(storedRepos.filter((repo) => repo.github_repo_id).map((repo) => [repo.github_repo_id, repo]));
+  const byName = new Map(storedRepos.map((repo) => [repo.name, repo]));
+
+  return repos.map((repo) => {
+    const stored = byGithubId.get(repo.githubRepoId) || byName.get(repo.name);
+    return stored ? { ...repo, ...mapRepoHeroFields(stored) } : repo;
+  });
+}
+
+export function mapRepoHeroFields(row = {}) {
+  return {
+    heroImageUrl: row.hero_image_url || "",
+    heroPositionX: Number.isFinite(Number(row.hero_position_x)) ? Number(row.hero_position_x) : 50,
+    heroPositionY: Number.isFinite(Number(row.hero_position_y)) ? Number(row.hero_position_y) : 50,
+    heroTitle: row.hero_title || "",
+    heroFont: row.hero_font || ""
+  };
+}
+
+export async function uploadRepoHeroImage(session, owner, repo, imageBlob) {
+  if (!supabase) throw new Error("Supabase is not configured.");
+  if (!session?.user?.id) throw new Error("Sign in before uploading a hero image.");
+  if (!imageBlob) throw new Error("Choose a hero image first.");
+
+  const safeOwner = slugForStorage(owner || "owner");
+  const safeRepo = slugForStorage(repo || "repo");
+  const path = `${session.user.id}/${safeOwner}/${safeRepo}/hero-${Date.now()}.jpg`;
+  const { error } = await supabase.storage
+    .from("repo-heroes")
+    .upload(path, imageBlob, {
+      cacheControl: "31536000",
+      contentType: "image/jpeg",
+      upsert: true
+    });
+
+  if (error) {
+    throw new Error(error.message || "Could not upload the hero image to Supabase Storage.");
+  }
+
+  const { data } = supabase.storage.from("repo-heroes").getPublicUrl(path);
+  return data.publicUrl;
+}
+
+export async function saveRepoHeroToSupabase(session, repoName, hero) {
+  if (!supabase) throw new Error("Supabase is not configured.");
+  if (!session?.user?.id) throw new Error("Sign in before saving this hero.");
+
+  const { data, error } = await supabase
+    .from("repositories")
+    .update({
+      hero_image_url: hero.image || null,
+      hero_position_x: hero.positionX ?? 50,
+      hero_position_y: hero.positionY ?? 50,
+      hero_title: hero.title || repoName,
+      hero_font: hero.fontFamily || null
+    })
+    .eq("owner_id", session.user.id)
+    .eq("name", repoName)
+    .select("hero_image_url, hero_position_x, hero_position_y, hero_title, hero_font")
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message || "Could not save the repository hero settings.");
+  }
+  if (!data) {
+    throw new Error("Could not find this repository in Supabase. Sync your repos and try again.");
+  }
+
+  return mapRepoHeroFields(data);
+}
+
+function slugForStorage(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    || "item";
 }
 
 export async function syncGitHubActivity(session) {

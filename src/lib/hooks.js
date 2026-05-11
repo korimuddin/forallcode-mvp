@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getUserPreference } from "./preferences";
-import { getSessionIdentity, syncGitHubActivity, syncGitHubReposToSupabase, supabase, upsertProfileFromSession } from "./supabase";
+import { getSessionIdentity, mapStoredRepository, syncGitHubActivity, syncGitHubReposToSupabase, supabase, upsertProfileFromSession } from "./supabase";
 
 export function useAuthSession() {
   const [session, setSession] = useState(null);
@@ -89,22 +89,7 @@ export function useSignedInUserData() {
             .eq("owner_id", session.user.id)
             .order("updated_at", { ascending: false });
 
-          nextRepos = (data || []).map((repo) => ({
-            githubRepoId: repo.github_repo_id,
-            name: repo.name,
-            owner: storedProfile?.username || identity.username,
-            description: repo.description || "No description yet.",
-            language: repo.language || "Code",
-            private: Boolean(repo.is_private),
-            stars: repo.stars_count || 0,
-            forks: repo.forks_count || 0,
-            updated: "Recently",
-            updatedAt: repo.updated_at,
-            createdAt: repo.created_at,
-            pinned: false,
-            topic: "repo",
-            landing: false
-          }));
+          nextRepos = (data || []).map((repo) => mapStoredRepository(repo, storedProfile?.username || identity.username));
         }
 
         if (!cancelled) setRepos(nextRepos);

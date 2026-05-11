@@ -26,6 +26,11 @@ CREATE TABLE repositories (
   forks_count INT DEFAULT 0,
   readme_content TEXT,
   landing_page_html TEXT,
+  hero_image_url TEXT,
+  hero_position_x NUMERIC DEFAULT 50,
+  hero_position_y NUMERIC DEFAULT 50,
+  hero_title TEXT,
+  hero_font TEXT,
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
