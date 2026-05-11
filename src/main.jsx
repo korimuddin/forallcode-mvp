@@ -1,6 +1,6 @@
 import React, { lazy, Suspense, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { Link, Navigate, Route, Routes, useNavigate, useParams } from "react-router-dom";
+import { Link, Navigate, Route, Routes, useLocation, useNavigate, useParams } from "react-router-dom";
 import { BrowserRouter } from "react-router-dom";
 import {
   BookOpen,
@@ -159,46 +159,72 @@ function App() {
   return (
     <ErrorBoundary>
       <BrowserRouter>
-        <CommandPalette />
-        <div className="app-shell">
-          <TopNav />
-          <main>
-            <Suspense fallback={<RouteFallback />}>
-              <Routes>
-                <Route path="/" element={<LandingPage />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/auth/callback" element={<AuthCallback />} />
-                <Route path="/learn" element={<LearnPage />} />
-                <Route path="/dashboard" element={<DashboardPage />} />
-                <Route path="/workspace" element={<WorkspacePage />} />
-                <Route path="/profile" element={<MyProfilePage />} />
-                <Route path="/repos" element={<ReposPage />} />
-                <Route path="/repos/new" element={<NewRepoPage />} />
-                <Route path="/explore" element={<Explore />} />
-                <Route path="/notifications" element={<Notifications />} />
-                <Route path="/settings" element={<SettingsLayout />}>
-                  <Route index element={<Navigate to="/settings/account" replace />} />
-                  <Route path="account" element={<SettingsAccount />} />
-                  <Route path="profile" element={<SettingsProfile />} />
-                  <Route path="workspace" element={<SettingsWorkspace />} />
-                  <Route path="appearance" element={<SettingsAppearance />} />
-                  <Route path="notifications" element={<SettingsNotifications />} />
-                  <Route path="integrations" element={<SettingsIntegrations />} />
-                  <Route path="privacy" element={<SettingsPrivacy />} />
-                  <Route path="danger" element={<SettingsDanger />} />
-                </Route>
-                <Route path="/:username/:repo/readme" element={<ReadmeStudio />} />
-                <Route path="/:username/:repo/landing" element={<LandingDesigner />} />
-                <Route path="/:username/:repo" element={<RepoPage />} />
-                <Route path="/:username" element={<PublicProfile />} />
-              </Routes>
-            </Suspense>
-          </main>
-          <Footer />
-        </div>
+        <AppRoutes />
       </BrowserRouter>
     </ErrorBoundary>
+  );
+}
+
+function AppRoutes() {
+  const location = useLocation();
+  const isEntryPage = location.pathname === "/";
+
+  return (
+    <>
+      {!isEntryPage && <CommandPalette />}
+      <div className={isEntryPage ? "app-shell entry-shell" : "app-shell"}>
+        {!isEntryPage && <TopNav />}
+        <main>
+          <Suspense fallback={<RouteFallback />}>
+            <Routes>
+              <Route path="/" element={<EntryPage />} />
+              <Route path="/home" element={<LandingPage />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
+              <Route path="/learn" element={<LearnPage />} />
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/workspace" element={<WorkspacePage />} />
+              <Route path="/profile" element={<MyProfilePage />} />
+              <Route path="/repos" element={<ReposPage />} />
+              <Route path="/repos/new" element={<NewRepoPage />} />
+              <Route path="/explore" element={<Explore />} />
+              <Route path="/notifications" element={<Notifications />} />
+              <Route path="/settings" element={<SettingsLayout />}>
+                <Route index element={<Navigate to="/settings/account" replace />} />
+                <Route path="account" element={<SettingsAccount />} />
+                <Route path="profile" element={<SettingsProfile />} />
+                <Route path="workspace" element={<SettingsWorkspace />} />
+                <Route path="appearance" element={<SettingsAppearance />} />
+                <Route path="notifications" element={<SettingsNotifications />} />
+                <Route path="integrations" element={<SettingsIntegrations />} />
+                <Route path="privacy" element={<SettingsPrivacy />} />
+                <Route path="danger" element={<SettingsDanger />} />
+              </Route>
+              <Route path="/:username/:repo/readme" element={<ReadmeStudio />} />
+              <Route path="/:username/:repo/landing" element={<LandingDesigner />} />
+              <Route path="/:username/:repo" element={<RepoPage />} />
+              <Route path="/:username" element={<PublicProfile />} />
+            </Routes>
+          </Suspense>
+        </main>
+        {!isEntryPage && <Footer />}
+      </div>
+    </>
+  );
+}
+
+function EntryPage() {
+  useDocumentTitle("ForAllCode");
+
+  return (
+    <section className="entry-page" aria-label="ForAllCode entrance">
+      <video className="entry-video" autoPlay muted loop playsInline preload="auto">
+        <source src="/forallcode-entry.mp4" type="video/mp4" />
+      </video>
+      <div className="entry-vignette" />
+      <Link className="entry-button" to="/home">enter</Link>
+    </section>
   );
 }
 
