@@ -33,7 +33,7 @@ import { useAuthSession, useDocumentTitle, useIsMobile, useSignedInUserData } fr
 import { renderMarkdown } from "./lib/markdownRenderer";
 import { createNotification } from "./lib/notifications";
 import { getUserPreference, setUserPreference } from "./lib/preferences";
-import { fetchGitHubFileContent, fetchGitHubRepoArchive, fetchGitHubRepoOverview, getCurrentSession, isSupabaseConfigured, saveRepoHeroToSupabase, signInWithGitHub, signInWithPassword, supabase, uploadRepoHeroImage } from "./lib/supabase";
+import { fetchGitHubFileContent, fetchGitHubRepoArchive, fetchGitHubRepoOverview, getCurrentSession, isSupabaseConfigured, saveRepoHeroToSupabase, signInWithGitHub, signInWithPassword, supabase, uploadProfileVisualImage, uploadRepoHeroImage } from "./lib/supabase";
 import "./styles.css";
 import "./styles/mobile.css";
 
@@ -445,7 +445,7 @@ function MyProfilePage() {
   const { profile, repos: userRepos, loading } = useSignedInUserData();
   const visibleRepos = userRepos.length > 0 ? userRepos : [];
   return (
-    <PageFrame title="My Profile" eyebrow="Profile">
+    <PageFrame>
       <ProfileHeader editable profileData={profile} repoCount={userRepos.length} />
       <Workspace compact />
       <div className="two-column">
@@ -1645,20 +1645,112 @@ function LanguagePill({ language }) {
   return <span className="language-pill" style={{ backgroundColor: bg, color }}><span style={{ backgroundColor: color }} />{language}</span>;
 }
 
-function Avatar({ size = "normal", variant = currentUser.avatarStyle }) {
+function Avatar({ photoUrl = "", size = "normal", variant = currentUser.avatarStyle }) {
   const sizes = { tiny: 28, normal: 44, large: 112 };
-  return <span className={`avatar ${size}`}><IllustratedAvatar size={sizes[size] || sizes.normal} variant={variant} /></span>;
+  return <span className={`avatar ${size}`}><IllustratedAvatar photoUrl={photoUrl} size={sizes[size] || sizes.normal} variant={variant} /></span>;
 }
 
 function ProfileHeader({ editable = false, publicView = false, profileData = null, repoCount = currentUser.repos }) {
   const loadingStats = useInitialLoading();
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [draft, setDraft] = useState(() => profileDraftFromData(profileData));
+  const [uploading, setUploading] = useState("");
+  const [status, setStatus] = useState("");
+  const coverPositionerRef = useRef(null);
   const displayName = profileData?.displayName || currentUser.name;
   const username = profileData?.username || currentUser.username;
   const avatarStyle = profileData?.avatarStyle || currentUser.avatarStyle;
+  const avatarUrl = profileData?.avatarUrl || "";
+  const coverGradient = profileData?.coverGradient || "linear-gradient(120deg, var(--lavender), var(--rose), var(--sage))";
+  const coverImageUrl = profileData?.coverImageUrl || "";
+  const coverPositionX = profileData?.coverPositionX ?? 50;
+  const coverPositionY = profileData?.coverPositionY ?? 50;
   const pronouns = profileData?.pronouns || currentUser.pronouns;
   const bio = profileData?.bio || currentUser.bio;
   const location = profileData?.location || currentUser.location;
   const website = profileData?.website || currentUser.website;
+
+  useEffect(() => {
+    setDraft(profileDraftFromData(profileData));
+  }, [profileData]);
+
+  async function handleProfileImageUpload(event, kind) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setUploading(kind);
+    setStatus("");
+
+    try {
+      const session = await getCurrentSession();
+      const imageBlob = await compressHeroImageToBlob(file);
+      const imageUrl = await uploadProfileVisualImage(session, kind, imageBlob);
+      setDraft((current) => ({
+        ...current,
+        [kind === "avatar" ? "avatarUrl" : "coverImageUrl"]: imageUrl,
+        coverPositionX: current.coverPositionX ?? 50,
+        coverPositionY: current.coverPositionY ?? 50
+      }));
+      setStatus(`${kind === "avatar" ? "Profile picture" : "Cover image"} uploaded.`);
+    } catch (error) {
+      setStatus(error.message || "Could not upload this image.");
+    } finally {
+      setUploading("");
+      event.target.value = "";
+    }
+  }
+
+  function moveProfileCover(event) {
+    if (event.type === "pointermove" && event.buttons !== 1) return;
+    const bounds = coverPositionerRef.current?.getBoundingClientRect();
+    if (!bounds) return;
+
+    const positionX = clamp(((event.clientX - bounds.left) / bounds.width) * 100, 0, 100);
+    const positionY = clamp(((event.clientY - bounds.top) / bounds.height) * 100, 0, 100);
+    setDraft((current) => ({ ...current, coverPositionX: positionX, coverPositionY: positionY }));
+  }
+
+  async function saveProfileDraft() {
+    setUploading("saving");
+    setStatus("");
+
+    try {
+      const session = await getCurrentSession();
+      if (!session?.user?.id || !supabase) throw new Error("Sign in before saving profile changes.");
+      await supabase.from("profiles").update({
+        display_name: draft.displayName,
+        bio: draft.bio,
+        pronouns: draft.pronouns,
+        location: draft.location,
+        website: draft.website,
+        avatar_style: draft.avatarStyle,
+        avatar_url: draft.avatarUrl,
+        cover_gradient: draft.coverGradient,
+        cover_image_url: draft.coverImageUrl,
+        cover_position_x: draft.coverPositionX ?? 50,
+        cover_position_y: draft.coverPositionY ?? 50
+      }).eq("id", session.user.id);
+      setUserPreference(session.user.id, "profile", {
+        displayName: draft.displayName,
+        bio: draft.bio,
+        pronouns: draft.pronouns,
+        location: draft.location,
+        website: draft.website,
+        avatarStyle: draft.avatarStyle,
+        avatarUrl: draft.avatarUrl,
+        coverGradient: draft.coverGradient,
+        coverImageUrl: draft.coverImageUrl,
+        coverPositionX: draft.coverPositionX,
+        coverPositionY: draft.coverPositionY
+      });
+      setStatus("Profile saved.");
+      setEditorOpen(false);
+      window.location.reload();
+    } catch (error) {
+      setStatus(error.message || "Could not save your profile.");
+    } finally {
+      setUploading("");
+    }
+  }
 
   async function handleFollow() {
     if (!supabase) return;
@@ -1685,20 +1777,133 @@ function ProfileHeader({ editable = false, publicView = false, profileData = nul
 
   return (
     <section className="profile-header">
-      <div className="cover" />
+      <div
+        className={coverImageUrl ? "cover has-cover-image" : "cover"}
+        style={coverImageUrl ? {
+          backgroundImage: `linear-gradient(90deg, rgba(20, 16, 14, .56), rgba(20, 16, 14, .08)), url("${coverImageUrl}")`,
+          backgroundPosition: `${coverPositionX}% ${coverPositionY}%`
+        } : { background: coverGradient }}
+      />
       <div className="profile-content">
-        <Avatar size="large" variant={avatarStyle} />
+        <Avatar photoUrl={avatarUrl} size="large" variant={avatarStyle} />
         <div><h2>{displayName}</h2><p>@{username}{pronouns ? ` - ${pronouns}` : ""}</p><p>{bio}</p><p>{[location, website, `Joined ${currentUser.joinDate}`].filter(Boolean).join(" - ")}</p></div>
-        <div className="profile-actions">{editable && <Button>Edit profile</Button>}{publicView && <Button onClick={handleFollow}>Follow</Button>}<Button variant="soft">Message</Button></div>
+        <div className="profile-actions">{editable && <Button onClick={() => setEditorOpen(true)}>Edit profile</Button>}{publicView && <Button onClick={handleFollow}>Follow</Button>}<Button variant="soft">Message</Button></div>
       </div>
       {loadingStats ? (
         <ProfileStatsSkeleton />
       ) : (
         <div className="stats profile-stats"><Stat value={repoCount} label="repos" /><Stat value={currentUser.followers} label="followers" /><Stat value={currentUser.following} label="following" /><Stat value={currentUser.stars} label="stars" /></div>
       )}
+      {editorOpen && (
+        <div className="repo-hero-modal-backdrop" onClick={() => setEditorOpen(false)}>
+          <div className="repo-hero-editor profile-editor-modal" role="dialog" aria-modal="true" aria-label="Edit profile" onClick={(event) => event.stopPropagation()}>
+            <div className="profile-editor-preview">
+              <div
+                className="profile-editor-cover-preview"
+                style={draft.coverImageUrl ? {
+                  backgroundImage: `linear-gradient(90deg, rgba(20, 16, 14, .56), rgba(20, 16, 14, .08)), url("${draft.coverImageUrl}")`,
+                  backgroundPosition: `${draft.coverPositionX ?? 50}% ${draft.coverPositionY ?? 50}%`
+                } : { background: draft.coverGradient }}
+              />
+              <Avatar photoUrl={draft.avatarUrl} size="large" variant={draft.avatarStyle} />
+            </div>
+            <div className="profile-editor-grid">
+              <label>
+                Display name
+                <input value={draft.displayName} onChange={(event) => setDraft({ ...draft, displayName: event.target.value })} />
+              </label>
+              <label>
+                Pronouns
+                <input value={draft.pronouns} onChange={(event) => setDraft({ ...draft, pronouns: event.target.value })} placeholder="e.g. they/them" />
+              </label>
+            </div>
+            <label>
+              Bio
+              <textarea value={draft.bio} onChange={(event) => setDraft({ ...draft, bio: event.target.value })} maxLength={160} />
+            </label>
+            <div className="profile-editor-grid">
+              <label>
+                Location
+                <input value={draft.location} onChange={(event) => setDraft({ ...draft, location: event.target.value })} />
+              </label>
+              <label>
+                Website
+                <input value={draft.website} onChange={(event) => setDraft({ ...draft, website: event.target.value })} />
+              </label>
+            </div>
+            <label>
+              Profile picture
+              <input accept="image/*" type="file" onChange={(event) => handleProfileImageUpload(event, "avatar")} disabled={Boolean(uploading)} />
+            </label>
+            <div className="avatar-picker profile-avatar-picker">
+              {avatarVariants.map((variant) => (
+                <button className={draft.avatarStyle === variant ? "active" : ""} key={variant} onClick={() => setDraft({ ...draft, avatarStyle: variant })} type="button">
+                  <IllustratedAvatar size={38} variant={variant} />
+                </button>
+              ))}
+            </div>
+            <label>
+              Cover image
+              <input accept="image/*" type="file" onChange={(event) => handleProfileImageUpload(event, "cover")} disabled={Boolean(uploading)} />
+            </label>
+            <div className="profile-cover-swatches">
+              {profileCoverOptions.map((cover) => (
+                <button className={draft.coverGradient === cover ? "active" : ""} key={cover} onClick={() => setDraft({ ...draft, coverGradient: cover, coverImageUrl: "" })} style={{ background: cover }} type="button" />
+              ))}
+            </div>
+            {draft.coverImageUrl && (
+              <div className="repo-hero-position-field">
+                <span>Cover image position</span>
+                <div
+                  className="repo-hero-positioner"
+                  onPointerDown={moveProfileCover}
+                  onPointerMove={moveProfileCover}
+                  ref={coverPositionerRef}
+                  style={{
+                    backgroundImage: `linear-gradient(90deg, rgba(20, 16, 14, .62), rgba(20, 16, 14, .1)), url("${draft.coverImageUrl}")`,
+                    backgroundPosition: `${draft.coverPositionX ?? 50}% ${draft.coverPositionY ?? 50}%`
+                  }}
+                >
+                  <strong style={{ left: `${draft.coverPositionX ?? 50}%`, top: `${draft.coverPositionY ?? 50}%` }} />
+                </div>
+              </div>
+            )}
+            {status && <p className="repo-hero-toast" role="status">{status}</p>}
+            <div className="repo-hero-editor-actions">
+              <Button variant="soft" onClick={() => setEditorOpen(false)} disabled={Boolean(uploading)}>Cancel</Button>
+              <Button onClick={saveProfileDraft} disabled={Boolean(uploading)}>{uploading === "saving" ? "Saving..." : "Save profile"}</Button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
+
+function profileDraftFromData(profileData = {}) {
+  return {
+    displayName: profileData?.displayName || currentUser.name,
+    pronouns: profileData?.pronouns || "",
+    bio: profileData?.bio || "",
+    location: profileData?.location || "",
+    website: profileData?.website || "",
+    avatarStyle: profileData?.avatarStyle || "sage",
+    avatarUrl: profileData?.avatarUrl || "",
+    coverGradient: profileData?.coverGradient || "linear-gradient(120deg, var(--lavender), var(--rose), var(--sage))",
+    coverImageUrl: profileData?.coverImageUrl || "",
+    coverPositionX: profileData?.coverPositionX ?? 50,
+    coverPositionY: profileData?.coverPositionY ?? 50
+  };
+}
+
+const profileCoverOptions = [
+  "linear-gradient(120deg, var(--lavender), var(--rose), var(--sage))",
+  "linear-gradient(120deg, var(--sky), var(--lavender), var(--white))",
+  "linear-gradient(120deg, var(--sage), var(--amber), var(--white))",
+  "linear-gradient(120deg, var(--rose), var(--amber), var(--lavender))",
+  "linear-gradient(120deg, var(--cream3), var(--sky), var(--sage))",
+  "linear-gradient(120deg, var(--ink2), var(--lavender3), var(--sky))"
+];
 
 function ProjectLanding({ repo }) {
   return <section className="project-landing"><h2>{repo.name}</h2><p>{repo.description}</p><Button>Open project</Button></section>;

@@ -64,12 +64,21 @@ export function useSignedInUserData() {
         });
 
         const storedProfile = await upsertProfileFromSession(session);
-        if (!cancelled && storedProfile && !localProfile) {
+        if (!cancelled && storedProfile) {
           setProfile((current) => ({
             ...current,
             username: storedProfile.username || current?.username || identity.username,
             displayName: storedProfile.display_name || current?.displayName || identity.displayName,
-            avatarStyle: storedProfile.avatar_style || current?.avatarStyle || "sage"
+            bio: storedProfile.bio || current?.bio || "",
+            pronouns: storedProfile.pronouns || current?.pronouns || "",
+            location: storedProfile.location || current?.location || "",
+            website: storedProfile.website || current?.website || "",
+            avatarStyle: storedProfile.avatar_style || current?.avatarStyle || "sage",
+            avatarUrl: storedProfile.avatar_url || current?.avatarUrl || identity.avatarUrl,
+            coverGradient: storedProfile.cover_gradient || current?.coverGradient || "",
+            coverImageUrl: storedProfile.cover_image_url || current?.coverImageUrl || "",
+            coverPositionX: storedProfile.cover_position_x ?? current?.coverPositionX ?? 50,
+            coverPositionY: storedProfile.cover_position_y ?? current?.coverPositionY ?? 50
           }));
         }
 

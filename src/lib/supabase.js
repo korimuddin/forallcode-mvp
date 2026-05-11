@@ -185,7 +185,7 @@ export async function upsertProfileFromSession(session) {
       display_name: identity.displayName,
       github_username: identity.username
     }, { onConflict: "id" })
-    .select("username, display_name, avatar_style, github_username")
+    .select("*")
     .maybeSingle();
 
   if (error) {
@@ -193,6 +193,32 @@ export async function upsertProfileFromSession(session) {
     return null;
   }
   return data;
+}
+
+export async function uploadProfileVisualImage(session, kind, imageBlob) {
+  if (!supabase) throw new Error("Supabase is not configured.");
+  if (!session?.user?.id) throw new Error("Sign in before uploading profile images.");
+  if (!imageBlob) throw new Error("Choose an image first.");
+  if (imageBlob.size > 1024 * 1024) {
+    throw new Error("This image is still over 1MB after compression. Please choose a smaller image.");
+  }
+
+  const safeKind = slugForStorage(kind || "image");
+  const path = `${session.user.id}/${safeKind}-${Date.now()}.jpg`;
+  const { error } = await supabase.storage
+    .from("profile-visuals")
+    .upload(path, imageBlob, {
+      cacheControl: "31536000",
+      contentType: "image/jpeg",
+      upsert: true
+    });
+
+  if (error) {
+    throw new Error(error.message || "Could not upload this profile image.");
+  }
+
+  const { data } = supabase.storage.from("profile-visuals").getPublicUrl(path);
+  return data.publicUrl;
 }
 
 export function mapGitHubRepo(repo, ownerUsername) {

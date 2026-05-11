@@ -8,7 +8,11 @@ CREATE TABLE profiles (
   location TEXT,
   website TEXT,
   avatar_style TEXT DEFAULT 'sage',
+  avatar_url TEXT,
   cover_gradient TEXT,
+  cover_image_url TEXT,
+  cover_position_x NUMERIC DEFAULT 50,
+  cover_position_y NUMERIC DEFAULT 50,
   github_username TEXT,
   learn_comfort_level TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()

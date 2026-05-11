@@ -1693,7 +1693,13 @@ label { display: grid; gap: 7px; margin: 12px 0; color: var(--ink2); font-weight
   overflow: hidden;
   margin-bottom: 20px;
 }
-.cover { height: 180px; background: linear-gradient(120deg, var(--lavender), var(--rose), var(--sage)); }
+.cover {
+  height: 180px;
+  background: linear-gradient(120deg, var(--lavender), var(--rose), var(--sage));
+  background-position: center;
+  background-size: cover;
+}
+.cover.has-cover-image { min-height: 240px; }
 .profile-content { gap: 18px; padding: 0 24px 18px; margin-top: -44px; }
 .profile-content > div:nth-child(2) { flex: 1; }
 .profile-actions { display: flex; gap: 9px; flex-wrap: wrap; }
@@ -1702,6 +1708,94 @@ label { display: grid; gap: 7px; margin: 12px 0; color: var(--ink2); font-weight
 .avatar svg { width: 44px; height: 44px; display: block; }
 .avatar.tiny svg { width: 28px; height: 28px; }
 .avatar.large svg { width: 112px; height: 112px; }
+.avatar.large img,
+.avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-editor-modal {
+  max-height: min(780px, calc(100vh - 36px));
+  overflow: auto;
+}
+
+.profile-editor-preview {
+  position: relative;
+  min-height: 170px;
+  overflow: hidden;
+  border: 1px solid var(--cream3);
+  border-radius: 18px;
+  background: var(--cream);
+}
+
+.profile-editor-cover-preview {
+  height: 124px;
+  background: linear-gradient(120deg, var(--lavender), var(--rose), var(--sage));
+  background-position: center;
+  background-size: cover;
+}
+
+.profile-editor-preview .avatar {
+  position: absolute;
+  left: 18px;
+  bottom: 18px;
+  border: 4px solid var(--white);
+  box-shadow: 0 14px 34px rgba(61, 53, 48, .18);
+}
+
+.profile-editor-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.profile-editor-modal textarea {
+  min-height: 84px;
+  resize: vertical;
+}
+
+.repo-hero-editor textarea {
+  width: 100%;
+  border: 1px solid var(--cream3);
+  border-radius: 14px;
+  background: var(--white);
+  padding: 12px 14px;
+  color: var(--ink);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.profile-avatar-picker {
+  grid-template-columns: repeat(8, auto);
+  justify-content: start;
+  gap: 8px;
+}
+
+.profile-avatar-picker button,
+.profile-cover-swatches button {
+  border: 1px solid var(--cream3);
+  background: var(--white);
+}
+
+.profile-avatar-picker button.active,
+.profile-cover-swatches button.active {
+  outline: 2px solid var(--lavender3);
+  outline-offset: 2px;
+}
+
+.profile-cover-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.profile-cover-swatches button {
+  width: 64px;
+  height: 38px;
+  border-radius: 12px;
+}
 
 .repo-layout {
   display: grid;
