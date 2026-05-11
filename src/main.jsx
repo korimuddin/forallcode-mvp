@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useEffect, useState } from "react";
+import React, { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Link, Navigate, Route, Routes, useLocation, useNavigate, useParams } from "react-router-dom";
 import { BrowserRouter } from "react-router-dom";
@@ -76,6 +76,19 @@ const languageStyles = {
   Shell: ["#f5e4c4", "#633806"],
   Go: ["#cce0f0", "#0C447C"]
 };
+
+const heroFontOptions = [
+  { label: "Lora", value: '"Lora", serif' },
+  { label: "DM Sans", value: '"DM Sans", sans-serif' },
+  { label: "DM Mono", value: '"DM Mono", monospace' },
+  { label: "Georgia", value: "Georgia, serif" },
+  { label: "Garamond", value: "Garamond, serif" },
+  { label: "Palatino", value: "Palatino, serif" },
+  { label: "Trebuchet", value: '"Trebuchet MS", sans-serif' },
+  { label: "Arial", value: "Arial, sans-serif" },
+  { label: "Verdana", value: "Verdana, sans-serif" },
+  { label: "Courier", value: '"Courier New", monospace' }
+];
 
 const repos = [];
 
@@ -780,14 +793,16 @@ function RepoPage() {
   const [fileError, setFileError] = useState("");
   const [downloadState, setDownloadState] = useState("");
   const [heroEditorOpen, setHeroEditorOpen] = useState(false);
-  const [repoHero, setRepoHero] = useState({ title: "", image: "" });
-  const [heroDraft, setHeroDraft] = useState({ title: "", image: "" });
+  const [repoHero, setRepoHero] = useState({ title: "", image: "", positionX: 50, positionY: 50, fontFamily: heroFontOptions[0].value });
+  const [heroDraft, setHeroDraft] = useState({ title: "", image: "", positionX: 50, positionY: 50, fontFamily: heroFontOptions[0].value });
+  const heroPositionerRef = useRef(null);
   const cloneUrl = `https://github.com/${username}/${repo}.git`;
 
   useEffect(() => {
     const nextHero = getRepoHeroPreference(username, repo, { title: repo, image: "" });
-    setRepoHero(nextHero);
-    setHeroDraft(nextHero);
+    const normalizedHero = normalizeRepoHero(nextHero, repo);
+    setRepoHero(normalizedHero);
+    setHeroDraft(normalizedHero);
   }, [username, repo]);
 
   useEffect(() => {
@@ -909,15 +924,28 @@ function RepoPage() {
 
     const reader = new FileReader();
     reader.onload = () => {
-      setHeroDraft((current) => ({ ...current, image: String(reader.result || "") }));
+      setHeroDraft((current) => ({ ...current, image: String(reader.result || ""), positionX: current.positionX ?? 50, positionY: current.positionY ?? 50 }));
     };
     reader.readAsDataURL(file);
+  }
+
+  function moveHeroImage(event) {
+    if (event.type === "pointermove" && event.buttons !== 1) return;
+    const bounds = heroPositionerRef.current?.getBoundingClientRect();
+    if (!bounds) return;
+
+    const positionX = clamp(((event.clientX - bounds.left) / bounds.width) * 100, 0, 100);
+    const positionY = clamp(((event.clientY - bounds.top) / bounds.height) * 100, 0, 100);
+    setHeroDraft((current) => ({ ...current, positionX, positionY }));
   }
 
   function saveRepoHero() {
     const nextHero = {
       title: heroDraft.title || repo,
-      image: heroDraft.image || ""
+      image: heroDraft.image || "",
+      positionX: heroDraft.positionX ?? 50,
+      positionY: heroDraft.positionY ?? 50,
+      fontFamily: heroDraft.fontFamily || heroFontOptions[0].value
     };
     setRepoHero(nextHero);
     setRepoHeroPreference(username, repo, nextHero);
@@ -925,7 +953,7 @@ function RepoPage() {
   }
 
   function clearRepoHeroImage() {
-    setHeroDraft((current) => ({ ...current, image: "" }));
+    setHeroDraft((current) => ({ ...current, image: "", positionX: 50, positionY: 50 }));
   }
 
   useEffect(() => {
@@ -975,11 +1003,14 @@ function RepoPage() {
       {landingHtml && <PublishedLanding html={landingHtml} />}
       <section
         className={repoHero.image ? "phase-repo-header has-hero-image" : "phase-repo-header"}
-        style={repoHero.image ? { backgroundImage: `linear-gradient(90deg, rgba(20, 16, 14, .82) 0%, rgba(20, 16, 14, .66) 34%, rgba(20, 16, 14, .26) 68%, rgba(20, 16, 14, .12) 100%), url("${repoHero.image}")` } : undefined}
+        style={repoHero.image ? {
+          backgroundImage: `linear-gradient(90deg, rgba(20, 16, 14, .82) 0%, rgba(20, 16, 14, .66) 34%, rgba(20, 16, 14, .26) 68%, rgba(20, 16, 14, .12) 100%), url("${repoHero.image}")`,
+          backgroundPosition: `${repoHero.positionX ?? 50}% ${repoHero.positionY ?? 50}%`
+        } : undefined}
       >
         <div className="repo-hero-content">
-          <div className="repo-breadcrumb"><span>{username}</span><b>/</b><strong>{repo}</strong></div>
-          <h1>{repoHero.title || repo}</h1>
+          <div className="repo-breadcrumb"><Link to="/repos">{username}</Link><b>/</b><strong>{repo}</strong></div>
+          <h1 style={{ fontFamily: repoHero.fontFamily || heroFontOptions[0].value }}>{repoHero.title || repo}</h1>
           <p>{data.description}</p>
           <div className="phase-repo-meta">
             <LanguagePill language={data.language} />
@@ -1013,9 +1044,37 @@ function RepoPage() {
               <input value={heroDraft.title} onChange={(event) => setHeroDraft({ ...heroDraft, title: event.target.value })} placeholder={repo} />
             </label>
             <label>
+              Title font
+              <select value={heroDraft.fontFamily || heroFontOptions[0].value} onChange={(event) => setHeroDraft({ ...heroDraft, fontFamily: event.target.value })}>
+                {heroFontOptions.map((font) => <option key={font.label} value={font.value}>{font.label}</option>)}
+              </select>
+            </label>
+            <label>
               Background image
               <input accept="image/*" type="file" onChange={handleHeroImageUpload} />
             </label>
+            {heroDraft.image && (
+              <div className="repo-hero-position-field">
+                <span>Hero image position</span>
+                <div
+                  className="repo-hero-positioner"
+                  onPointerDown={moveHeroImage}
+                  onPointerMove={moveHeroImage}
+                  ref={heroPositionerRef}
+                  style={{
+                    backgroundImage: `linear-gradient(90deg, rgba(20, 16, 14, .82), rgba(20, 16, 14, .12)), url("${heroDraft.image}")`,
+                    backgroundPosition: `${heroDraft.positionX ?? 50}% ${heroDraft.positionY ?? 50}%`
+                  }}
+                >
+                  <strong style={{
+                    fontFamily: heroDraft.fontFamily || heroFontOptions[0].value,
+                    left: `${heroDraft.positionX ?? 50}%`,
+                    top: `${heroDraft.positionY ?? 50}%`
+                  }} />
+                </div>
+                <small>Drag inside the box to choose which part of the image appears in the hero banner.</small>
+              </div>
+            )}
             {heroDraft.image && <button className="text-button" onClick={clearRepoHeroImage}>Remove image</button>}
             <div className="repo-hero-editor-actions">
               <Button variant="soft" onClick={() => setHeroEditorOpen(false)}>Cancel</Button>
@@ -1323,10 +1382,10 @@ function DeskIllustration() {
 }
 
 function RepoCard({ repo, actions = false }) {
-  const [hero, setHero] = useState(() => getRepoHeroPreference(repo.owner, repo.name));
+  const [hero, setHero] = useState(() => normalizeRepoHero(getRepoHeroPreference(repo.owner, repo.name), repo.name));
 
   useEffect(() => {
-    setHero(getRepoHeroPreference(repo.owner, repo.name));
+    setHero(normalizeRepoHero(getRepoHeroPreference(repo.owner, repo.name), repo.name));
   }, [repo.name, repo.owner]);
 
   async function handleStarClick() {
@@ -1356,8 +1415,11 @@ function RepoCard({ repo, actions = false }) {
   return (
     <Card>
       {hero.image && (
-        <div className="repo-card-hero" style={{ backgroundImage: `linear-gradient(90deg, rgba(20, 16, 14, .58), rgba(20, 16, 14, .18)), url("${hero.image}")` }}>
-          <span>{hero.title || repo.name}</span>
+        <div className="repo-card-hero" style={{
+          backgroundImage: `linear-gradient(90deg, rgba(20, 16, 14, .72), rgba(20, 16, 14, .2)), url("${hero.image}")`,
+          backgroundPosition: `${hero.positionX ?? 50}% ${hero.positionY ?? 50}%`
+        }}>
+          <span style={{ fontFamily: hero.fontFamily || heroFontOptions[0].value }}>{hero.title || repo.name}</span>
         </div>
       )}
       <div className="repo-card-head"><h3><Link to={`/${repo.owner}/${repo.name}`}>{repo.name}</Link></h3>{repo.private && <Lock size={15} />}</div>
@@ -1370,10 +1432,10 @@ function RepoCard({ repo, actions = false }) {
 
 function PhaseRepoCard({ repo }) {
   const navigate = useNavigate();
-  const [hero, setHero] = useState(() => getRepoHeroPreference(repo.owner, repo.name));
+  const [hero, setHero] = useState(() => normalizeRepoHero(getRepoHeroPreference(repo.owner, repo.name), repo.name));
 
   useEffect(() => {
-    setHero(getRepoHeroPreference(repo.owner, repo.name));
+    setHero(normalizeRepoHero(getRepoHeroPreference(repo.owner, repo.name), repo.name));
   }, [repo.name, repo.owner]);
 
   async function handleStarClick() {
@@ -1404,10 +1466,13 @@ function PhaseRepoCard({ repo }) {
     <article
       className={hero.image ? "phase-repo-card has-repo-hero" : "phase-repo-card"}
       onClick={() => navigate(`/${repo.owner}/${repo.name}`)}
-      style={hero.image ? { backgroundImage: `linear-gradient(90deg, rgba(20, 16, 14, .86) 0%, rgba(20, 16, 14, .7) 38%, rgba(20, 16, 14, .32) 70%, rgba(20, 16, 14, .14) 100%), url("${hero.image}")` } : undefined}
+      style={hero.image ? {
+        backgroundImage: `linear-gradient(90deg, rgba(20, 16, 14, .86) 0%, rgba(20, 16, 14, .7) 38%, rgba(20, 16, 14, .32) 70%, rgba(20, 16, 14, .14) 100%), url("${hero.image}")`,
+        backgroundPosition: `${hero.positionX ?? 50}% ${hero.positionY ?? 50}%`
+      } : undefined}
     >
       <div className="phase-repo-title">
-        <h3>{hero.title || repo.name}</h3>
+        <h3 style={{ fontFamily: hero.fontFamily || heroFontOptions[0].value }}>{hero.title || repo.name}</h3>
       </div>
       <p>{repo.description}</p>
       <div className="phase-repo-meta">
@@ -1520,6 +1585,20 @@ function FileTree() {
 function ReadmePreview({ repo = repos[0], markdown }) {
   const fallback = `# ${repo.name}\n\n${repo.description || "No README.md found for this repository."}`;
   return <MarkdownPreview markdown={markdown || fallback} />;
+}
+
+function normalizeRepoHero(hero, repoName) {
+  return {
+    title: hero?.title || repoName || "",
+    image: hero?.image || "",
+    positionX: Number.isFinite(hero?.positionX) ? hero.positionX : 50,
+    positionY: Number.isFinite(hero?.positionY) ? hero.positionY : 50,
+    fontFamily: hero?.fontFamily || heroFontOptions[0].value
+  };
+}
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
 }
 
 function getVisibleRepoTree(files, expandedFolders) {
