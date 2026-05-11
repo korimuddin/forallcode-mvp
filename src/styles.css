@@ -957,6 +957,25 @@ label { display: grid; gap: 7px; margin: 12px 0; color: var(--ink2); font-weight
 .activity-item { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; }
 .activity-item time, .repo-meta span { color: var(--ink3); font-size: .9rem; }
 
+.repo-card-hero {
+  display: grid;
+  align-items: end;
+  min-height: 128px;
+  margin: -22px -22px 16px;
+  border-radius: 8px 8px 0 0;
+  background-position: center;
+  background-size: cover;
+  padding: 18px;
+  color: var(--white);
+}
+
+.repo-card-hero span {
+  font-family: "Lora", serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+  text-shadow: 0 10px 30px rgba(20, 16, 14, .38);
+}
+
 .repo-card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .repo-meta { gap: 12px; flex-wrap: wrap; margin-top: 14px; }
 .repo-meta span { display: inline-flex; align-items: center; gap: 5px; }
@@ -1209,6 +1228,30 @@ label { display: grid; gap: 7px; margin: 12px 0; color: var(--ink2); font-weight
   background: var(--white);
   padding: 20px;
   transition: all .18s ease;
+}
+
+.phase-repo-card.has-repo-hero {
+  overflow: hidden;
+  padding-top: 0;
+}
+
+.phase-repo-card-hero {
+  display: grid;
+  align-items: end;
+  min-height: 150px;
+  margin: 0 -20px 12px;
+  background-position: center;
+  background-size: cover;
+  padding: 20px;
+  color: var(--white);
+}
+
+.phase-repo-card-hero span {
+  font-family: "Lora", serif;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  text-shadow: 0 10px 30px rgba(20, 16, 14, .42);
 }
 
 .phase-repo-card:hover {

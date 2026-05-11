@@ -31,7 +31,7 @@ import Skeleton from "./components/ui/Skeleton";
 import { useAuthSession, useDocumentTitle, useIsMobile, useSignedInUserData } from "./lib/hooks";
 import { renderMarkdown } from "./lib/markdownRenderer";
 import { createNotification } from "./lib/notifications";
-import { getUserPreference, setUserPreference } from "./lib/preferences";
+import { getRepoHeroPreference, getUserPreference, setRepoHeroPreference, setUserPreference } from "./lib/preferences";
 import { fetchGitHubFileContent, fetchGitHubRepoArchive, fetchGitHubRepoOverview, getCurrentSession, isSupabaseConfigured, signInWithGitHub, signInWithPassword, supabase } from "./lib/supabase";
 import "./styles.css";
 import "./styles/mobile.css";
@@ -783,14 +783,12 @@ function RepoPage() {
   const [repoHero, setRepoHero] = useState({ title: "", image: "" });
   const [heroDraft, setHeroDraft] = useState({ title: "", image: "" });
   const cloneUrl = `https://github.com/${username}/${repo}.git`;
-  const heroStorageKey = `forallcode:repo-hero:${username}/${repo}`;
 
   useEffect(() => {
-    const savedHero = window.localStorage.getItem(heroStorageKey);
-    const nextHero = savedHero ? JSON.parse(savedHero) : { title: repo, image: "" };
+    const nextHero = getRepoHeroPreference(username, repo, { title: repo, image: "" });
     setRepoHero(nextHero);
     setHeroDraft(nextHero);
-  }, [heroStorageKey, repo]);
+  }, [username, repo]);
 
   useEffect(() => {
     let alive = true;
@@ -922,7 +920,7 @@ function RepoPage() {
       image: heroDraft.image || ""
     };
     setRepoHero(nextHero);
-    window.localStorage.setItem(heroStorageKey, JSON.stringify(nextHero));
+    setRepoHeroPreference(username, repo, nextHero);
     setHeroEditorOpen(false);
   }
 
@@ -1325,6 +1323,12 @@ function DeskIllustration() {
 }
 
 function RepoCard({ repo, actions = false }) {
+  const [hero, setHero] = useState(() => getRepoHeroPreference(repo.owner, repo.name));
+
+  useEffect(() => {
+    setHero(getRepoHeroPreference(repo.owner, repo.name));
+  }, [repo.name, repo.owner]);
+
   async function handleStarClick() {
     if (!supabase) return;
     const session = await getCurrentSession();
@@ -1351,6 +1355,11 @@ function RepoCard({ repo, actions = false }) {
 
   return (
     <Card>
+      {hero.image && (
+        <div className="repo-card-hero" style={{ backgroundImage: `linear-gradient(90deg, rgba(20, 16, 14, .58), rgba(20, 16, 14, .18)), url("${hero.image}")` }}>
+          <span>{hero.title || repo.name}</span>
+        </div>
+      )}
       <div className="repo-card-head"><h3><Link to={`/${repo.owner}/${repo.name}`}>{repo.name}</Link></h3>{repo.private && <Lock size={15} />}</div>
       <p>{repo.description}</p>
       <div className="repo-meta"><LanguagePill language={repo.language} /><span><Star size={14} />{repo.stars}</span><span><GitFork size={14} />{repo.forks}</span><span>{repo.updated}</span></div>
@@ -1361,6 +1370,11 @@ function RepoCard({ repo, actions = false }) {
 
 function PhaseRepoCard({ repo }) {
   const navigate = useNavigate();
+  const [hero, setHero] = useState(() => getRepoHeroPreference(repo.owner, repo.name));
+
+  useEffect(() => {
+    setHero(getRepoHeroPreference(repo.owner, repo.name));
+  }, [repo.name, repo.owner]);
 
   async function handleStarClick() {
     if (!supabase) return;
@@ -1387,7 +1401,12 @@ function PhaseRepoCard({ repo }) {
   }
 
   return (
-    <article className="phase-repo-card" onClick={() => navigate(`/${repo.owner}/${repo.name}`)}>
+    <article className={hero.image ? "phase-repo-card has-repo-hero" : "phase-repo-card"} onClick={() => navigate(`/${repo.owner}/${repo.name}`)}>
+      {hero.image && (
+        <div className="phase-repo-card-hero" style={{ backgroundImage: `linear-gradient(90deg, rgba(20, 16, 14, .62), rgba(20, 16, 14, .2)), url("${hero.image}")` }}>
+          <span>{hero.title || repo.name}</span>
+        </div>
+      )}
       <div className="phase-repo-title">
         <h3>{repo.name}</h3>
         <span>{repo.private ? "Private" : "Public"}</span>
