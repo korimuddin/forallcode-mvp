@@ -777,7 +777,18 @@ function RepoPage() {
   const [fileLoading, setFileLoading] = useState(false);
   const [fileError, setFileError] = useState("");
   const [downloadState, setDownloadState] = useState("");
+  const [heroEditorOpen, setHeroEditorOpen] = useState(false);
+  const [repoHero, setRepoHero] = useState({ title: "", image: "" });
+  const [heroDraft, setHeroDraft] = useState({ title: "", image: "" });
   const cloneUrl = `https://github.com/${username}/${repo}.git`;
+  const heroStorageKey = `forallcode:repo-hero:${username}/${repo}`;
+
+  useEffect(() => {
+    const savedHero = window.localStorage.getItem(heroStorageKey);
+    const nextHero = savedHero ? JSON.parse(savedHero) : { title: repo, image: "" };
+    setRepoHero(nextHero);
+    setHeroDraft(nextHero);
+  }, [heroStorageKey, repo]);
 
   useEffect(() => {
     let alive = true;
@@ -882,6 +893,31 @@ function RepoPage() {
     }
   }
 
+  function handleHeroImageUpload(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setHeroDraft((current) => ({ ...current, image: String(reader.result || "") }));
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function saveRepoHero() {
+    const nextHero = {
+      title: heroDraft.title || repo,
+      image: heroDraft.image || ""
+    };
+    setRepoHero(nextHero);
+    window.localStorage.setItem(heroStorageKey, JSON.stringify(nextHero));
+    setHeroEditorOpen(false);
+  }
+
+  function clearRepoHeroImage() {
+    setHeroDraft((current) => ({ ...current, image: "" }));
+  }
+
   useEffect(() => {
     async function loadPublishedLanding() {
       if (!supabase) return;
@@ -927,16 +963,23 @@ function RepoPage() {
   return (
     <div className="phase-repo-page">
       {landingHtml && <PublishedLanding html={landingHtml} />}
-      <section className="phase-repo-header">
-        <div className="repo-breadcrumb"><span>{username}</span><b>/</b><strong>{repo}</strong></div>
-        <p>{data.description}</p>
-        <div className="phase-repo-meta">
-          <LanguagePill language={data.language} />
-          <span><Star size={14} />{data.stars}</span>
-          <span><GitFork size={14} />{data.forks}</span>
-          <span>Updated {data.updated}</span>
+      <section
+        className={repoHero.image ? "phase-repo-header has-hero-image" : "phase-repo-header"}
+        style={repoHero.image ? { backgroundImage: `linear-gradient(90deg, rgba(20, 16, 14, .62), rgba(20, 16, 14, .18)), url("${repoHero.image}")` } : undefined}
+      >
+        <div className="repo-hero-content">
+          <div className="repo-breadcrumb"><span>{username}</span><b>/</b><strong>{repo}</strong></div>
+          <h1>{repoHero.title || repo}</h1>
+          <p>{data.description}</p>
+          <div className="phase-repo-meta">
+            <LanguagePill language={data.language} />
+            <span><Star size={14} />{data.stars}</span>
+            <span><GitFork size={14} />{data.forks}</span>
+            <span>Updated {data.updated}</span>
+          </div>
         </div>
         <div className="repo-header-actions">
+          <Button variant="soft" onClick={() => setHeroEditorOpen((open) => !open)}><Palette size={16} />Edit hero</Button>
           <Button variant="soft" onClick={handleStarRepo}><Star size={16} />Star</Button>
           <Button variant="soft"><GitFork size={16} />Fork</Button>
           <Button variant="soft" onClick={downloadRepositoryArchive} disabled={repoDetailsLoading || downloadState === "repo"}>
@@ -947,6 +990,23 @@ function RepoPage() {
             <div><input readOnly value={cloneUrl} /><Button variant="soft"><Copy size={16} /></Button></div>
           </div>
         </div>
+        {heroEditorOpen && (
+          <div className="repo-hero-editor">
+            <label>
+              Overlay title
+              <input value={heroDraft.title} onChange={(event) => setHeroDraft({ ...heroDraft, title: event.target.value })} placeholder={repo} />
+            </label>
+            <label>
+              Background image
+              <input accept="image/*" type="file" onChange={handleHeroImageUpload} />
+            </label>
+            {heroDraft.image && <button className="text-button" onClick={clearRepoHeroImage}>Remove image</button>}
+            <div className="repo-hero-editor-actions">
+              <Button variant="soft" onClick={() => setHeroEditorOpen(false)}>Cancel</Button>
+              <Button onClick={saveRepoHero}>Save hero</Button>
+            </div>
+          </div>
+        )}
       </section>
 
       <div className="repo-tab-bar">
