@@ -975,7 +975,7 @@ function RepoPage() {
       {landingHtml && <PublishedLanding html={landingHtml} />}
       <section
         className={repoHero.image ? "phase-repo-header has-hero-image" : "phase-repo-header"}
-        style={repoHero.image ? { backgroundImage: `linear-gradient(90deg, rgba(20, 16, 14, .62), rgba(20, 16, 14, .18)), url("${repoHero.image}")` } : undefined}
+        style={repoHero.image ? { backgroundImage: `linear-gradient(90deg, rgba(20, 16, 14, .82) 0%, rgba(20, 16, 14, .66) 34%, rgba(20, 16, 14, .26) 68%, rgba(20, 16, 14, .12) 100%), url("${repoHero.image}")` } : undefined}
       >
         <div className="repo-hero-content">
           <div className="repo-breadcrumb"><span>{username}</span><b>/</b><strong>{repo}</strong></div>
