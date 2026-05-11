@@ -28,6 +28,7 @@ import TopNav from "./components/layout/TopNav";
 import ErrorBoundary from "./components/ui/ErrorBoundary";
 import IllustratedAvatar, { avatarVariants } from "./components/ui/IllustratedAvatar";
 import Skeleton from "./components/ui/Skeleton";
+import { learnLessons, learnTracks } from "./data/learnLessons";
 import { useAuthSession, useDocumentTitle, useIsMobile, useSignedInUserData } from "./lib/hooks";
 import { renderMarkdown } from "./lib/markdownRenderer";
 import { createNotification } from "./lib/notifications";
@@ -92,71 +93,7 @@ const heroFontOptions = [
 
 const repos = [];
 
-const lessons = [
-  ["branching", "Branching", "beginner", "Try ideas without disturbing your main line of work."],
-  ["merging", "Merging", "beginner", "Bring a finished branch home with confidence."],
-  ["forking", "Forking", "beginner", "Make your own copy of a project before contributing."],
-  ["commits", "Commits", "beginner", "Capture meaningful checkpoints and write useful messages."],
-  ["pull-requests", "Pull Requests", "intermediate", "Turn your branch into a thoughtful proposal."],
-  ["rebasing", "Rebasing", "intermediate", "Replay changes onto a fresher base when history needs tidying."],
-  ["conflicts", "Resolving merge conflicts", "intermediate", "Understand why conflicts happen and resolve them calmly."],
-  ["gitignore", "Gitignore", "beginner", "Keep generated files and secrets out of your repo."],
-  ["stashing", "Stashing changes", "intermediate", "Temporarily shelve work while you switch context."],
-  ["commit-messages", "Writing good commit messages", "beginner", "Leave future readers a clear trail."],
-  ["open-source", "Open source contribution", "advanced", "Choose an issue, communicate well, and ship your first PR."],
-  ["licences", "Licences explained simply", "beginner", "Pick a licence without getting lost in legal fog."]
-];
-
-const lessonDetails = {
-  branching: {
-    label: "A feature branch splits from main and returns later.",
-    steps: ["Start from main", "Create a new branch", "Make a focused change", "Compare your work"]
-  },
-  merging: {
-    label: "Two lines of work combine into one finished history.",
-    steps: ["Review both branches", "Bring changes together", "Resolve the merge", "Check the result"]
-  },
-  forking: {
-    label: "A project is copied into your account before you contribute.",
-    steps: ["Find the upstream project", "Create your fork", "Clone your copy", "Send improvements back"]
-  },
-  commits: {
-    label: "Checkpoints stack into a clear project timeline.",
-    steps: ["Stage the right files", "Describe the change", "Create the checkpoint", "Review the timeline"]
-  },
-  "pull-requests": {
-    label: "A branch becomes a reviewed proposal with comments.",
-    steps: ["Open the proposal", "Explain the change", "Respond to review", "Merge when ready"]
-  },
-  rebasing: {
-    label: "Local commits replay on top of a fresher main branch.",
-    steps: ["Fetch the newest main", "Replay your commits", "Fix any stops", "Push the tidy history"]
-  },
-  conflicts: {
-    label: "Competing edits meet in one file and need a human choice.",
-    steps: ["Find conflict markers", "Choose the final text", "Remove the markers", "Commit the resolution"]
-  },
-  gitignore: {
-    label: "Generated files and secrets are filtered before they enter Git.",
-    steps: ["Spot noisy files", "Write ignore rules", "Check ignored paths", "Commit the clean list"]
-  },
-  stashing: {
-    label: "Unfinished work goes onto a shelf while you switch tasks.",
-    steps: ["Save work in progress", "Switch context", "Finish the urgent task", "Pop the stash back"]
-  },
-  "commit-messages": {
-    label: "A commit gets a clear subject and helpful details.",
-    steps: ["Name the intent", "Add useful context", "Keep it readable", "Help future readers"]
-  },
-  "open-source": {
-    label: "An issue moves through discussion, contribution, and review.",
-    steps: ["Choose a good issue", "Talk before building", "Submit the change", "Follow through kindly"]
-  },
-  licences: {
-    label: "A licence document clarifies how others can use the work.",
-    steps: ["Compare permissions", "Pick a licence", "Add it to the repo", "Make terms visible"]
-  }
-};
+const lessons = learnLessons;
 
 function useInitialLoading(delay = 420) {
   const [loading, setLoading] = useState(true);
@@ -1256,40 +1193,211 @@ function RepoPage() {
 function LearnPage() {
   useDocumentTitle("Learn");
   const isMobile = useIsMobile();
-  const [active, setActive] = useState(lessons[0][0]);
-  const lesson = lessons.find((item) => item[0] === active);
-  const detail = lessonDetails[active] || lessonDetails.branching;
+  const { session, checked } = useAuthSession();
+  const [activeTrack, setActiveTrack] = useState("beginner");
+  const [expandedTracks, setExpandedTracks] = useState(() => new Set(["beginner"]));
+  const [active, setActive] = useState(lessons[0].slug);
+  const [completedLessons, setCompletedLessons] = useState(() => new Set());
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [onboardingLeaving, setOnboardingLeaving] = useState(false);
+  const [selectedComfort, setSelectedComfort] = useState("");
+  const lesson = lessons.find((item) => item.slug === active) || lessons[0];
+  const isFreeUser = true;
+
+  useEffect(() => {
+    let alive = true;
+
+    async function loadLearnPreferences() {
+      if (!checked) return;
+      const fallback = typeof window !== "undefined" ? window.localStorage.getItem("learn_comfort_level") : "";
+
+      if (!session?.user?.id || !supabase) {
+        if (!alive) return;
+        if (fallback) openRecommendedTrack(fallback);
+        setShowOnboarding(!fallback);
+        return;
+      }
+
+      const [{ data: profile }, { data: progress }] = await Promise.all([
+        supabase.from("profiles").select("learn_comfort_level").eq("id", session.user.id).maybeSingle(),
+        supabase.from("learn_progress").select("lesson_slug, completed").eq("user_id", session.user.id)
+      ]);
+
+      if (!alive) return;
+      const comfort = profile?.learn_comfort_level || fallback;
+      if (comfort) openRecommendedTrack(comfort);
+      setShowOnboarding(!comfort);
+      setCompletedLessons(new Set((progress || []).filter((item) => item.completed).map((item) => item.lesson_slug)));
+    }
+
+    loadLearnPreferences();
+    return () => {
+      alive = false;
+    };
+  }, [checked, session]);
+
+  function openRecommendedTrack(trackId) {
+    const track = learnTracks.find((item) => item.id === trackId) || learnTracks[0];
+    const firstLesson = lessons.find((item) => item.track === track.track);
+    setActiveTrack(track.id);
+    setExpandedTracks(new Set([track.id]));
+    if (firstLesson) setActive(firstLesson.slug);
+  }
+
+  async function chooseComfort(trackId) {
+    setSelectedComfort(trackId);
+    if (typeof window !== "undefined") window.localStorage.setItem("learn_comfort_level", trackId);
+
+    if (session?.user?.id && supabase) {
+      await supabase.from("profiles").update({ learn_comfort_level: trackId }).eq("id", session.user.id);
+    }
+
+    window.setTimeout(() => {
+      setOnboardingLeaving(true);
+      window.setTimeout(() => {
+        openRecommendedTrack(trackId);
+        setShowOnboarding(false);
+        setOnboardingLeaving(false);
+      }, 300);
+    }, 400);
+  }
+
+  function toggleTrack(trackId) {
+    setExpandedTracks((current) => {
+      const next = new Set(current);
+      if (next.has(trackId)) next.delete(trackId);
+      else next.add(trackId);
+      return next;
+    });
+  }
+
+  function chooseLesson(slug) {
+    const nextLesson = lessons.find((item) => item.slug === slug);
+    if (nextLesson) {
+      const track = learnTracks.find((item) => item.track === nextLesson.track);
+      if (track) setActiveTrack(track.id);
+    }
+    setActive(slug);
+  }
+
+  async function markLessonComplete() {
+    const next = new Set(completedLessons);
+    next.add(lesson.slug);
+    setCompletedLessons(next);
+
+    if (session?.user?.id && supabase) {
+      await supabase.from("learn_progress").upsert({
+        user_id: session.user.id,
+        lesson_slug: lesson.slug,
+        completed: true,
+        completed_at: new Date().toISOString()
+      }, { onConflict: "user_id,lesson_slug" });
+    }
+  }
+
+  if (showOnboarding) {
+    return <LearnComfortCheck selected={selectedComfort} leaving={onboardingLeaving} onSelect={chooseComfort} />;
+  }
+
   return (
     <PageFrame title="Learn Git visually" eyebrow="Learn">
       {isMobile && (
-        <select className="learn-mobile-select" value={active} onChange={(event) => setActive(event.target.value)} aria-label="Choose lesson">
-          {lessons.map(([slug, title, level]) => (
-            <option key={slug} value={slug}>{title} - {level}</option>
+        <select className="learn-mobile-select" value={active} onChange={(event) => chooseLesson(event.target.value)} aria-label="Choose lesson">
+          {lessons.map((item) => (
+            <option key={item.slug} value={item.slug}>{item.title} - {item.tag}</option>
           ))}
         </select>
       )}
-      <div className="learn-layout">
+      <div className="learn-layout learn-library">
         <aside className="lesson-sidebar">
-          {["New to Git", "Getting comfortable", "Going further"].map((track) => <h3 key={track}>{track}</h3>)}
-          {lessons.map(([slug, title, level], index) => (
-            <button key={slug} className={active === slug ? "active" : ""} onClick={() => setActive(slug)}>
-              <span>{title}</span>{index > 2 && <Lock size={13} />}<Badge>{level}</Badge>
-            </button>
-          ))}
+          {learnTracks.map((track) => {
+            const trackLessons = lessons.filter((item) => item.track === track.track);
+            const completed = trackLessons.filter((item) => completedLessons.has(item.slug)).length;
+            const expanded = expandedTracks.has(track.id);
+            return (
+              <div className="learn-track-group" key={track.id}>
+                <button className="learn-track-heading" onClick={() => toggleTrack(track.id)}>
+                  <span>{track.subtitle}</span>
+                  <ChevronDown className={expanded ? "open" : ""} size={14} />
+                </button>
+                {expanded && (
+                  <>
+                    <div className="learn-track-progress"><span style={{ width: `${trackLessons.length ? (completed / trackLessons.length) * 100 : 0}%`, background: track.color }} /></div>
+                    {track.id === "advanced" && (
+                      <>
+                        {trackLessons.filter((item) => item.tag !== "devops").map((item) => (
+                          <LessonSidebarButton active={active === item.slug} completed={completedLessons.has(item.slug)} freeLocked={isFreeUser && item.track > 1} key={item.slug} lesson={item} onClick={() => chooseLesson(item.slug)} />
+                        ))}
+                        <div className="devops-separator"><span>DevOps Track</span></div>
+                        {trackLessons.filter((item) => item.tag === "devops").map((item) => (
+                          <LessonSidebarButton active={active === item.slug} completed={completedLessons.has(item.slug)} freeLocked={isFreeUser} key={item.slug} lesson={item} onClick={() => chooseLesson(item.slug)} />
+                        ))}
+                      </>
+                    )}
+                    {track.id !== "advanced" && trackLessons.map((item) => (
+                      <LessonSidebarButton active={active === item.slug} completed={completedLessons.has(item.slug)} freeLocked={isFreeUser && item.track > 1} key={item.slug} lesson={item} onClick={() => chooseLesson(item.slug)} />
+                    ))}
+                  </>
+                )}
+              </div>
+            );
+          })}
         </aside>
         <article className="lesson-content">
-          <Badge>{lesson[2]}</Badge>
-          <h2>{lesson[1]}</h2>
-          <p>{lesson[3]}</p>
-          <LessonIllustration slug={active} title={lesson[1]} description={detail.label} />
+          <LessonTag tag={lesson.tag} />
+          <h2>{lesson.title}</h2>
+          <p>{lesson.description}</p>
+          <LessonIllustration lesson={lesson} />
           <div className="steps">
-            {detail.steps.map((step) => <Card key={step}><h3>{step}</h3><p>Each step connects the illustration to the command and the reason behind it.</p></Card>)}
+            {lesson.steps.map((step) => <Card key={step.title}><h3>{step.title}</h3><p>{step.body}</p></Card>)}
           </div>
-          <Button><Check size={16} />Mark as complete</Button>
+          <Button onClick={markLessonComplete}><Check size={16} />{completedLessons.has(lesson.slug) ? "Completed" : "Mark as complete"}</Button>
         </article>
       </div>
     </PageFrame>
   );
+}
+
+function LearnComfortCheck({ selected, leaving, onSelect }) {
+  const cards = [
+    { id: "beginner", emoji: "🌱", title: "New to this", text: "I've heard of Git but haven't really used it, or I've only used it a little and things still feel unclear.", action: "Start with the basics →" },
+    { id: "intermediate", emoji: "🌿", title: "Getting there", text: "I know the basics — commits, branches, push and pull. But I want to get more confident working with others.", action: "Jump to Intermediate →" },
+    { id: "advanced", emoji: "🚀", title: "Pretty comfortable", text: "I use Git daily and work in teams. I want to go deeper — advanced workflows, DevOps, and shipping with confidence.", action: "Go to Advanced →" }
+  ];
+
+  return (
+    <section className={leaving ? "learn-onboarding leaving" : "learn-onboarding"}>
+      <p className="eyebrow">Learn Git visually</p>
+      <h1>How comfortable are you <em>with Git right now?</em></h1>
+      <p className="learn-onboarding-subtext">Be honest — there's no wrong answer. We'll start you in exactly the right place.</p>
+      <div className="comfort-card-grid">
+        {cards.map((card) => (
+          <button className={`comfort-card ${card.id} ${selected === card.id ? "selected" : ""}`} key={card.id} onClick={() => onSelect(card.id)}>
+            <span className="comfort-emoji">{card.emoji}</span>
+            <strong>{card.title}</strong>
+            <small>{card.text}</small>
+            <b>{card.action}</b>
+          </button>
+        ))}
+      </div>
+      <p className="learn-reassurance">You can always switch tracks or go back to basics — these are suggestions, not locks.</p>
+    </section>
+  );
+}
+
+function LessonSidebarButton({ active, completed, freeLocked, lesson, onClick }) {
+  return (
+    <button className={active ? "active" : ""} onClick={onClick}>
+      <i className={completed ? "lesson-dot complete" : "lesson-dot"} />
+      <span>{lesson.title}</span>
+      {freeLocked && <Lock size={13} />}
+      <LessonTag tag={lesson.tag} compact />
+    </button>
+  );
+}
+
+function LessonTag({ tag, compact = false }) {
+  return <span className={`lesson-tag ${tag} ${compact ? "compact" : ""}`}>{tag}</span>;
 }
 
 function ExplorePage() {
@@ -1800,7 +1908,7 @@ function RepoListLoading() {
   ));
 }
 
-function LessonIllustration({ slug, title, description }) {
+function LessonIllustration({ lesson }) {
   const diagrams = {
     branching: <BranchingArt />,
     merging: <MergingArt />,
@@ -1815,19 +1923,76 @@ function LessonIllustration({ slug, title, description }) {
     "open-source": <OpenSourceArt />,
     licences: <LicencesArt />
   };
+  const art = diagrams[lesson.slug] || <GeneratedLessonArt lesson={lesson} />;
 
   return (
     <figure className="git-diagram">
-      <svg viewBox="0 0 760 300" role="img" aria-label={`${title} lesson illustration`}>
-        <title>{title}</title>
-        <desc>{description}</desc>
+      <svg viewBox="0 0 760 300" role="img" aria-label={`${lesson.title} lesson illustration`}>
+        <title>{lesson.title}</title>
+        <desc>{lesson.description}</desc>
         <rect x="0" y="0" width="760" height="300" rx="28" fill="#f4efe6" />
         <circle cx="660" cy="58" r="58" fill="#ddd5f0" opacity="0.72" />
         <circle cx="92" cy="235" r="72" fill="#c8d8c4" opacity="0.55" />
         <path d="M60 252 C188 198 292 274 430 218 S620 206 704 142" stroke="#fffdf9" strokeWidth="26" fill="none" strokeLinecap="round" opacity="0.72" />
-        {diagrams[slug] || diagrams.branching}
+        {art}
       </svg>
     </figure>
+  );
+}
+
+function GeneratedLessonArt({ lesson }) {
+  const accent = lesson.tag === "devops" ? "#6aa8d4" : lesson.tag === "advanced" ? "#d4848c" : "#9b8fd4";
+  const secondary = lesson.tag === "devops" ? "#cce0f0" : lesson.tag === "advanced" ? "#f5d5d8" : "#ddd5f0";
+  const labels = lesson.steps.slice(0, 4).map((step) => step.title.split(" ").slice(0, 2).join(" "));
+
+  if (lesson.tag === "devops") {
+    return (
+      <>
+        <rect x="116" y="78" width="528" height="142" rx="24" fill="#fffdf9" stroke="#cce0f0" strokeWidth="6" />
+        {labels.map((label, index) => {
+          const x = 172 + index * 138;
+          return (
+            <g key={label}>
+              {index > 0 && <path d={`M${x - 96} 150 H${x - 38}`} stroke="#6aa8d4" strokeWidth="8" strokeLinecap="round" />}
+              <rect x={x - 36} y="118" width="72" height="64" rx="16" fill={index % 2 ? "#cce0f0" : "#fffdf9"} stroke="#6aa8d4" strokeWidth="5" />
+              <text x={x} y="205" textAnchor="middle">{label}</text>
+            </g>
+          );
+        })}
+        <text x="380" y="64" textAnchor="middle">automated delivery pipeline</text>
+      </>
+    );
+  }
+
+  if (lesson.track === 3) {
+    return (
+      <>
+        <path d="M114 206 H646" stroke="#d4848c" strokeWidth="9" strokeLinecap="round" />
+        <path d="M180 206 C242 98 330 98 394 206" stroke="#9b8fd4" strokeWidth="8" fill="none" strokeLinecap="round" />
+        <path d="M394 206 C446 110 536 110 606 206" stroke="#6aa8d4" strokeWidth="8" fill="none" strokeLinecap="round" />
+        {[114, 246, 394, 526, 646].map((x, index) => <GitNode key={x} x={x} y={206} stroke={index % 2 ? accent : "#7aaa72"} label={index === 0 ? "base" : `a${index}`} />)}
+        <rect x="246" y="62" width="268" height="60" rx="18" fill="#fffdf9" stroke={accent} strokeWidth="5" />
+        <text x="380" y="99" textAnchor="middle">{labels[0] || lesson.title}</text>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <rect x="116" y="70" width="528" height="162" rx="24" fill="#fffdf9" stroke="#e8e0d4" />
+      <path d="M170 168 H590" stroke={accent} strokeWidth="9" strokeLinecap="round" />
+      {labels.map((label, index) => {
+        const x = 170 + index * 140;
+        return (
+          <g key={label}>
+            <GitNode x={x} y={168} stroke={index % 2 ? "#7aaa72" : accent} />
+            <rect x={x - 54} y="88" width="108" height="36" rx="12" fill={secondary} />
+            <text x={x} y="112" textAnchor="middle">{label}</text>
+          </g>
+        );
+      })}
+      <text x="380" y="264" textAnchor="middle">practice with confidence</text>
+    </>
   );
 }
 

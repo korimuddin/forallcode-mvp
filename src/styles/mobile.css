@@ -181,6 +181,21 @@
     display: none;
   }
 
+  .learn-onboarding {
+    justify-content: start;
+    padding-top: 34px;
+  }
+
+  .comfort-card-grid {
+    grid-template-columns: 1fr;
+    width: 100%;
+    max-width: 360px;
+  }
+
+  .comfort-card {
+    min-height: auto;
+  }
+
   .learn-mobile-select {
     width: 100%;
     min-height: 44px;

@@ -10,6 +10,7 @@ CREATE TABLE profiles (
   avatar_style TEXT DEFAULT 'sage',
   cover_gradient TEXT,
   github_username TEXT,
+  learn_comfort_level TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
