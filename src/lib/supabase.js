@@ -311,6 +311,9 @@ export async function uploadRepoHeroImage(session, owner, repo, imageBlob) {
   if (!supabase) throw new Error("Supabase is not configured.");
   if (!session?.user?.id) throw new Error("Sign in before uploading a hero image.");
   if (!imageBlob) throw new Error("Choose a hero image first.");
+  if (imageBlob.size > 1024 * 1024) {
+    throw new Error("This image is still over 1MB after compression. Please choose a smaller image.");
+  }
 
   const safeOwner = slugForStorage(owner || "owner");
   const safeRepo = slugForStorage(repo || "repo");

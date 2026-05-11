@@ -1647,22 +1647,29 @@ function repoToHero(repo = {}) {
   };
 }
 
-function compressHeroImageToBlob(input, maxBytes = 1024 * 1024, maxWidth = 1600) {
+function compressHeroImageToBlob(input, maxBytes = 900 * 1024, maxWidth = 1400) {
   return new Promise((resolve, reject) => {
     const image = new Image();
     const objectUrl = URL.createObjectURL(input);
 
     image.onload = () => {
-      const scale = Math.min(1, maxWidth / image.width);
       const canvas = document.createElement("canvas");
-      canvas.width = Math.max(1, Math.round(image.width * scale));
-      canvas.height = Math.max(1, Math.round(image.height * scale));
       const context = canvas.getContext("2d");
-      context.drawImage(image, 0, 0, canvas.width, canvas.height);
-
       const qualities = [0.85, 0.75, 0.65, 0.55, 0.5];
+      const widths = [maxWidth, 1200, 1000, 800];
+      let widthIndex = 0;
       let qualityIndex = 0;
+
+      const drawAtCurrentSize = () => {
+        const scale = Math.min(1, widths[widthIndex] / image.width);
+        canvas.width = Math.max(1, Math.round(image.width * scale));
+        canvas.height = Math.max(1, Math.round(image.height * scale));
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      };
+
       const tryExport = () => {
+        drawAtCurrentSize();
         const quality = qualities[qualityIndex];
         canvas.toBlob((blob) => {
           if (!blob) {
@@ -1679,6 +1686,11 @@ function compressHeroImageToBlob(input, maxBytes = 1024 * 1024, maxWidth = 1600)
 
           qualityIndex += 1;
           if (qualityIndex >= qualities.length) {
+            widthIndex += 1;
+            qualityIndex = 0;
+          }
+
+          if (widthIndex >= widths.length) {
             URL.revokeObjectURL(objectUrl);
             reject(new Error("This image is still over 1MB after compression. Please choose a smaller image."));
             return;
