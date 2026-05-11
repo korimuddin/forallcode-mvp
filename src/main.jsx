@@ -1401,14 +1401,13 @@ function PhaseRepoCard({ repo }) {
   }
 
   return (
-    <article className={hero.image ? "phase-repo-card has-repo-hero" : "phase-repo-card"} onClick={() => navigate(`/${repo.owner}/${repo.name}`)}>
-      {hero.image && (
-        <div className="phase-repo-card-hero" style={{ backgroundImage: `linear-gradient(90deg, rgba(20, 16, 14, .62), rgba(20, 16, 14, .2)), url("${hero.image}")` }}>
-          <span>{hero.title || repo.name}</span>
-        </div>
-      )}
+    <article
+      className={hero.image ? "phase-repo-card has-repo-hero" : "phase-repo-card"}
+      onClick={() => navigate(`/${repo.owner}/${repo.name}`)}
+      style={hero.image ? { backgroundImage: `linear-gradient(90deg, rgba(20, 16, 14, .86) 0%, rgba(20, 16, 14, .7) 38%, rgba(20, 16, 14, .32) 70%, rgba(20, 16, 14, .14) 100%), url("${hero.image}")` } : undefined}
+    >
       <div className="phase-repo-title">
-        <h3>{repo.name}</h3>
+        <h3>{hero.title || repo.name}</h3>
         <span>{repo.private ? "Private" : "Public"}</span>
       </div>
       <p>{repo.description}</p>
