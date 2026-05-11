@@ -4,6 +4,7 @@ import SettingsInput from "../../components/settings/SettingsInput";
 import SettingsSection from "../../components/settings/SettingsSection";
 import { SettingsActions, SettingsPageHeader, SettingsSaveButton } from "../../components/settings/SettingsControls";
 import IllustratedAvatar from "../../components/ui/IllustratedAvatar";
+import { getUserPreference, setUserPreference } from "../../lib/preferences";
 import { signInWithGitHub, supabase } from "../../lib/supabase";
 
 const defaultAccount = {
@@ -52,6 +53,7 @@ export default function SettingsAccount() {
       const nextSession = data.session;
       setSession(nextSession);
       if (!nextSession?.user) return;
+      const localProfile = getUserPreference(nextSession.user.id, "profile", null);
 
       const { data: profile } = await supabase
         .from("profiles")
@@ -61,10 +63,10 @@ export default function SettingsAccount() {
 
       const metadata = nextSession.user.user_metadata || {};
       const nextAccount = {
-        displayName: profile?.display_name || metadata.full_name || metadata.name || metadata.user_name || defaultAccount.displayName,
+        displayName: localProfile?.displayName || profile?.display_name || metadata.full_name || metadata.name || metadata.user_name || defaultAccount.displayName,
         email: nextSession.user.email || defaultAccount.email,
-        githubUsername: metadata.user_name || metadata.preferred_username || profile?.username || "",
-        avatarStyle: profile?.avatar_style || defaultAccount.avatarStyle
+        githubUsername: localProfile?.username || metadata.user_name || metadata.preferred_username || profile?.username || "",
+        avatarStyle: localProfile?.avatarStyle || profile?.avatar_style || defaultAccount.avatarStyle
       };
 
       setAccount(nextAccount);
@@ -80,10 +82,19 @@ export default function SettingsAccount() {
 
   async function handleDisplaySave() {
     await saveDisplay(async () => {
+      if (session?.user?.id) {
+        const currentProfile = getUserPreference(session.user.id, "profile", {});
+        setUserPreference(session.user.id, "profile", {
+          ...currentProfile,
+          displayName: account.displayName,
+          username: account.githubUsername || currentProfile.username || ""
+        });
+      }
       if (!supabase || !session?.user?.id) return;
-      await supabase
+      const { error } = await supabase
         .from("profiles")
         .upsert({ id: session.user.id, display_name: account.displayName }, { onConflict: "id" });
+      if (error) console.warn("Could not sync account display name to Supabase.", error);
     });
   }
 

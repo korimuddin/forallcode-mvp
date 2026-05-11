@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import SettingsSection from "../../components/settings/SettingsSection";
 import { FocusToggle, SettingsActions, SettingsPageHeader, SettingsRadioCards, SettingsSaveButton, SettingsSwatches } from "../../components/settings/SettingsControls";
+import { getUserPreference, setUserPreference } from "../../lib/preferences";
 import { supabase } from "../../lib/supabase";
 
 const noteColours = [
@@ -28,14 +29,16 @@ export default function SettingsWorkspace() {
       const { data } = await supabase.auth.getSession();
       setSession(data.session);
       if (!data.session?.user?.id) return;
+      const localSettings = getUserPreference(data.session.user.id, "workspace", null);
+      if (localSettings) setSettings((current) => ({ ...current, ...localSettings }));
 
-      const { data: stored } = await supabase
+      const { data: stored, error } = await supabase
         .from("workspace_settings")
         .select("*")
         .eq("user_id", data.session.user.id)
         .maybeSingle();
 
-      if (stored) {
+      if (stored && !localSettings && !error) {
         setSettings((current) => ({
           ...current,
           deskTheme: stored.desk_theme || current.deskTheme,
@@ -56,8 +59,9 @@ export default function SettingsWorkspace() {
 
   async function handleSave() {
     setStatus("saving");
+    if (session?.user?.id) setUserPreference(session.user.id, "workspace", settings);
     if (supabase && session?.user?.id) {
-      await supabase.from("workspace_settings").upsert({
+      const { error } = await supabase.from("workspace_settings").upsert({
         user_id: session.user.id,
         focus_mode: settings.focusMode,
         desk_theme: settings.deskTheme,
@@ -65,6 +69,7 @@ export default function SettingsWorkspace() {
         show_decorations: settings.showDecorations,
         default_note_colour: settings.defaultNoteColour
       }, { onConflict: "user_id" });
+      if (error) console.warn("Could not sync workspace settings to Supabase.", error);
     }
     setStatus("saved");
     setTimeout(() => setStatus("default"), 1800);

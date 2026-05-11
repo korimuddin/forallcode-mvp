@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { getUserPreference } from "./preferences";
 import { getSessionIdentity, syncGitHubActivity, syncGitHubReposToSupabase, supabase, upsertProfileFromSession } from "./supabase";
 
 export function useAuthSession() {
@@ -53,15 +54,17 @@ export function useSignedInUserData() {
 
       try {
         const identity = getSessionIdentity(session);
+        const localProfile = getUserPreference(session.user.id, "profile", null);
         setProfile({
           username: identity.username,
           displayName: identity.displayName,
           avatarUrl: identity.avatarUrl,
-          avatarStyle: "sage"
+          avatarStyle: "sage",
+          ...localProfile
         });
 
         const storedProfile = await upsertProfileFromSession(session);
-        if (!cancelled && storedProfile) {
+        if (!cancelled && storedProfile && !localProfile) {
           setProfile((current) => ({
             ...current,
             username: storedProfile.username || current?.username || identity.username,

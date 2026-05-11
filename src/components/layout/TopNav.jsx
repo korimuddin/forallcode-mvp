@@ -3,6 +3,7 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { Bell, BookOpen, ChevronDown, Code2, Menu, Search, X } from "lucide-react";
 import IllustratedAvatar from "../ui/IllustratedAvatar";
+import { getUserPreference } from "../../lib/preferences";
 import { syncGitHubReposToSupabase, supabase } from "../../lib/supabase";
 
 const mockUser = {
@@ -108,6 +109,7 @@ export default function TopNav() {
         setProfile(mockUser);
         return;
       }
+      const localProfile = getUserPreference(session.user.id, "profile", null);
 
       const { data } = await supabase
         .from("profiles")
@@ -116,11 +118,11 @@ export default function TopNav() {
         .maybeSingle();
 
       setProfile({
-        displayName: data?.display_name || session.user.user_metadata?.name || session.user.email || mockUser.displayName,
-        username: data?.username || session.user.user_metadata?.user_name || session.user.user_metadata?.preferred_username || mockUser.username,
+        displayName: localProfile?.displayName || data?.display_name || session.user.user_metadata?.name || session.user.email || mockUser.displayName,
+        username: localProfile?.username || data?.username || session.user.user_metadata?.user_name || session.user.user_metadata?.preferred_username || mockUser.username,
         initials: "",
-        avatarUrl: "",
-        avatarStyle: data?.avatar_style || mockUser.avatarStyle
+        avatarUrl: localProfile?.avatarUrl || "",
+        avatarStyle: localProfile?.avatarStyle || data?.avatar_style || mockUser.avatarStyle
       });
     }
 

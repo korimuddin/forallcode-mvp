@@ -31,6 +31,7 @@ import Skeleton from "./components/ui/Skeleton";
 import { useAuthSession, useDocumentTitle, useIsMobile, useSignedInUserData } from "./lib/hooks";
 import { renderMarkdown } from "./lib/markdownRenderer";
 import { createNotification } from "./lib/notifications";
+import { getUserPreference, setUserPreference } from "./lib/preferences";
 import { fetchGitHubFileContent, fetchGitHubRepoArchive, fetchGitHubRepoOverview, getCurrentSession, isSupabaseConfigured, signInWithGitHub, signInWithPassword, supabase } from "./lib/supabase";
 import "./styles.css";
 import "./styles/mobile.css";
@@ -774,6 +775,7 @@ function RepoPage() {
   const [repoDetailsError, setRepoDetailsError] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
   const [openFile, setOpenFile] = useState(null);
+  const [expandedFolders, setExpandedFolders] = useState(() => new Set());
   const [fileLoading, setFileLoading] = useState(false);
   const [fileError, setFileError] = useState("");
   const [downloadState, setDownloadState] = useState("");
@@ -806,6 +808,7 @@ function RepoPage() {
         const details = await fetchGitHubRepoOverview(username, repo, session.provider_token);
         if (alive) {
           setRepoDetails(details);
+          setExpandedFolders(new Set());
           const readmeFile = details.files.find((item) => item.type === "file" && item.name.toLowerCase() === "readme.md");
           setSelectedFile(readmeFile || details.files.find((item) => item.type === "file") || null);
           setOpenFile(readmeFile ? {
@@ -851,6 +854,15 @@ function RepoPage() {
     } finally {
       setFileLoading(false);
     }
+  }
+
+  function toggleRepoFolder(folder) {
+    setExpandedFolders((current) => {
+      const next = new Set(current);
+      if (next.has(folder.path)) next.delete(folder.path);
+      else next.add(folder.path);
+      return next;
+    });
   }
 
   async function downloadSelectedFile() {
@@ -979,19 +991,25 @@ function RepoPage() {
           </div>
         </div>
         <div className="repo-header-actions">
-          <Button variant="soft" onClick={() => setHeroEditorOpen((open) => !open)}><Palette size={16} />Edit hero</Button>
-          <Button variant="soft" onClick={handleStarRepo}><Star size={16} />Star</Button>
-          <Button variant="soft"><GitFork size={16} />Fork</Button>
-          <Button variant="soft" onClick={downloadRepositoryArchive} disabled={repoDetailsLoading || downloadState === "repo"}>
-            <Download size={16} />{downloadState === "repo" ? "Downloading..." : "Download all"}
-          </Button>
-          <div className="clone-control">
-            <button>Clone <ChevronDown size={14} /></button>
-            <div><input readOnly value={cloneUrl} /><Button variant="soft"><Copy size={16} /></Button></div>
+          <div className="repo-primary-actions">
+            <Button variant="soft" onClick={handleStarRepo}><Star size={16} />Star</Button>
+            <Button variant="soft"><GitFork size={16} />Fork</Button>
+            <Button variant="soft" onClick={downloadRepositoryArchive} disabled={repoDetailsLoading || downloadState === "repo"}>
+              <Download size={16} />{downloadState === "repo" ? "Downloading..." : "Download all"}
+            </Button>
+            <div className="clone-control">
+              <button>Clone <ChevronDown size={14} /></button>
+              <div><input readOnly value={cloneUrl} /><Button variant="soft"><Copy size={16} /></Button></div>
+            </div>
           </div>
+          <button className="repo-hero-edit-button" onClick={() => setHeroEditorOpen(true)}>
+            <Palette size={16} />Edit hero
+          </button>
         </div>
-        {heroEditorOpen && (
-          <div className="repo-hero-editor">
+      </section>
+      {heroEditorOpen && (
+        <div className="repo-hero-modal-backdrop" onClick={() => setHeroEditorOpen(false)}>
+          <div className="repo-hero-editor" role="dialog" aria-modal="true" aria-label="Edit repository hero" onClick={(event) => event.stopPropagation()}>
             <label>
               Overlay title
               <input value={heroDraft.title} onChange={(event) => setHeroDraft({ ...heroDraft, title: event.target.value })} placeholder={repo} />
@@ -1006,8 +1024,8 @@ function RepoPage() {
               <Button onClick={saveRepoHero}>Save hero</Button>
             </div>
           </div>
-        )}
-      </section>
+        </div>
+      )}
 
       <div className="repo-tab-bar">
         {["Code", "Commits", "Branches", "Visual Map", "Settings"].map((tab) => (
@@ -1032,15 +1050,20 @@ function RepoPage() {
                     <option key={branch.name}>{branch.name}</option>
                   ))}
                 </select>
-                {(repoDetails?.files || []).map((item) => (
+                {getVisibleRepoTree(repoDetails?.files || [], expandedFolders).map((item) => (
                   <button
-                    className={selectedFile?.path === item.path ? "active" : ""}
-                    disabled={item.type === "folder"}
+                    className={[
+                      selectedFile?.path === item.path ? "active" : "",
+                      item.type === "folder" ? "folder-toggle" : ""
+                    ].filter(Boolean).join(" ")}
                     key={item.path}
-                    onClick={() => openRepoFile(item)}
+                    onClick={() => item.type === "folder" ? toggleRepoFolder(item) : openRepoFile(item)}
                     title={item.path}
                     style={{ paddingLeft: `${12 + item.indent * 18}px` }}
                   >
+                    {item.type === "folder" && (
+                      <ChevronDown className={expandedFolders.has(item.path) ? "folder-chevron open" : "folder-chevron"} size={13} />
+                    )}
                     {item.type === "folder" ? <Folder size={15} /> : <FileText size={15} />}
                     {item.name}
                   </button>
@@ -1178,6 +1201,8 @@ function ExplorePage() {
 }
 
 function Workspace({ compact = false, interactive = false }) {
+  const [workspaceUserId, setWorkspaceUserId] = useState("");
+  const [readyToPersist, setReadyToPersist] = useState(false);
   const [focus, setFocus] = useState(false);
   const [notes, setNotes] = useState([
     { id: 1, colour: "lavender", content: "Ship README Studio", x: 18, y: 22 },
@@ -1189,7 +1214,43 @@ function Workspace({ compact = false, interactive = false }) {
     { id: 2, content: "Draft public roadmap", completed: false },
     { id: 3, content: "Polish landing designer", completed: false }
   ]);
-  const addNote = () => setNotes([...notes, { id: Date.now(), colour: "amber", content: "New idea", x: 34, y: 56 }]);
+  const [defaultNoteColour, setDefaultNoteColour] = useState("amber");
+
+  useEffect(() => {
+    let alive = true;
+
+    async function loadWorkspacePreferences() {
+      const session = await getCurrentSession();
+      const userId = session?.user?.id || "local";
+      const workspacePrefs = getUserPreference(userId, "workspace", null);
+      const deskPrefs = getUserPreference(userId, "workspace-desk", null);
+      if (!alive) return;
+
+      setWorkspaceUserId(userId);
+      if (workspacePrefs) {
+        setFocus(Boolean(workspacePrefs.focusMode));
+        setDefaultNoteColour(workspacePrefs.defaultNoteColour || "amber");
+      }
+      if (deskPrefs) {
+        setFocus(Boolean(deskPrefs.focus));
+        setNotes(deskPrefs.notes || []);
+        setTodos(deskPrefs.todos || []);
+      }
+      setReadyToPersist(true);
+    }
+
+    loadWorkspacePreferences();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!readyToPersist || !workspaceUserId || !interactive) return;
+    setUserPreference(workspaceUserId, "workspace-desk", { focus, notes, todos });
+  }, [focus, interactive, notes, readyToPersist, todos, workspaceUserId]);
+
+  const addNote = () => setNotes([...notes, { id: Date.now(), colour: defaultNoteColour, content: "New idea", x: 34, y: 56 }]);
   return (
     <section className={compact ? "workspace compact" : "workspace"}>
       <div className="workspace-toolbar">
@@ -1363,6 +1424,10 @@ function ProfileHeader({ editable = false, publicView = false, profileData = nul
   const displayName = profileData?.displayName || currentUser.name;
   const username = profileData?.username || currentUser.username;
   const avatarStyle = profileData?.avatarStyle || currentUser.avatarStyle;
+  const pronouns = profileData?.pronouns || currentUser.pronouns;
+  const bio = profileData?.bio || currentUser.bio;
+  const location = profileData?.location || currentUser.location;
+  const website = profileData?.website || currentUser.website;
 
   async function handleFollow() {
     if (!supabase) return;
@@ -1392,7 +1457,7 @@ function ProfileHeader({ editable = false, publicView = false, profileData = nul
       <div className="cover" />
       <div className="profile-content">
         <Avatar size="large" variant={avatarStyle} />
-        <div><h2>{displayName}</h2><p>@{username} - {currentUser.pronouns}</p><p>{currentUser.bio}</p><p>{currentUser.location} - {currentUser.website} - Joined {currentUser.joinDate}</p></div>
+        <div><h2>{displayName}</h2><p>@{username}{pronouns ? ` - ${pronouns}` : ""}</p><p>{bio}</p><p>{[location, website, `Joined ${currentUser.joinDate}`].filter(Boolean).join(" - ")}</p></div>
         <div className="profile-actions">{editable && <Button>Edit profile</Button>}{publicView && <Button onClick={handleFollow}>Follow</Button>}<Button variant="soft">Message</Button></div>
       </div>
       {loadingStats ? (
@@ -1437,6 +1502,16 @@ function FileTree() {
 function ReadmePreview({ repo = repos[0], markdown }) {
   const fallback = `# ${repo.name}\n\n${repo.description || "No README.md found for this repository."}`;
   return <MarkdownPreview markdown={markdown || fallback} />;
+}
+
+function getVisibleRepoTree(files, expandedFolders) {
+  return files.filter((item) => {
+    const parts = item.path.split("/");
+    if (parts.length === 1) return true;
+
+    const parentPaths = parts.slice(0, -1).map((_, index) => parts.slice(0, index + 1).join("/"));
+    return parentPaths.every((path) => expandedFolders.has(path));
+  });
 }
 
 function MarkdownPreview({ markdown, className = "readme-render" }) {

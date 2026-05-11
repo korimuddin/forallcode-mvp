@@ -3,6 +3,7 @@ import SettingsInput from "../../components/settings/SettingsInput";
 import SettingsSection from "../../components/settings/SettingsSection";
 import { SettingsActions, SettingsPageHeader, SettingsSaveButton, SettingsSwatches } from "../../components/settings/SettingsControls";
 import IllustratedAvatar, { avatarVariants } from "../../components/ui/IllustratedAvatar";
+import { getUserPreference, setUserPreference } from "../../lib/preferences";
 import { supabase } from "../../lib/supabase";
 
 const gradients = [
@@ -51,20 +52,26 @@ export default function SettingsProfile() {
       setSession(nextSession);
       if (!nextSession?.user?.id) return;
       const metadata = nextSession.user.user_metadata || {};
+      const metadataProfile = {
+        displayName: metadata.full_name || metadata.name || metadata.user_name || "",
+        username: metadata.user_name || metadata.preferred_username || "",
+        github: metadata.user_name ? `https://github.com/${metadata.user_name}` : ""
+      };
+      const localProfile = getUserPreference(nextSession.user.id, "profile", null);
+
       setProfile((current) => ({
         ...current,
-        displayName: metadata.full_name || metadata.name || metadata.user_name || current.displayName,
-        username: metadata.user_name || metadata.preferred_username || current.username,
-        github: metadata.user_name ? `https://github.com/${metadata.user_name}` : current.github
+        ...metadataProfile,
+        ...localProfile
       }));
 
-      const { data: storedProfile } = await supabase
+      const { data: storedProfile, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", nextSession.user.id)
         .maybeSingle();
 
-      if (storedProfile) {
+      if (storedProfile && !localProfile && !error) {
         setProfile((current) => ({
           ...current,
           displayName: storedProfile.display_name || current.displayName,
@@ -92,13 +99,16 @@ export default function SettingsProfile() {
   function handleImagePreview(event, key) {
     const file = event.target.files?.[0];
     if (!file) return;
-    updateProfile(key, URL.createObjectURL(file));
+    const reader = new FileReader();
+    reader.onload = () => updateProfile(key, String(reader.result || ""));
+    reader.readAsDataURL(file);
   }
 
   async function handleSave() {
     setStatus("saving");
+    if (session?.user?.id) setUserPreference(session.user.id, "profile", profile);
     if (supabase && session?.user?.id) {
-      await supabase
+      const { error } = await supabase
         .from("profiles")
         .upsert({
           id: session.user.id,
@@ -114,6 +124,7 @@ export default function SettingsProfile() {
           twitter_url: profile.twitter,
           linkedin_url: profile.linkedin
         }, { onConflict: "id" });
+      if (error) console.warn("Could not sync profile settings to Supabase.", error);
     }
     setStatus("saved");
     setTimeout(() => setStatus("default"), 1800);
