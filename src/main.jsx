@@ -31,7 +31,7 @@ import Skeleton from "./components/ui/Skeleton";
 import { useAuthSession, useDocumentTitle, useIsMobile, useSignedInUserData } from "./lib/hooks";
 import { renderMarkdown } from "./lib/markdownRenderer";
 import { createNotification } from "./lib/notifications";
-import { getRepoHeroPreference, getUserPreference, setRepoHeroPreference, setUserPreference } from "./lib/preferences";
+import { compactRepoHeroPreferences, getRepoHeroPreference, getUserPreference, setRepoHeroPreference, setUserPreference } from "./lib/preferences";
 import { fetchGitHubFileContent, fetchGitHubRepoArchive, fetchGitHubRepoOverview, getCurrentSession, isSupabaseConfigured, signInWithGitHub, signInWithPassword, supabase } from "./lib/supabase";
 import "./styles.css";
 import "./styles/mobile.css";
@@ -918,15 +918,12 @@ function RepoPage() {
     }
   }
 
-  function handleHeroImageUpload(event) {
+  async function handleHeroImageUpload(event) {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      setHeroDraft((current) => ({ ...current, image: String(reader.result || ""), positionX: current.positionX ?? 50, positionY: current.positionY ?? 50 }));
-    };
-    reader.readAsDataURL(file);
+    const image = await compressHeroImage(file);
+    setHeroDraft((current) => ({ ...current, image, positionX: current.positionX ?? 50, positionY: current.positionY ?? 50 }));
   }
 
   function moveHeroImage(event) {
@@ -939,7 +936,7 @@ function RepoPage() {
     setHeroDraft((current) => ({ ...current, positionX, positionY }));
   }
 
-  function saveRepoHero() {
+  async function saveRepoHero() {
     const nextHero = {
       title: heroDraft.title || repo,
       image: heroDraft.image || "",
@@ -947,8 +944,15 @@ function RepoPage() {
       positionY: heroDraft.positionY ?? 50,
       fontFamily: heroDraft.fontFamily || heroFontOptions[0].value
     };
+
+    try {
+      setRepoHeroPreference(username, repo, nextHero);
+    } catch (error) {
+      await compactRepoHeroPreferences(compressHeroImage);
+      setRepoHeroPreference(username, repo, nextHero);
+    }
+
     setRepoHero(nextHero);
-    setRepoHeroPreference(username, repo, nextHero);
     setHeroEditorOpen(false);
   }
 
@@ -1595,6 +1599,34 @@ function normalizeRepoHero(hero, repoName) {
     positionY: Number.isFinite(hero?.positionY) ? hero.positionY : 50,
     fontFamily: hero?.fontFamily || heroFontOptions[0].value
   };
+}
+
+function compressHeroImage(input, maxWidth = 1400, quality = 0.72) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => {
+      const scale = Math.min(1, maxWidth / image.width);
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(image.width * scale));
+      canvas.height = Math.max(1, Math.round(image.height * scale));
+      const context = canvas.getContext("2d");
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL("image/jpeg", quality));
+    };
+    image.onerror = () => reject(new Error("Could not prepare this hero image."));
+
+    if (typeof input === "string") {
+      image.src = input;
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      image.src = String(reader.result || "");
+    };
+    reader.onerror = () => reject(new Error("Could not read this hero image."));
+    reader.readAsDataURL(input);
+  });
 }
 
 function clamp(value, min, max) {

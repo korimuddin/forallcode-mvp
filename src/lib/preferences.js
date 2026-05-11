@@ -32,6 +32,27 @@ export function setRepoHeroPreference(owner, repo, value) {
   window.localStorage.setItem(repoHeroKey(owner, repo), JSON.stringify(value));
 }
 
+export function compactRepoHeroPreferences(compressImage) {
+  if (typeof window === "undefined") return Promise.resolve();
+
+  const heroKeys = [];
+  for (let index = 0; index < window.localStorage.length; index += 1) {
+    const key = window.localStorage.key(index);
+    if (key?.startsWith("forallcode:repo-hero:")) heroKeys.push(key);
+  }
+
+  return Promise.all(heroKeys.map(async (key) => {
+    try {
+      const hero = JSON.parse(window.localStorage.getItem(key) || "{}");
+      if (!hero.image || hero.image.length < 450000) return;
+      const image = await compressImage(hero.image);
+      window.localStorage.setItem(key, JSON.stringify({ ...hero, image }));
+    } catch {
+      // Ignore one broken hero entry so the rest can still be compacted.
+    }
+  }));
+}
+
 function repoHeroKey(owner, repo) {
   return `forallcode:repo-hero:${owner}/${repo}`;
 }
