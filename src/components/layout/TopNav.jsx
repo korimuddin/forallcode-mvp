@@ -267,25 +267,25 @@ export default function TopNav() {
       {showAppNav && (
         <nav className={mobileOpen ? "top-nav-center open" : "top-nav-center"} aria-label="Primary navigation">
           <div className="nav-search-wrap" ref={searchRef}>
-            {searchMode === "local" ? (
-              <button className="search-box" onClick={() => window.dispatchEvent(new Event("open-command"))}>
-                <Search size={17} />
-                <span>Search your repos, users, lessons</span>
-                <kbd>⌘K</kbd>
-              </button>
-            ) : (
-              <label className="search-box global-search-box">
-                <Search size={17} />
-                <input
-                  value={globalQuery}
-                  onChange={(event) => setGlobalQuery(event.target.value)}
-                  placeholder="Search all GitHub repos"
-                  type="search"
-                />
-                {globalSearchLoading && <small>Searching...</small>}
-              </label>
-            )}
-            <div className="search-scope-toggle" aria-label="Search scope">
+            <div className="search-box integrated-search-box">
+              <Search size={17} />
+              {searchMode === "local" ? (
+                <button className="integrated-local-search" onClick={() => window.dispatchEvent(new Event("open-command"))} type="button">
+                  <span>Search your repos, users, lessons</span>
+                  <kbd>⌘K</kbd>
+                </button>
+              ) : (
+                <label className="global-search-box">
+                  <input
+                    value={globalQuery}
+                    onChange={(event) => setGlobalQuery(event.target.value)}
+                    placeholder="Search all GitHub repos"
+                    type="search"
+                  />
+                  {globalSearchLoading && <small>Searching...</small>}
+                </label>
+              )}
+              <div className="search-scope-toggle" aria-label="Search scope">
               {["local", "global"].map((mode) => (
                 <button
                   className={searchMode === mode ? "active" : ""}
@@ -300,6 +300,7 @@ export default function TopNav() {
                   {mode === "local" ? "Local" : "Global"}
                 </button>
               ))}
+              </div>
             </div>
             {searchMode === "global" && (globalResults.length > 0 || globalSearchError || (globalQuery.trim().length >= 2 && !globalSearchLoading)) && (
               <div className="global-search-menu">

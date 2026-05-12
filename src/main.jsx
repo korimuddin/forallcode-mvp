@@ -499,9 +499,11 @@ function ReposPage() {
       if (sort === "name") return a.name.localeCompare(b.name);
       return 0;
     });
+  const repoHeroSlides = buildRepoHeroSlides(repoSource);
 
   return (
     <PageFrame title="" eyebrow="">
+      <CarouselHero slides={repoHeroSlides} type="repos" />
       <div className="repos-page-header">
         <h1>Repositories</h1>
         <div>
@@ -626,6 +628,154 @@ function NewRepoPage() {
         <CodebaseMapPanel owner={profile?.username || "origin"} repo={name || "new-repo"} />
       </section>
     </PageFrame>
+  );
+}
+
+const learnHeroSlides = [
+  {
+    eyebrow: "Did you know?",
+    title: ".gitignore has been part of Git since the beginning.",
+    text: "Git began on April 7, 2005, and ignore rules were designed early to help teams keep untracked local files out of shared history.",
+    tone: "lavender"
+  },
+  {
+    eyebrow: "Live learning",
+    title: "4k users are learning right now.",
+    text: "Tiny daily Git lessons add up. Pick a topic, complete a visual step, and keep your project moving.",
+    tone: "sage"
+  },
+  {
+    eyebrow: "More info",
+    title: "Git becomes clearer when you can see the shape of the work.",
+    text: "Branches, merges, conflicts, releases, and remotes all become easier once the history is visible.",
+    tone: "amber"
+  },
+  {
+    eyebrow: "Course nudge",
+    title: "Have you considered DevOps?",
+    text: "Take a look at the DevOps track to understand CI/CD, environments, deployment strategies, and observability.",
+    tone: "sky"
+  },
+  {
+    eyebrow: "Next step",
+    title: "Start where you are. Move when ready.",
+    text: "Beginner, Intermediate, Advanced, and DevOps tracks are suggestions, not locks.",
+    tone: "rose"
+  }
+];
+
+function buildRepoHeroSlides(reposForHero) {
+  const repoSlides = reposForHero.slice(0, 3).map((repo) => ({
+    eyebrow: "Your repository",
+    title: repo.name,
+    text: repo.description || "A synced GitHub repository ready to explore visually.",
+    meta: `${repo.language || "Code"} · ${repo.stars || 0} stars · Updated ${repo.updated || "recently"}`,
+    image: repo.heroImageUrl,
+    imagePosition: `${repo.heroPositionX ?? 50}% ${repo.heroPositionY ?? 50}%`,
+    tone: "repo"
+  }));
+
+  const fallbackRepoSlides = [
+    {
+      eyebrow: "Build warmly",
+      title: "Every repository is a place someone can learn from.",
+      text: "Shape your README, map the codebase, and make the first contribution feel less mysterious.",
+      tone: "lavender"
+    },
+    {
+      eyebrow: "Keep going",
+      title: "Small commits become a clear story.",
+      text: "A thoughtful history makes collaboration easier for future you and everyone after.",
+      tone: "sage"
+    },
+    {
+      eyebrow: "Visual workspace",
+      title: "See the project before you open a single file.",
+      text: "Branches, forks, merges, and pull requests all have a shape. ForAllCode helps you read it.",
+      tone: "sky"
+    }
+  ];
+
+  return [
+    ...repoSlides,
+    ...fallbackRepoSlides
+  ].slice(0, 3).concat([
+    {
+      eyebrow: "Repository momentum",
+      title: "Code is easier to join when it welcomes people in.",
+      text: "Use project pages, README Studio, and visual maps to turn your repos into friendly workspaces.",
+      tone: "amber"
+    },
+    {
+      eyebrow: "Placeholder",
+      title: "Your next project can start right here.",
+      text: "Create a repo, pick a starter, and let the project take shape.",
+      tone: "computer",
+      visual: "computer"
+    }
+  ]);
+}
+
+function CarouselHero({ slides, type }) {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const activeSlide = slides[activeIndex] || slides[0];
+
+  useEffect(() => {
+    if (slides.length <= 1) return undefined;
+    const timer = window.setInterval(() => {
+      setActiveIndex((index) => (index + 1) % slides.length);
+    }, 5200);
+    return () => window.clearInterval(timer);
+  }, [slides.length]);
+
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [type, slides.length]);
+
+  if (!activeSlide) return null;
+
+  return (
+    <section
+      className={`carousel-hero ${type || ""} tone-${activeSlide.tone || "lavender"} ${activeSlide.image ? "has-image" : ""}`}
+      style={activeSlide.image ? {
+        backgroundImage: `linear-gradient(90deg, rgba(20, 16, 14, .78), rgba(20, 16, 14, .24)), url("${activeSlide.image}")`,
+        backgroundPosition: activeSlide.imagePosition || "50% 50%"
+      } : undefined}
+    >
+      <div className="carousel-hero-copy">
+        <p className="eyebrow">{activeSlide.eyebrow}</p>
+        <h1>{activeSlide.title}</h1>
+        <p>{activeSlide.text}</p>
+        {activeSlide.meta && <span>{activeSlide.meta}</span>}
+      </div>
+      {activeSlide.visual === "computer" && <AnimatedComputer />}
+      <div className="carousel-dots" aria-label="Hero slides">
+        {slides.map((slide, index) => (
+          <button
+            aria-label={`Show slide ${index + 1}`}
+            className={index === activeIndex ? "active" : ""}
+            key={`${slide.title}-${index}`}
+            onClick={() => setActiveIndex(index)}
+            type="button"
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function AnimatedComputer() {
+  return (
+    <div className="animated-computer" aria-hidden="true">
+      <div className="computer-screen">
+        <i />
+        <i />
+        <i />
+      </div>
+      <div className="computer-base" />
+      <div className="computer-spark one" />
+      <div className="computer-spark two" />
+    </div>
   );
 }
 
@@ -1329,6 +1479,7 @@ function LearnPage() {
 
   return (
     <PageFrame title="Learn Git visually" eyebrow="Learn">
+      <CarouselHero slides={learnHeroSlides} type="learn" />
       {isMobile && (
         <select className="learn-mobile-select" value={active} onChange={(event) => chooseLesson(event.target.value)} aria-label="Choose lesson">
           {lessons.map((item) => (

@@ -37,6 +37,16 @@
   .explore-workspaces {
     position: static;
   }
+
+  .carousel-hero {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .animated-computer {
+    justify-self: center;
+    width: min(280px, 70vw);
+  }
 }
 
 @media (max-width: 640px) {
@@ -76,8 +86,24 @@
   }
 
   .hero h1,
-  .hero-title {
+  .hero-title,
+  .carousel-hero-copy h1 {
     font-size: 28px;
+  }
+
+  .carousel-hero {
+    gap: 20px;
+    border-radius: 18px;
+    padding: 24px;
+  }
+
+  .carousel-hero-copy > p:not(.eyebrow) {
+    font-size: .98rem;
+  }
+
+  .carousel-dots {
+    position: static;
+    margin-top: 18px;
   }
 
   .hero-btns,
