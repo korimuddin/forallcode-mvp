@@ -264,6 +264,7 @@ main { flex: 1; }
 
 .top-nav-center > a,
 .nav-trigger,
+.nav-static-link,
 .nav-icon-button,
 .avatar-trigger,
 .nav-ghost-button,
@@ -279,6 +280,7 @@ main { flex: 1; }
 
 .top-nav-center > a:hover,
 .nav-trigger:hover,
+.nav-static-link:hover,
 .nav-icon-button:hover,
 .avatar-trigger:hover,
 .nav-ghost-button:hover {
@@ -454,8 +456,14 @@ main { flex: 1; }
   gap: 7px;
 }
 
+.nav-static-link {
+  font: inherit;
+  cursor: default;
+}
+
 .nav-trigger svg,
 .top-nav-center > a,
+.nav-static-link,
 .nav-icon-button svg,
 .avatar-trigger svg {
   flex: 0 0 auto;

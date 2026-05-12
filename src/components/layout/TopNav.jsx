@@ -340,6 +340,7 @@ export default function TopNav() {
             <Link to="/learn">Browse all lessons</Link>
           </NavDropdown>
           <NavLink to="/explore">Explore</NavLink>
+          <button className="nav-static-link" type="button" aria-disabled="true">Marketplace</button>
         </nav>
       )}
 
