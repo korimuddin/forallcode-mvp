@@ -2046,10 +2046,12 @@ function ProfileHeader({ editable = false, publicView = false, profileData = nul
   const [uploading, setUploading] = useState("");
   const [status, setStatus] = useState("");
   const coverPositionerRef = useRef(null);
+  const quickAvatarInputRef = useRef(null);
   const displayName = profileData?.displayName || currentUser.name;
   const username = profileData?.username || currentUser.username;
   const avatarStyle = profileData?.avatarStyle || currentUser.avatarStyle;
   const avatarUrl = profileData?.avatarUrl || "";
+  const [quickAvatarUrl, setQuickAvatarUrl] = useState(avatarUrl);
   const coverGradient = profileData?.coverGradient || "linear-gradient(120deg, var(--lavender), var(--rose), var(--sage))";
   const coverImageUrl = profileData?.coverImageUrl || "";
   const coverPositionX = profileData?.coverPositionX ?? 50;
@@ -2062,6 +2064,10 @@ function ProfileHeader({ editable = false, publicView = false, profileData = nul
   useEffect(() => {
     setDraft(profileDraftFromData(profileData));
   }, [profileData]);
+
+  useEffect(() => {
+    setQuickAvatarUrl(avatarUrl);
+  }, [avatarUrl]);
 
   async function handleProfileImageUpload(event, kind) {
     const file = event.target.files?.[0];
@@ -2082,6 +2088,29 @@ function ProfileHeader({ editable = false, publicView = false, profileData = nul
       setStatus(`${kind === "avatar" ? "Profile picture" : "Cover image"} uploaded.`);
     } catch (error) {
       setStatus(error.message || "Could not upload this image.");
+    } finally {
+      setUploading("");
+      event.target.value = "";
+    }
+  }
+
+  async function handleQuickAvatarUpload(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setUploading("avatar");
+    setStatus("");
+
+    try {
+      const session = await getCurrentSession();
+      if (!session?.user?.id || !supabase) throw new Error("Sign in before updating your profile picture.");
+      const imageBlob = await compressHeroImageToBlob(file);
+      const imageUrl = await uploadProfileVisualImage(session, "avatar", imageBlob);
+      await supabase.from("profiles").update({ avatar_url: imageUrl }).eq("id", session.user.id);
+      setQuickAvatarUrl(imageUrl);
+      setDraft((current) => ({ ...current, avatarUrl: imageUrl }));
+      setStatus("Profile picture saved.");
+    } catch (error) {
+      setStatus(error.message || "Could not update your profile picture.");
     } finally {
       setUploading("");
       event.target.value = "";
@@ -2174,9 +2203,35 @@ function ProfileHeader({ editable = false, publicView = false, profileData = nul
         } : { background: coverGradient }}
       />
       <div className="profile-content">
-        <Avatar photoUrl={avatarUrl} size="large" variant={avatarStyle} />
-        <div><h2>{displayName}</h2><p>@{username}{pronouns ? ` - ${pronouns}` : ""}</p><p>{bio}</p><p>{[location, website, `Joined ${currentUser.joinDate}`].filter(Boolean).join(" - ")}</p></div>
-        <div className="profile-actions">{editable && <Button onClick={() => setEditorOpen(true)}>Edit profile</Button>}{publicView && <Button onClick={handleFollow}>Follow</Button>}<Button variant="soft">Message</Button></div>
+        <div className="profile-avatar-card">
+          <Avatar photoUrl={quickAvatarUrl} size="large" variant={avatarStyle} />
+          {editable && (
+            <>
+              <button
+                aria-label="Edit profile picture"
+                className="profile-avatar-edit"
+                disabled={uploading === "avatar"}
+                onClick={() => quickAvatarInputRef.current?.click()}
+                type="button"
+              >
+                <Palette size={16} />
+              </button>
+              <input accept="image/*" hidden onChange={handleQuickAvatarUpload} ref={quickAvatarInputRef} type="file" />
+            </>
+          )}
+        </div>
+        <div className="profile-info-panel">
+          <div className="profile-title-block">
+            <h2>{displayName}</h2>
+            <p>@{username}{pronouns ? ` - ${pronouns}` : ""}</p>
+          </div>
+          <div className="profile-details">
+            {bio && <p>{bio}</p>}
+            <p>{[location, website, `Joined ${currentUser.joinDate}`].filter(Boolean).join(" - ")}</p>
+            {status && <small>{status}</small>}
+          </div>
+          <div className="profile-actions">{editable && <Button onClick={() => setEditorOpen(true)}>Edit profile</Button>}{publicView && <Button onClick={handleFollow}>Follow</Button>}<Button variant="soft">Message</Button></div>
+        </div>
       </div>
       {loadingStats ? (
         <ProfileStatsSkeleton />

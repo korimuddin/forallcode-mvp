@@ -144,6 +144,33 @@
     display: block;
   }
 
+  .profile-content {
+    grid-template-columns: 1fr;
+    margin-top: -124px;
+    padding-inline: 16px;
+    padding-bottom: 40px;
+  }
+
+  .profile-avatar-card {
+    width: 168px;
+    height: 225px;
+  }
+
+  .profile-info-panel {
+    grid-template-columns: 1fr;
+    align-items: start;
+    border-radius: 18px;
+    transform: translateY(14px);
+  }
+
+  .profile-actions {
+    justify-content: stretch;
+  }
+
+  .profile-actions .button {
+    flex: 1;
+  }
+
   .settings-sidebar {
     width: 100%;
     height: auto;
