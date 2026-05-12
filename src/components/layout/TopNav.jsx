@@ -25,8 +25,14 @@ export default function TopNav() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [toastMessage, setToastMessage] = useState("");
   const [avatarOpen, setAvatarOpen] = useState(false);
+  const [searchMode, setSearchMode] = useState("local");
+  const [globalQuery, setGlobalQuery] = useState("");
+  const [globalResults, setGlobalResults] = useState([]);
+  const [globalSearchLoading, setGlobalSearchLoading] = useState(false);
+  const [globalSearchError, setGlobalSearchError] = useState("");
   const notificationsRef = useRef(null);
   const avatarRef = useRef(null);
+  const searchRef = useRef(null);
 
   const loggedIn = Boolean(session);
   const showAppNav = loggedIn;
@@ -170,14 +176,66 @@ export default function TopNav() {
     const closeMenusOnOutsideClick = (event) => {
       const clickedNotifications = notificationsRef.current?.contains(event.target);
       const clickedAvatar = avatarRef.current?.contains(event.target);
+      const clickedSearch = searchRef.current?.contains(event.target);
 
       if (!clickedNotifications) setNotificationsOpen(false);
       if (!clickedAvatar) setAvatarOpen(false);
+      if (!clickedSearch) setGlobalResults([]);
     };
 
     document.addEventListener("pointerdown", closeMenusOnOutsideClick);
     return () => document.removeEventListener("pointerdown", closeMenusOnOutsideClick);
   }, []);
+
+  useEffect(() => {
+    if (searchMode !== "global") return undefined;
+    const query = globalQuery.trim();
+    if (query.length < 2) {
+      setGlobalResults([]);
+      setGlobalSearchError("");
+      setGlobalSearchLoading(false);
+      return undefined;
+    }
+
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      setGlobalSearchLoading(true);
+      setGlobalSearchError("");
+
+      try {
+        const response = await fetch(`https://api.github.com/search/repositories?q=${encodeURIComponent(query)}&sort=stars&order=desc&per_page=6`, {
+          headers: {
+            Accept: "application/vnd.github+json",
+            ...(session?.provider_token ? { Authorization: `Bearer ${session.provider_token}` } : {})
+          },
+          signal: controller.signal
+        });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload?.message || "GitHub search failed.");
+        setGlobalResults((payload.items || []).map((repo) => ({
+          id: repo.id,
+          name: repo.name,
+          fullName: repo.full_name,
+          description: repo.description || "No description yet.",
+          language: repo.language || "Code",
+          stars: repo.stargazers_count || 0,
+          url: repo.html_url
+        })));
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          setGlobalResults([]);
+          setGlobalSearchError(error.message || "Could not search GitHub.");
+        }
+      } finally {
+        setGlobalSearchLoading(false);
+      }
+    }, 350);
+
+    return () => {
+      controller.abort();
+      window.clearTimeout(timer);
+    };
+  }, [globalQuery, searchMode, session]);
 
   async function handleSignOut() {
     if (supabase) await supabase.auth.signOut();
@@ -208,11 +266,55 @@ export default function TopNav() {
 
       {showAppNav && (
         <nav className={mobileOpen ? "top-nav-center open" : "top-nav-center"} aria-label="Primary navigation">
-          <button className="search-box" onClick={() => window.dispatchEvent(new Event("open-command"))}>
-            <Search size={17} />
-            <span>Search repos, users, lessons</span>
-            <kbd>⌘K</kbd>
-          </button>
+          <div className="nav-search-wrap" ref={searchRef}>
+            {searchMode === "local" ? (
+              <button className="search-box" onClick={() => window.dispatchEvent(new Event("open-command"))}>
+                <Search size={17} />
+                <span>Search your repos, users, lessons</span>
+                <kbd>⌘K</kbd>
+              </button>
+            ) : (
+              <label className="search-box global-search-box">
+                <Search size={17} />
+                <input
+                  value={globalQuery}
+                  onChange={(event) => setGlobalQuery(event.target.value)}
+                  placeholder="Search all GitHub repos"
+                  type="search"
+                />
+                {globalSearchLoading && <small>Searching...</small>}
+              </label>
+            )}
+            <div className="search-scope-toggle" aria-label="Search scope">
+              {["local", "global"].map((mode) => (
+                <button
+                  className={searchMode === mode ? "active" : ""}
+                  key={mode}
+                  onClick={() => {
+                    setSearchMode(mode);
+                    setGlobalResults([]);
+                    setGlobalSearchError("");
+                  }}
+                  type="button"
+                >
+                  {mode === "local" ? "Local" : "Global"}
+                </button>
+              ))}
+            </div>
+            {searchMode === "global" && (globalResults.length > 0 || globalSearchError || (globalQuery.trim().length >= 2 && !globalSearchLoading)) && (
+              <div className="global-search-menu">
+                {globalSearchError && <p>{globalSearchError}</p>}
+                {!globalSearchError && globalResults.length === 0 && <p>No GitHub repositories found.</p>}
+                {globalResults.map((repo) => (
+                  <a href={repo.url} key={repo.id} target="_blank" rel="noreferrer">
+                    <strong>{repo.fullName}</strong>
+                    <span>{repo.description}</span>
+                    <small>{repo.language} · {repo.stars.toLocaleString()} stars</small>
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
           <span className="nav-divider" />
           <NavDropdown label="Repos" icon={<Code2 size={16} />}>
             <Link to="/repos">Your repos</Link>

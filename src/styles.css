@@ -291,6 +291,14 @@ main { flex: 1; }
   background-color: var(--cream2);
 }
 
+.nav-search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: min(560px, 100%);
+}
+
 .search-box {
   display: flex;
   align-items: center;
@@ -311,6 +319,95 @@ main { flex: 1; }
   border: 1px solid var(--cream3);
   border-radius: 8px;
   padding: 1px 6px;
+}
+
+.global-search-box input {
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  background: transparent;
+  outline: 0;
+  color: var(--ink);
+}
+
+.global-search-box small {
+  margin-left: auto;
+  color: var(--ink3);
+  font-size: .74rem;
+  font-weight: 800;
+}
+
+.search-scope-toggle {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--cream3);
+  border-radius: 999px;
+  background: var(--cream2);
+  padding: 3px;
+}
+
+.search-scope-toggle button {
+  min-height: 28px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  padding: 5px 10px;
+  color: var(--ink3);
+  font-size: .76rem;
+  font-weight: 800;
+}
+
+.search-scope-toggle button.active {
+  background: var(--white);
+  color: var(--ink);
+  box-shadow: 0 6px 16px rgba(61, 53, 48, .08);
+}
+
+.global-search-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  z-index: 120;
+  width: min(560px, calc(100vw - 36px));
+  max-height: 420px;
+  overflow: auto;
+  border: 1px solid var(--cream3);
+  border-radius: 18px;
+  background: rgba(255, 253, 249, .98);
+  box-shadow: 0 22px 70px rgba(61, 53, 48, .16);
+  padding: 8px;
+}
+
+.global-search-menu a,
+.global-search-menu p {
+  display: grid;
+  gap: 4px;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.global-search-menu a:hover {
+  background: var(--cream2);
+}
+
+.global-search-menu strong {
+  color: var(--ink);
+  font-size: .94rem;
+}
+
+.global-search-menu span {
+  overflow: hidden;
+  color: var(--ink2);
+  font-size: .82rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.global-search-menu small,
+.global-search-menu p {
+  color: var(--ink3);
+  font-size: .76rem;
+  font-weight: 800;
 }
 
 .search-box:hover {
