@@ -159,6 +159,28 @@ export async function fetchGitHubRepoArchive(owner, repo, githubAccessToken, ref
   return response.blob();
 }
 
+export async function forkGitHubRepository(owner, repo, githubAccessToken) {
+  if (!owner || !repo || !githubAccessToken) {
+    throw new Error("Sign in with GitHub repo access before forking this repository.");
+  }
+
+  const response = await fetch(`https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/forks`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${githubAccessToken}`,
+      Accept: "application/vnd.github+json",
+      "Content-Type": "application/json"
+    }
+  });
+
+  const payload = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new Error(payload?.message || "GitHub could not fork this repository.");
+  }
+
+  return payload;
+}
+
 export async function createGitHubRepository(session, options) {
   if (!session?.provider_token) {
     throw new Error("Sign in with GitHub repo access before creating a repository.");

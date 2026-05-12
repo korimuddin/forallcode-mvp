@@ -34,7 +34,7 @@ import { useAuthSession, useDocumentTitle, useIsMobile, useSignedInUserData } fr
 import { renderMarkdown } from "./lib/markdownRenderer";
 import { createNotification } from "./lib/notifications";
 import { getUserPreference, setUserPreference } from "./lib/preferences";
-import { createGitHubRepository, fetchGitHubFileContent, fetchGitHubRepoArchive, fetchGitHubRepoOverview, getCurrentSession, isSupabaseConfigured, saveGitHubRepositoryFile, saveRepoHeroToSupabase, signInWithGitHub, signInWithPassword, supabase, uploadProfileVisualImage, uploadRepoHeroImage } from "./lib/supabase";
+import { createGitHubRepository, fetchGitHubFileContent, fetchGitHubRepoArchive, fetchGitHubRepoOverview, forkGitHubRepository, getCurrentSession, isSupabaseConfigured, saveGitHubRepositoryFile, saveRepoHeroToSupabase, signInWithGitHub, signInWithPassword, supabase, uploadProfileVisualImage, uploadRepoHeroImage } from "./lib/supabase";
 import "./styles.css";
 import "./styles/mobile.css";
 
@@ -1000,6 +1000,9 @@ function RepoPage() {
   const [fileLoading, setFileLoading] = useState(false);
   const [fileError, setFileError] = useState("");
   const [downloadState, setDownloadState] = useState("");
+  const [repoActionState, setRepoActionState] = useState("");
+  const [repoActionMessage, setRepoActionMessage] = useState("");
+  const [cloneMenuOpen, setCloneMenuOpen] = useState(false);
   const [addFileMenuOpen, setAddFileMenuOpen] = useState(false);
   const [createFileOpen, setCreateFileOpen] = useState(false);
   const [newFilePath, setNewFilePath] = useState("");
@@ -1020,6 +1023,7 @@ function RepoPage() {
   const [heroToast, setHeroToast] = useState("");
   const heroPositionerRef = useRef(null);
   const addFileMenuRef = useRef(null);
+  const cloneMenuRef = useRef(null);
   const uploadFileInputRef = useRef(null);
   const cloneUrl = `https://github.com/${username}/${repo}.git`;
   const notebooks = getRepoNotebooks(repoDetails?.files || []);
@@ -1048,6 +1052,7 @@ function RepoPage() {
   useEffect(() => {
     function closeAddFileMenu(event) {
       if (!addFileMenuRef.current?.contains(event.target)) setAddFileMenuOpen(false);
+      if (!cloneMenuRef.current?.contains(event.target)) setCloneMenuOpen(false);
     }
 
     document.addEventListener("pointerdown", closeAddFileMenu);
@@ -1189,6 +1194,7 @@ function RepoPage() {
 
   async function downloadRepositoryArchive() {
     setDownloadState("repo");
+    setRepoActionMessage("");
 
     try {
       const session = await getCurrentSession();
@@ -1199,11 +1205,64 @@ function RepoPage() {
       const branch = repoDetails?.defaultBranch || "main";
       const archive = await fetchGitHubRepoArchive(username, repo, session.provider_token, branch);
       downloadBlob(archive, `${repo}-${branch}.zip`);
+      setRepoActionMessage(`Downloading ${repo}-${branch}.zip`);
     } catch (error) {
-      setFileError(error.message || "Could not download this repository from GitHub.");
+      setRepoActionMessage(error.message || "Could not download this repository from GitHub.");
     } finally {
       setDownloadState("");
     }
+  }
+
+  async function forkRepository() {
+    setRepoActionState("forking");
+    setRepoActionMessage("");
+
+    try {
+      const session = await getCurrentSession();
+      if (!session?.provider_token) {
+        throw new Error("Sign in with GitHub repo access to fork this repository.");
+      }
+
+      const fork = await forkGitHubRepository(username, repo, session.provider_token);
+      setRepoActionMessage(`Fork started: ${fork.full_name || fork.name}. GitHub may take a moment to finish copying files.`);
+    } catch (error) {
+      setRepoActionMessage(error.message || "Could not fork this repository from GitHub.");
+    } finally {
+      setRepoActionState("");
+    }
+  }
+
+  async function copyCloneUrl() {
+    setRepoActionMessage("");
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        try {
+          await navigator.clipboard.writeText(cloneUrl);
+        } catch (error) {
+          copyTextWithTemporaryInput(cloneUrl);
+        }
+      } else {
+        copyTextWithTemporaryInput(cloneUrl);
+      }
+      setCloneMenuOpen(false);
+      setRepoActionMessage("Clone URL copied.");
+    } catch (error) {
+      setRepoActionMessage("Could not copy automatically. Select the clone URL and copy it manually.");
+    }
+  }
+
+  function copyTextWithTemporaryInput(value) {
+    const input = document.createElement("input");
+    input.value = value;
+    input.setAttribute("readonly", "");
+    input.style.position = "fixed";
+    input.style.left = "-9999px";
+    document.body.appendChild(input);
+    input.select();
+    const copied = document.execCommand("copy");
+    input.remove();
+    if (!copied) throw new Error("Clipboard copy failed.");
   }
 
   function getCurrentRepoDirectory() {
@@ -1575,19 +1634,25 @@ function RepoPage() {
         <div className="repo-header-actions">
           <div className="repo-primary-actions">
             <Button variant="soft" onClick={handleStarRepo}><Star size={16} />Star</Button>
-            <Button variant="soft"><GitFork size={16} />Fork</Button>
+            <Button variant="soft" onClick={forkRepository} disabled={repoActionState === "forking"}>
+              <GitFork size={16} />{repoActionState === "forking" ? "Forking..." : "Fork"}
+            </Button>
             <Button variant="soft" onClick={downloadRepositoryArchive} disabled={repoDetailsLoading || downloadState === "repo"}>
               <Download size={16} />{downloadState === "repo" ? "Downloading..." : "Download all"}
             </Button>
-            <div className="clone-control">
-              <button>Clone <ChevronDown size={14} /></button>
-              <div><input readOnly value={cloneUrl} /><Button variant="soft"><Copy size={16} /></Button></div>
+            <div className={cloneMenuOpen ? "clone-control open" : "clone-control"} ref={cloneMenuRef}>
+              <button onClick={() => setCloneMenuOpen((open) => !open)} type="button">Clone <ChevronDown size={14} /></button>
+              <div>
+                <input readOnly value={cloneUrl} onFocus={(event) => event.target.select()} aria-label="Clone URL" />
+                <button className="button soft" onClick={copyCloneUrl} type="button" aria-label="Copy clone URL"><Copy size={16} />Copy</button>
+              </div>
             </div>
           </div>
           <button className="repo-hero-edit-button" onClick={() => setHeroEditorOpen(true)}>
             <Palette size={16} />Edit hero
           </button>
         </div>
+        {repoActionMessage && <p className="repo-action-message" role="status">{repoActionMessage}</p>}
       </section>
       {heroEditorOpen && (
         <div className="repo-hero-modal-backdrop" onClick={() => setHeroEditorOpen(false)}>
