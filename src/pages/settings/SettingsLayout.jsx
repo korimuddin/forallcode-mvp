@@ -11,6 +11,7 @@ import {
   UserCircle
 } from "lucide-react";
 import { useDocumentTitle } from "../../lib/hooks";
+import { useSubscription } from "../../lib/useSubscription";
 
 const settingsGroups = [
   {
@@ -35,6 +36,7 @@ const settingsGroups = [
 
 export default function SettingsLayout() {
   const location = useLocation();
+  const { isPro } = useSubscription();
   const activeSegment = location.pathname.split("/").filter(Boolean).pop() || "account";
   const title = activeSegment.split("-").map((part) => part[0].toUpperCase() + part.slice(1)).join(" ");
   useDocumentTitle(`${title} settings`);
@@ -60,6 +62,7 @@ export default function SettingsLayout() {
                 >
                   <Icon size={16} />
                   <span>{item.label}</span>
+                  {item.path === "account" && <b className="settings-plan-badge">{isPro ? "Pro" : "Free"}</b>}
                 </NavLink>
               );
             })}

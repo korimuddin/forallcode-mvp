@@ -28,14 +28,16 @@ import CommandPalette from "./components/layout/CommandPalette";
 import TopNav from "./components/layout/TopNav";
 import ErrorBoundary from "./components/ui/ErrorBoundary";
 import IllustratedAvatar, { avatarVariants } from "./components/ui/IllustratedAvatar";
+import { LimitBanner } from "./components/ui/LimitBanner";
 import Skeleton from "./components/ui/Skeleton";
 import { learnLessons, learnTracks } from "./data/learnLessons";
 import { useAuthSession, useDocumentTitle, useIsMobile, useSignedInUserData } from "./lib/hooks";
 import { renderMarkdown } from "./lib/markdownRenderer";
 import { createNotification } from "./lib/notifications";
+import { isAtLimit } from "./lib/plans";
 import { getUserPreference, setUserPreference } from "./lib/preferences";
 import { createGitHubRepository, fetchGitHubFileContent, fetchGitHubRepoArchive, fetchGitHubRepoOverview, forkGitHubRepository, getCurrentSession, isSupabaseConfigured, saveGitHubRepositoryFile, saveRepoHeroToSupabase, signInWithGitHub, signInWithPassword, supabase, uploadProfileVisualImage, uploadRepoHeroImage } from "./lib/supabase";
-import { SubscriptionProvider } from "./lib/useSubscription";
+import { SubscriptionProvider, useSubscription } from "./lib/useSubscription";
 import "./styles.css";
 import "./styles/mobile.css";
 
@@ -579,12 +581,14 @@ function getPaginationItems(currentPage, totalPages) {
 function ReposPage() {
   useDocumentTitle("Repositories");
   const { repos: userRepos, loading: loadingRepos, error } = useSignedInUserData();
+  const { isPro, limits } = useSubscription();
   const [query, setQuery] = useState("");
   const [language, setLanguage] = useState("all");
   const [visibility, setVisibility] = useState("all");
   const [sort, setSort] = useState("updated");
   const [layout, setLayout] = useState(() => getUserPreference("repos", "layout", "rows"));
   const repoSource = userRepos.length > 0 ? userRepos : [];
+  const privateRepoCount = repoSource.filter((repo) => repo.private).length;
   const languages = [...new Set(repoSource.map((repo) => repo.language))];
   const filtered = repoSource
     .filter((repo) => (language === "all" || repo.language === language))
@@ -617,6 +621,12 @@ function ReposPage() {
           <Button to="/repos/new"><Plus size={16} />New repository</Button>
         </div>
       </div>
+      {!isPro && (
+        <div className="limit-indicator">
+          Private repos: {privateRepoCount} / {limits.privateRepos}
+        </div>
+      )}
+      <LimitBanner limitKey="privateRepos" currentCount={privateRepoCount} />
       <div className="phase-filter-bar">
         <input placeholder="Search repositories..." value={query} onChange={(event) => setQuery(event.target.value)} />
         <select value={language} onChange={(event) => setLanguage(event.target.value)}>
@@ -669,15 +679,45 @@ function NewRepoPage() {
   useDocumentTitle("New repository");
   const navigate = useNavigate();
   const { profile } = useSignedInUserData();
+  const { planId } = useSubscription();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [visibility, setVisibility] = useState("public");
   const [template, setTemplate] = useState("starter");
   const [status, setStatus] = useState("");
   const [creating, setCreating] = useState(false);
+  const [privateRepoCount, setPrivateRepoCount] = useState(0);
+  const privateRepoLimitReached = isAtLimit(planId, "privateRepos", privateRepoCount);
+  const privateRepoAtLimit = visibility === "private" && privateRepoLimitReached;
+
+  useEffect(() => {
+    let alive = true;
+
+    async function loadPrivateRepoCount() {
+      const session = await getCurrentSession();
+      if (!supabase || !session?.user?.id) return;
+      const { count } = await supabase
+        .from("repositories")
+        .select("id", { count: "exact", head: true })
+        .eq("owner_id", session.user.id)
+        .eq("is_private", true);
+      if (alive) setPrivateRepoCount(count || 0);
+    }
+
+    loadPrivateRepoCount();
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   async function handleCreateRepository() {
     setStatus("");
+
+    if (visibility === "private" && isAtLimit(planId, "privateRepos", privateRepoCount)) {
+      setStatus("You've reached the free private repo limit. Upgrade to Pro for unlimited private repositories.");
+      return;
+    }
+
     setCreating(true);
 
     try {
@@ -716,12 +756,19 @@ function NewRepoPage() {
                 ["public", "Public", "Anyone can see this repository."],
                 ["private", "Private", "Only people you invite can see it."]
               ].map(([value, title, text]) => (
-                <button className={visibility === value ? "active" : ""} key={value} onClick={() => setVisibility(value)} type="button">
+                <button
+                  className={visibility === value ? "active" : ""}
+                  disabled={value === "private" && privateRepoLimitReached}
+                  key={value}
+                  onClick={() => setVisibility(value)}
+                  type="button"
+                >
                   <strong>{title}</strong>
                   <small>{text}</small>
                 </button>
               ))}
             </div>
+            <LimitBanner limitKey="privateRepos" currentCount={privateRepoCount} />
             <label className="new-repo-field">
               <span>Starter template</span>
               <select value={template} onChange={(event) => setTemplate(event.target.value)}>
@@ -733,7 +780,7 @@ function NewRepoPage() {
             </label>
             {status && <p className="repo-hero-toast" role="status">{status}</p>}
             <div className="button-row">
-              <Button disabled={creating || !name.trim()} onClick={handleCreateRepository}>{creating ? "Creating..." : "Create repository"}</Button>
+              <Button disabled={creating || !name.trim() || privateRepoAtLimit} onClick={handleCreateRepository}>{creating ? "Creating..." : "Create repository"}</Button>
               <Button to="/repos" variant="soft">Cancel</Button>
             </div>
           </Card>
@@ -2270,6 +2317,7 @@ function ExplorePage() {
 }
 
 function Workspace({ compact = false, interactive = false }) {
+  const { isPro, limits, planId } = useSubscription();
   const [workspaceUserId, setWorkspaceUserId] = useState("");
   const [readyToPersist, setReadyToPersist] = useState(false);
   const [focus, setFocus] = useState(false);
@@ -2319,13 +2367,19 @@ function Workspace({ compact = false, interactive = false }) {
     setUserPreference(workspaceUserId, "workspace-desk", { focus, notes, todos });
   }, [focus, interactive, notes, readyToPersist, todos, workspaceUserId]);
 
-  const addNote = () => setNotes([...notes, { id: Date.now(), colour: defaultNoteColour, content: "New idea", x: 34, y: 56 }]);
+  const stickyNoteAtLimit = isAtLimit(planId, "stickyNotes", notes.length);
+  const addNote = () => {
+    if (stickyNoteAtLimit) return;
+    setNotes([...notes, { id: Date.now(), colour: defaultNoteColour, content: "New idea", x: 34, y: 56 }]);
+  };
   return (
     <section className={compact ? "workspace compact" : "workspace"}>
       <div className="workspace-toolbar">
         <Button variant="soft" onClick={() => setFocus(!focus)}><Eye size={16} />Focus mode {focus ? "ON" : "OFF"}</Button>
-        {interactive && <Button onClick={addNote}><Plus size={16} />Sticky note</Button>}
+        {interactive && !isPro && <span className="limit-indicator">Sticky notes: {notes.length} / {limits.stickyNotes}</span>}
+        {interactive && <Button disabled={stickyNoteAtLimit} onClick={addNote}><Plus size={16} />Sticky note</Button>}
       </div>
+      {interactive && <LimitBanner limitKey="stickyNotes" currentCount={notes.length} />}
       <div className={focus ? "desk focus-on" : "desk"}>
         <DeskIllustration />
         {notes.map((note) => (

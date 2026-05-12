@@ -3,8 +3,10 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { Bell, BookOpen, ChevronDown, Code2, Menu, Search, X } from "lucide-react";
 import IllustratedAvatar from "../ui/IllustratedAvatar";
+import { UpgradeButton } from "../ui/UpgradeButton";
 import { getUserPreference } from "../../lib/preferences";
 import { syncGitHubReposToSupabase, supabase } from "../../lib/supabase";
+import { useSubscription } from "../../lib/useSubscription";
 
 const mockUser = {
   displayName: "",
@@ -30,6 +32,7 @@ export default function TopNav() {
   const [globalResults, setGlobalResults] = useState([]);
   const [globalSearchLoading, setGlobalSearchLoading] = useState(false);
   const [globalSearchError, setGlobalSearchError] = useState("");
+  const { isPro } = useSubscription();
   const notificationsRef = useRef(null);
   const avatarRef = useRef(null);
   const searchRef = useRef(null);
@@ -373,6 +376,10 @@ export default function TopNav() {
               {avatarOpen && (
                 <div className="dropdown-menu avatar-menu">
                   <p>Signed in as {displayName}</p>
+                  <div className="avatar-plan-row">
+                    <span>{isPro ? "Pro" : "Free"} plan</span>
+                    {!isPro && <UpgradeButton small />}
+                  </div>
                   <span className="dropdown-divider" />
                   <Link to="/profile">My profile</Link>
                   <Link to="/workspace">My workspace</Link>

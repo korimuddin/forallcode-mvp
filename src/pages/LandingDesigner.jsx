@@ -2,8 +2,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { ArrowLeft, Download, Rocket } from "lucide-react";
 import DesignerPreview from "../components/landing-designer/DesignerPreview";
+import { LimitBanner } from "../components/ui/LimitBanner";
+import { ProGate } from "../components/ui/ProGate";
 import { useDocumentTitle, useIsMobile } from "../lib/hooks";
+import { isAtLimit } from "../lib/plans";
 import { getCurrentSession, supabase } from "../lib/supabase";
+import { useSubscription } from "../lib/useSubscription";
 
 const ownerUsername = "";
 
@@ -74,6 +78,7 @@ export default function LandingDesigner() {
   const { username = ownerUsername, repo = "" } = useParams();
   useDocumentTitle(`${repo} Landing Designer`);
   const isMobile = useIsMobile();
+  const { planId } = useSubscription();
   const userIdRef = useRef(null);
   const [activeSection, setActiveSection] = useState("navigation");
   const [theme, setTheme] = useState(landingThemes[0]);
@@ -88,8 +93,12 @@ export default function LandingDesigner() {
     secondaryCta: "View on GitHub"
   });
   const [font, setFont] = useState(fontOptions[0]);
+  const [landingPageCount, setLandingPageCount] = useState(0);
+  const [currentRepoHasLanding, setCurrentRepoHasLanding] = useState(false);
 
   const isOwner = username === ownerUsername;
+  const landingPageLimitReached = isAtLimit(planId, "landingPages", landingPageCount);
+  const publishLocked = landingPageLimitReached && !currentRepoHasLanding;
   const selectedPreset = stylePresets[stylePreset];
   const effectiveViewport = isMobile ? "mobile" : viewport;
 
@@ -129,11 +138,30 @@ export default function LandingDesigner() {
   useEffect(() => {
     async function loadSession() {
       const session = await getCurrentSession();
-      userIdRef.current = session?.user?.id || null;
+      const userId = session?.user?.id || null;
+      userIdRef.current = userId;
+      if (!supabase || !userId) return;
+
+      const [{ count }, { data: currentRepo }] = await Promise.all([
+        supabase
+          .from("repositories")
+          .select("id", { count: "exact", head: true })
+          .eq("owner_id", userId)
+          .not("landing_page_html", "is", null),
+        supabase
+          .from("repositories")
+          .select("landing_page_html")
+          .eq("owner_id", userId)
+          .eq("name", repo)
+          .maybeSingle()
+      ]);
+
+      setLandingPageCount(count || 0);
+      setCurrentRepoHasLanding(Boolean(currentRepo?.landing_page_html));
     }
 
     loadSession();
-  }, []);
+  }, [repo]);
 
   useEffect(() => {
     const timer = window.setTimeout(async () => {
@@ -271,6 +299,11 @@ export default function LandingDesigner() {
   }
 
   async function handlePublish() {
+    if (publishLocked) {
+      setStatus("You've reached the free landing page limit. Upgrade to Pro for unlimited landing pages.");
+      return;
+    }
+
     setPublishState("publishing");
     setStatus("Publishing landing page");
 
@@ -291,6 +324,8 @@ export default function LandingDesigner() {
 
       if (error) throw error;
 
+      if (!currentRepoHasLanding) setLandingPageCount((count) => count + 1);
+      setCurrentRepoHasLanding(true);
       setPublishState("published");
       setStatus(`Published at ${username}.forallcode.dev/${repo}`);
       window.setTimeout(() => setPublishState("idle"), 3000);
@@ -323,11 +358,20 @@ export default function LandingDesigner() {
             <button className={effectiveViewport === "mobile" ? "active" : ""} onClick={() => setViewport("mobile")} type="button">Mobile</button>
           </div>
           <button className="designer-ghost-button" type="button" onClick={handleExport}><Download size={14} />Export HTML</button>
-          <button className={`designer-publish-button ${publishState}`} type="button" onClick={handlePublish} disabled={publishState === "publishing"}>
-            {publishButtonContent[publishState]}
-          </button>
+          {publishLocked ? (
+            <ProGate feature="Publishing more landing pages" description="Free users can publish one landing page. Upgrade to Pro to publish unlimited project pages.">
+              <button className={`designer-publish-button ${publishState}`} type="button" onClick={handlePublish} disabled={publishState === "publishing"}>
+                {publishButtonContent[publishState]}
+              </button>
+            </ProGate>
+          ) : (
+            <button className={`designer-publish-button ${publishState}`} type="button" onClick={handlePublish} disabled={publishState === "publishing"}>
+              {publishButtonContent[publishState]}
+            </button>
+          )}
         </div>
       </header>
+      <LimitBanner limitKey="landingPages" currentCount={landingPageCount} />
 
       <div className="landing-designer-body">
         <aside className="landing-designer-panel">
