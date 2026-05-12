@@ -241,6 +241,34 @@
     min-height: auto;
   }
 
+  .repo-code-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .repo-code-toolbar > div:first-child {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .repo-code-toolbar span {
+    white-space: normal;
+  }
+
+  .add-file-button,
+  .add-file-control {
+    width: 100%;
+  }
+
+  .add-file-button {
+    justify-content: center;
+  }
+
+  .add-file-menu {
+    left: 0;
+    right: 0;
+  }
+
   .phase-file-tree,
   .file-tree {
     display: none;

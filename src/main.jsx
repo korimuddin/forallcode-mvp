@@ -22,6 +22,7 @@ import {
   Settings,
   Sparkles,
   Star,
+  Upload,
 } from "lucide-react";
 import CommandPalette from "./components/layout/CommandPalette";
 import TopNav from "./components/layout/TopNav";
@@ -33,7 +34,7 @@ import { useAuthSession, useDocumentTitle, useIsMobile, useSignedInUserData } fr
 import { renderMarkdown } from "./lib/markdownRenderer";
 import { createNotification } from "./lib/notifications";
 import { getUserPreference, setUserPreference } from "./lib/preferences";
-import { createGitHubRepository, fetchGitHubFileContent, fetchGitHubRepoArchive, fetchGitHubRepoOverview, getCurrentSession, isSupabaseConfigured, saveRepoHeroToSupabase, signInWithGitHub, signInWithPassword, supabase, uploadProfileVisualImage, uploadRepoHeroImage } from "./lib/supabase";
+import { createGitHubRepository, fetchGitHubFileContent, fetchGitHubRepoArchive, fetchGitHubRepoOverview, getCurrentSession, isSupabaseConfigured, saveGitHubRepositoryFile, saveRepoHeroToSupabase, signInWithGitHub, signInWithPassword, supabase, uploadProfileVisualImage, uploadRepoHeroImage } from "./lib/supabase";
 import "./styles.css";
 import "./styles/mobile.css";
 
@@ -926,12 +927,20 @@ function RepoPage() {
   const [fileLoading, setFileLoading] = useState(false);
   const [fileError, setFileError] = useState("");
   const [downloadState, setDownloadState] = useState("");
+  const [addFileMenuOpen, setAddFileMenuOpen] = useState(false);
+  const [createFileOpen, setCreateFileOpen] = useState(false);
+  const [newFilePath, setNewFilePath] = useState("");
+  const [newFileContent, setNewFileContent] = useState("");
+  const [fileActionState, setFileActionState] = useState("");
+  const [fileActionMessage, setFileActionMessage] = useState("");
   const [heroEditorOpen, setHeroEditorOpen] = useState(false);
   const [repoHero, setRepoHero] = useState({ title: "", image: "", positionX: 50, positionY: 50, fontFamily: heroFontOptions[0].value });
   const [heroDraft, setHeroDraft] = useState({ title: "", image: "", positionX: 50, positionY: 50, fontFamily: heroFontOptions[0].value });
   const [heroUploadState, setHeroUploadState] = useState("");
   const [heroToast, setHeroToast] = useState("");
   const heroPositionerRef = useRef(null);
+  const addFileMenuRef = useRef(null);
+  const uploadFileInputRef = useRef(null);
   const cloneUrl = `https://github.com/${username}/${repo}.git`;
 
   useEffect(() => {
@@ -952,6 +961,15 @@ function RepoPage() {
     const timer = window.setTimeout(() => setHeroToast(""), 4200);
     return () => window.clearTimeout(timer);
   }, [heroToast]);
+
+  useEffect(() => {
+    function closeAddFileMenu(event) {
+      if (!addFileMenuRef.current?.contains(event.target)) setAddFileMenuOpen(false);
+    }
+
+    document.addEventListener("pointerdown", closeAddFileMenu);
+    return () => document.removeEventListener("pointerdown", closeAddFileMenu);
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -994,6 +1012,37 @@ function RepoPage() {
       alive = false;
     };
   }, [username, repo]);
+
+  async function refreshRepoAfterFileChange(preferredPath = "") {
+    const session = await getCurrentSession();
+    if (!session?.provider_token) {
+      throw new Error("Sign in with GitHub to refresh repository files.");
+    }
+
+    const details = await fetchGitHubRepoOverview(username, repo, session.provider_token);
+    setRepoDetails(details);
+    const visibleParents = getParentFolderPaths(preferredPath);
+    setExpandedFolders(new Set(visibleParents));
+
+    const preferredFile = preferredPath
+      ? details.files.find((item) => item.type === "file" && item.path === preferredPath)
+      : null;
+    const readmeFile = details.files.find((item) => item.type === "file" && item.name.toLowerCase() === "readme.md");
+    const nextFile = preferredFile || readmeFile || details.files.find((item) => item.type === "file") || null;
+    setSelectedFile(nextFile);
+
+    if (nextFile) {
+      const content = await fetchGitHubFileContent(username, repo, nextFile.path, session.provider_token, details.defaultBranch);
+      setOpenFile(content);
+    } else {
+      setOpenFile(readmeFile ? {
+        name: "README.md",
+        path: readmeFile.path,
+        content: details.readme,
+        size: readmeFile.size || details.readme.length
+      } : null);
+    }
+  }
 
   async function openRepoFile(file) {
     if (file.type === "folder") return;
@@ -1063,6 +1112,100 @@ function RepoPage() {
       setFileError(error.message || "Could not download this repository from GitHub.");
     } finally {
       setDownloadState("");
+    }
+  }
+
+  function getCurrentRepoDirectory() {
+    if (selectedFile?.type === "folder") return selectedFile.path;
+    if (selectedFile?.path?.includes("/")) return selectedFile.path.split("/").slice(0, -1).join("/");
+    return "";
+  }
+
+  function openCreateFileDialog() {
+    const currentFolder = getCurrentRepoDirectory();
+    setNewFilePath(currentFolder ? `${currentFolder}/new-file.md` : "new-file.md");
+    setNewFileContent("");
+    setFileActionMessage("");
+    setCreateFileOpen(true);
+    setAddFileMenuOpen(false);
+  }
+
+  function openUploadFilePicker() {
+    setFileActionMessage("");
+    setAddFileMenuOpen(false);
+    uploadFileInputRef.current?.click();
+  }
+
+  async function createNewGitHubFile(event) {
+    event.preventDefault();
+    const path = normalizeGitHubFilePath(newFilePath);
+    setFileActionState("creating");
+    setFileActionMessage("");
+
+    try {
+      const session = await getCurrentSession();
+      if (!session?.provider_token) {
+        throw new Error("Sign in with GitHub repo access before creating files.");
+      }
+
+      await saveGitHubRepositoryFile({
+        githubAccessToken: session.provider_token,
+        owner: username,
+        repo,
+        path,
+        content: newFileContent,
+        branch: repoDetails?.defaultBranch,
+        message: `Add ${path} via ForAllCode`
+      });
+      await refreshRepoAfterFileChange(path);
+      setCreateFileOpen(false);
+      setNewFilePath("");
+      setNewFileContent("");
+      setFileActionMessage(`${path} was saved to GitHub.`);
+    } catch (error) {
+      setFileActionMessage(error.message || "Could not create this file on GitHub.");
+    } finally {
+      setFileActionState("");
+    }
+  }
+
+  async function uploadGitHubFiles(event) {
+    const files = Array.from(event.target.files || []);
+    event.target.value = "";
+    if (files.length === 0) return;
+
+    const currentFolder = getCurrentRepoDirectory();
+    setFileActionState("uploading");
+    setFileActionMessage("");
+
+    try {
+      const session = await getCurrentSession();
+      if (!session?.provider_token) {
+        throw new Error("Sign in with GitHub repo access before uploading files.");
+      }
+
+      const uploadedPaths = [];
+      for (const file of files) {
+        const path = normalizeGitHubFilePath([currentFolder, file.name].filter(Boolean).join("/"));
+        const contentBase64 = await readFileAsBase64(file);
+        await saveGitHubRepositoryFile({
+          githubAccessToken: session.provider_token,
+          owner: username,
+          repo,
+          path,
+          contentBase64,
+          branch: repoDetails?.defaultBranch,
+          message: `Upload ${path} via ForAllCode`
+        });
+        uploadedPaths.push(path);
+      }
+
+      await refreshRepoAfterFileChange(uploadedPaths[0]);
+      setFileActionMessage(`${uploadedPaths.length} file${uploadedPaths.length === 1 ? "" : "s"} uploaded to GitHub.`);
+    } catch (error) {
+      setFileActionMessage(error.message || "Could not upload these files to GitHub.");
+    } finally {
+      setFileActionState("");
     }
   }
 
@@ -1274,6 +1417,29 @@ function RepoPage() {
 
       {activeTab === "Code" && (
         <section className="phase-code-tab">
+          <div className="repo-code-toolbar">
+            <div>
+              <strong>{repoDetails?.defaultBranch || "main"}</strong>
+              <span>{fileActionState === "uploading" ? "Uploading to GitHub..." : fileActionState === "creating" ? "Creating file on GitHub..." : fileActionMessage || "Files are saved directly to GitHub."}</span>
+            </div>
+            <div className="add-file-control" ref={addFileMenuRef}>
+              <button
+                className="add-file-button"
+                disabled={repoDetailsLoading || Boolean(repoDetailsError) || Boolean(fileActionState)}
+                onClick={() => setAddFileMenuOpen((open) => !open)}
+                type="button"
+              >
+                Add file <ChevronDown size={15} />
+              </button>
+              {addFileMenuOpen && (
+                <div className="add-file-menu">
+                  <button onClick={openCreateFileDialog} type="button"><Plus size={18} />Create new file</button>
+                  <button onClick={openUploadFilePicker} type="button"><Upload size={18} />Upload files</button>
+                </div>
+              )}
+              <input multiple onChange={uploadGitHubFiles} ref={uploadFileInputRef} type="file" hidden />
+            </div>
+          </div>
           {repoDetailsLoading ? (
             <>
               <RepoFileTreeSkeleton />
@@ -1321,6 +1487,31 @@ function RepoPage() {
             </>
           )}
         </section>
+      )}
+
+      {createFileOpen && (
+        <div className="repo-hero-modal-backdrop" onClick={() => setCreateFileOpen(false)}>
+          <form className="repo-file-editor" role="dialog" aria-modal="true" aria-label="Create new file" onClick={(event) => event.stopPropagation()} onSubmit={createNewGitHubFile}>
+            <div>
+              <p className="eyebrow">Add file</p>
+              <h2>Create new file</h2>
+              <p>Choose a path and write the first version. Saving commits it directly to GitHub.</p>
+            </div>
+            <label>
+              File path
+              <input value={newFilePath} onChange={(event) => setNewFilePath(event.target.value)} placeholder="docs/notes.md" />
+            </label>
+            <label>
+              File content
+              <textarea rows="12" value={newFileContent} onChange={(event) => setNewFileContent(event.target.value)} placeholder="# New file" />
+            </label>
+            {fileActionMessage && <p className="repo-hero-toast" role="status">{fileActionMessage}</p>}
+            <div className="repo-hero-editor-actions">
+              <Button variant="soft" onClick={() => setCreateFileOpen(false)} disabled={Boolean(fileActionState)} type="button">Cancel</Button>
+              <Button disabled={Boolean(fileActionState)} type="submit">{fileActionState === "creating" ? "Saving..." : "Save to GitHub"}</Button>
+            </div>
+          </form>
+        </div>
       )}
 
       {activeTab === "Commits" && (
@@ -2288,6 +2479,33 @@ function formatFileSize(size = 0) {
   return `${(size / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function normalizeGitHubFilePath(path) {
+  return String(path || "")
+    .trim()
+    .replace(/\\/g, "/")
+    .replace(/^\/+/, "")
+    .replace(/\/{2,}/g, "/");
+}
+
+function getParentFolderPaths(path) {
+  const cleanPath = normalizeGitHubFilePath(path);
+  if (!cleanPath.includes("/")) return [];
+  const parts = cleanPath.split("/").slice(0, -1);
+  return parts.map((_, index) => parts.slice(0, index + 1).join("/"));
+}
+
+function readFileAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = String(reader.result || "");
+      resolve(result.includes(",") ? result.split(",").pop() : result);
+    };
+    reader.onerror = () => reject(new Error("Could not read this file before uploading."));
+    reader.readAsDataURL(file);
+  });
+}
+
 function RepoDataMessage({ title, text }) {
   return (
     <Card>
@@ -2562,9 +2780,9 @@ function Card({ children, large = false }) {
   return <article className={large ? "card large-card" : "card"}>{children}</article>;
 }
 
-function Button({ children, disabled = false, to, variant = "primary", full = false, onClick }) {
+function Button({ children, disabled = false, to, variant = "primary", full = false, onClick, type = "button" }) {
   const className = `button ${variant} ${full ? "full" : ""}`;
-  return to ? <Link className={className} to={to}>{children}</Link> : <button className={className} disabled={disabled} onClick={onClick}>{children}</button>;
+  return to ? <Link className={className} to={to}>{children}</Link> : <button className={className} disabled={disabled} onClick={onClick} type={type}>{children}</button>;
 }
 
 function Badge({ children }) {

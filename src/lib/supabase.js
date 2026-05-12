@@ -230,6 +230,64 @@ async function createGitHubRepositoryFile(githubAccessToken, owner, repo, path, 
   }
 }
 
+export async function saveGitHubRepositoryFile({
+  githubAccessToken,
+  owner,
+  repo,
+  path,
+  content = "",
+  contentBase64 = "",
+  message = "",
+  branch = ""
+}) {
+  if (!githubAccessToken) throw new Error("Sign in with GitHub repo access before saving files.");
+  if (!owner || !repo) throw new Error("Repository details are missing.");
+
+  const normalizedPath = String(path || "").replace(/^\/+/, "").trim();
+  if (!normalizedPath) throw new Error("Add a file path first.");
+
+  const contentsUrl = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${encodeGitHubPath(normalizedPath)}`;
+  const refQuery = branch ? `?ref=${encodeURIComponent(branch)}` : "";
+  const existingResponse = await fetch(`${contentsUrl}${refQuery}`, {
+    headers: {
+      Authorization: `Bearer ${githubAccessToken}`,
+      Accept: "application/vnd.github+json"
+    }
+  });
+  const existing = existingResponse.ok ? await existingResponse.json() : null;
+
+  if (!existingResponse.ok && existingResponse.status !== 404) {
+    const payload = await existingResponse.json().catch(() => null);
+    throw new Error(payload?.message || "Could not check this file on GitHub.");
+  }
+
+  if (existing?.type && existing.type !== "file") {
+    throw new Error("That path already exists as a folder on GitHub.");
+  }
+
+  const response = await fetch(contentsUrl, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${githubAccessToken}`,
+      Accept: "application/vnd.github+json",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      message: message || `${existing?.sha ? "Update" : "Add"} ${normalizedPath}`,
+      content: contentBase64 || encodeBase64(content),
+      ...(branch ? { branch } : {}),
+      ...(existing?.sha ? { sha: existing.sha } : {})
+    })
+  });
+
+  const payload = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new Error(payload?.message || "Could not save this file to GitHub.");
+  }
+
+  return payload;
+}
+
 function getRepositoryTemplateFiles(template, name, description) {
   const readme = `# ${name}\n\n${description || "A ForAllCode project."}\n\n## Getting started\n\nDescribe the project, how to run it, and how new contributors can help.\n`;
 
