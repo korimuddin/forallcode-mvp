@@ -268,6 +268,26 @@
     min-height: auto;
   }
 
+  .repo-notes-panel,
+  .repo-notes-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .repo-notes-sidebar,
+  .repo-notes-pages {
+    border-right: 0;
+    border-bottom: 1px solid var(--cream3);
+  }
+
+  .repo-note-editor-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .repo-note-editor textarea {
+    min-height: 360px;
+  }
+
   .repo-code-toolbar {
     align-items: stretch;
     flex-direction: column;

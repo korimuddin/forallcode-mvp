@@ -933,6 +933,13 @@ function RepoPage() {
   const [newFileContent, setNewFileContent] = useState("");
   const [fileActionState, setFileActionState] = useState("");
   const [fileActionMessage, setFileActionMessage] = useState("");
+  const [activeNotebook, setActiveNotebook] = useState("");
+  const [activeNotePath, setActiveNotePath] = useState("");
+  const [noteContent, setNoteContent] = useState("");
+  const [notebookName, setNotebookName] = useState("");
+  const [noteName, setNoteName] = useState("");
+  const [notesStatus, setNotesStatus] = useState("");
+  const [notesSaving, setNotesSaving] = useState(false);
   const [heroEditorOpen, setHeroEditorOpen] = useState(false);
   const [repoHero, setRepoHero] = useState({ title: "", image: "", positionX: 50, positionY: 50, fontFamily: heroFontOptions[0].value });
   const [heroDraft, setHeroDraft] = useState({ title: "", image: "", positionX: 50, positionY: 50, fontFamily: heroFontOptions[0].value });
@@ -942,6 +949,9 @@ function RepoPage() {
   const addFileMenuRef = useRef(null);
   const uploadFileInputRef = useRef(null);
   const cloneUrl = `https://github.com/${username}/${repo}.git`;
+  const notebooks = getRepoNotebooks(repoDetails?.files || []);
+  const selectedNotebook = notebooks.find((notebook) => notebook.slug === activeNotebook) || notebooks[0] || null;
+  const selectedNote = selectedNotebook?.notes.find((note) => note.path === activeNotePath) || selectedNotebook?.notes[0] || null;
 
   useEffect(() => {
     const normalizedHero = normalizeRepoHero(repoToHero(data), repo);
@@ -1012,6 +1022,14 @@ function RepoPage() {
       alive = false;
     };
   }, [username, repo]);
+
+  useEffect(() => {
+    if (activeTab !== "Notes" || activeNotebook || notebooks.length === 0) return;
+    const firstNotebook = notebooks[0];
+    const firstNote = firstNotebook.notes[0];
+    setActiveNotebook(firstNotebook.slug);
+    if (firstNote) openNotePage(firstNote);
+  }, [activeTab, activeNotebook, notebooks.length]);
 
   async function refreshRepoAfterFileChange(preferredPath = "") {
     const session = await getCurrentSession();
@@ -1206,6 +1224,147 @@ function RepoPage() {
       setFileActionMessage(error.message || "Could not upload these files to GitHub.");
     } finally {
       setFileActionState("");
+    }
+  }
+
+  async function createNotebook() {
+    const slug = slugForPath(notebookName);
+    if (!slug) {
+      setNotesStatus("Add a notebook name first.");
+      return;
+    }
+
+    setNotesSaving(true);
+    setNotesStatus("");
+
+    try {
+      const session = await getCurrentSession();
+      if (!session?.provider_token) {
+        throw new Error("Sign in with GitHub repo access before creating notebooks.");
+      }
+
+      const path = `notes/${slug}/index.md`;
+      const title = titleFromSlug(slug);
+      await saveGitHubRepositoryFile({
+        githubAccessToken: session.provider_token,
+        owner: username,
+        repo,
+        path,
+        content: `# ${title}\n\nStart your notebook here.\n`,
+        branch: repoDetails?.defaultBranch,
+        message: `Create ${title} notebook via ForAllCode`
+      });
+      await refreshRepoAfterFileChange(path);
+      setActiveNotebook(slug);
+      setActiveNotePath(path);
+      setNoteContent(`# ${title}\n\nStart your notebook here.\n`);
+      setNotebookName("");
+      setNotesStatus(`${title} notebook created in GitHub.`);
+    } catch (error) {
+      setNotesStatus(error.message || "Could not create this notebook on GitHub.");
+    } finally {
+      setNotesSaving(false);
+    }
+  }
+
+  async function createNotePage() {
+    const notebook = selectedNotebook?.slug || activeNotebook;
+    const slug = slugForPath(noteName);
+    if (!notebook) {
+      setNotesStatus("Create or select a notebook first.");
+      return;
+    }
+    if (!slug) {
+      setNotesStatus("Add a page name first.");
+      return;
+    }
+
+    const path = `notes/${notebook}/${slug}.md`;
+    const title = titleFromSlug(slug);
+    setNotesSaving(true);
+    setNotesStatus("");
+
+    try {
+      const session = await getCurrentSession();
+      if (!session?.provider_token) {
+        throw new Error("Sign in with GitHub repo access before creating notes.");
+      }
+
+      const content = `# ${title}\n\n`;
+      await saveGitHubRepositoryFile({
+        githubAccessToken: session.provider_token,
+        owner: username,
+        repo,
+        path,
+        content,
+        branch: repoDetails?.defaultBranch,
+        message: `Create ${title} note via ForAllCode`
+      });
+      await refreshRepoAfterFileChange(path);
+      setActiveNotebook(notebook);
+      setActiveNotePath(path);
+      setNoteContent(content);
+      setNoteName("");
+      setNotesStatus(`${title} note created in GitHub.`);
+    } catch (error) {
+      setNotesStatus(error.message || "Could not create this note on GitHub.");
+    } finally {
+      setNotesSaving(false);
+    }
+  }
+
+  async function openNotePage(note) {
+    if (!note?.path) return;
+    setNotesSaving(true);
+    setNotesStatus("");
+
+    try {
+      const session = await getCurrentSession();
+      if (!session?.provider_token) {
+        throw new Error("Sign in with GitHub to open notes.");
+      }
+
+      const content = await fetchGitHubFileContent(username, repo, note.path, session.provider_token, repoDetails?.defaultBranch);
+      setActiveNotebook(note.notebookSlug);
+      setActiveNotePath(note.path);
+      setNoteContent(content?.content || "");
+    } catch (error) {
+      setNotesStatus(error.message || "Could not open this note from GitHub.");
+    } finally {
+      setNotesSaving(false);
+    }
+  }
+
+  async function saveActiveNote() {
+    if (!activeNotePath) {
+      setNotesStatus("Create or select a note first.");
+      return;
+    }
+
+    setNotesSaving(true);
+    setNotesStatus("");
+
+    try {
+      const session = await getCurrentSession();
+      if (!session?.provider_token) {
+        throw new Error("Sign in with GitHub repo access before saving notes.");
+      }
+
+      await saveGitHubRepositoryFile({
+        githubAccessToken: session.provider_token,
+        owner: username,
+        repo,
+        path: activeNotePath,
+        content: noteContent,
+        branch: repoDetails?.defaultBranch,
+        message: `Update ${activeNotePath} via ForAllCode Notes`
+      });
+      await refreshRepoAfterFileChange(activeNotePath);
+      setNotesStatus("Note saved to GitHub.");
+    } catch (error) {
+      setNotesStatus(error.message || "Could not save this note to GitHub.");
+    } finally {
+      setNotesSaving(false);
     }
   }
 
@@ -1410,7 +1569,7 @@ function RepoPage() {
       )}
 
       <div className="repo-tab-bar">
-        {["Code", "Commits", "Branches", "Visual Map", "Settings"].map((tab) => (
+        {["Code", "Commits", "Branches", "Visual Map", "Settings", "Notes"].map((tab) => (
           <button className={activeTab === tab ? "active" : ""} key={tab} onClick={() => setActiveTab(tab)}>{tab}</button>
         ))}
       </div>
@@ -1572,6 +1731,82 @@ function RepoPage() {
             <label>Confirmation<input placeholder={repo} /></label>
             <Button variant="soft">Delete repo</Button>
           </Card>
+        </section>
+      )}
+
+      {activeTab === "Notes" && (
+        <section className="repo-notes-panel">
+          <aside className="repo-notes-sidebar">
+            <div>
+              <p className="eyebrow">GitHub notebooks</p>
+              <h3>Notes</h3>
+              <span>Saved in this repo under <code>notes/</code>.</span>
+            </div>
+            <label>
+              Create notebook
+              <div className="repo-notes-create-row">
+                <input value={notebookName} onChange={(event) => setNotebookName(event.target.value)} placeholder="Release notes" />
+                <button onClick={createNotebook} disabled={notesSaving} type="button"><Plus size={15} /></button>
+              </div>
+            </label>
+            <nav className="repo-notebook-list" aria-label="Notebooks">
+              {notebooks.map((notebook) => (
+                <button
+                  className={notebook.slug === selectedNotebook?.slug ? "active" : ""}
+                  key={notebook.slug}
+                  onClick={() => {
+                    setActiveNotebook(notebook.slug);
+                    if (notebook.notes[0]) openNotePage(notebook.notes[0]);
+                    else {
+                      setActiveNotePath("");
+                      setNoteContent("");
+                    }
+                  }}
+                  type="button"
+                >
+                  <Folder size={15} />
+                  <span>{notebook.name}</span>
+                </button>
+              ))}
+              {notebooks.length === 0 && <p>No notebooks yet.</p>}
+            </nav>
+          </aside>
+          <div className="repo-notes-workspace">
+            <div className="repo-notes-pages">
+              <div>
+                <strong>{selectedNotebook?.name || "No notebook selected"}</strong>
+                <span>{selectedNotebook?.notes.length || 0} page{selectedNotebook?.notes.length === 1 ? "" : "s"}</span>
+              </div>
+              <div className="repo-notes-create-row">
+                <input value={noteName} onChange={(event) => setNoteName(event.target.value)} placeholder="New page" disabled={!selectedNotebook} />
+                <button onClick={createNotePage} disabled={!selectedNotebook || notesSaving} type="button"><Plus size={15} /></button>
+              </div>
+              <div className="repo-note-page-list">
+                {selectedNotebook?.notes.map((note) => (
+                  <button className={note.path === activeNotePath ? "active" : ""} key={note.path} onClick={() => openNotePage(note)} type="button">
+                    <FileText size={15} />
+                    <span>{note.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="repo-note-editor">
+              <div className="repo-note-editor-head">
+                <div>
+                  <p className="eyebrow">Markdown note</p>
+                  <h3>{selectedNote?.name || activeNotePath || "Create a notebook to begin"}</h3>
+                </div>
+                <Button onClick={saveActiveNote} disabled={!activeNotePath || notesSaving}>{notesSaving ? "Saving..." : "Save note"}</Button>
+              </div>
+              <textarea
+                value={noteContent}
+                onChange={(event) => setNoteContent(event.target.value)}
+                placeholder="# Your note"
+                disabled={!activeNotePath || notesSaving}
+              />
+              {notesStatus && <p className="repo-notes-status">{notesStatus}</p>}
+            </div>
+          </div>
         </section>
       )}
     </div>
@@ -2039,12 +2274,13 @@ function Avatar({ photoUrl = "", size = "normal", variant = currentUser.avatarSt
   return <span className={`avatar ${size}`}><IllustratedAvatar photoUrl={photoUrl} size={sizes[size] || sizes.normal} variant={variant} /></span>;
 }
 
-function ProfileHeader({ editable = false, publicView = false, profileData = null, repoCount = currentUser.repos }) {
-  const loadingStats = useInitialLoading();
+function ProfileHeader({ editable = false, publicView = false, profileData = null }) {
   const [editorOpen, setEditorOpen] = useState(false);
   const [draft, setDraft] = useState(() => profileDraftFromData(profileData));
   const [uploading, setUploading] = useState("");
   const [status, setStatus] = useState("");
+  const [avatarPreviewOpen, setAvatarPreviewOpen] = useState(false);
+  const [bioMenuOpen, setBioMenuOpen] = useState(false);
   const coverPositionerRef = useRef(null);
   const quickAvatarInputRef = useRef(null);
   const displayName = profileData?.displayName || currentUser.name;
@@ -2060,6 +2296,12 @@ function ProfileHeader({ editable = false, publicView = false, profileData = nul
   const bio = profileData?.bio || currentUser.bio;
   const location = profileData?.location || currentUser.location;
   const website = profileData?.website || currentUser.website;
+  const profileLinks = [
+    { label: "Website", value: website },
+    { label: "GitHub", value: profileData?.githubUrl || "" },
+    { label: "Twitter/X", value: profileData?.twitterUrl || "" },
+    { label: "LinkedIn", value: profileData?.linkedinUrl || "" }
+  ].filter((item) => item.value);
 
   useEffect(() => {
     setDraft(profileDraftFromData(profileData));
@@ -2204,7 +2446,9 @@ function ProfileHeader({ editable = false, publicView = false, profileData = nul
       />
       <div className="profile-content">
         <div className="profile-avatar-card">
-          <Avatar photoUrl={quickAvatarUrl} size="large" variant={avatarStyle} />
+          <button className="profile-avatar-preview-trigger" onClick={() => setAvatarPreviewOpen(true)} type="button" aria-label="View larger profile picture">
+            <Avatar photoUrl={quickAvatarUrl} size="large" variant={avatarStyle} />
+          </button>
           {editable && (
             <>
               <button
@@ -2226,17 +2470,40 @@ function ProfileHeader({ editable = false, publicView = false, profileData = nul
             <p>@{username}{pronouns ? ` - ${pronouns}` : ""}</p>
           </div>
           <div className="profile-details">
-            {bio && <p>{bio}</p>}
-            <p>{[location, website, `Joined ${currentUser.joinDate}`].filter(Boolean).join(" - ")}</p>
+            {bio && <p className="profile-bio-summary">{bio}</p>}
+            <p>{[location, `Joined ${currentUser.joinDate}`].filter(Boolean).join(" - ")}</p>
             {status && <small>{status}</small>}
           </div>
           <div className="profile-actions">{editable && <Button onClick={() => setEditorOpen(true)}>Edit profile</Button>}{publicView && <Button onClick={handleFollow}>Follow</Button>}<Button variant="soft">Message</Button></div>
+          <button className="profile-bio-toggle" onClick={() => setBioMenuOpen((open) => !open)} type="button" aria-label="Toggle profile details" aria-expanded={bioMenuOpen}>
+            <ChevronDown size={18} />
+          </button>
+          {bioMenuOpen && (
+            <div className="profile-bio-menu">
+              {bio && <p>{bio}</p>}
+              {location && <p><strong>Location</strong><span>{location}</span></p>}
+              <p><strong>Joined</strong><span>{currentUser.joinDate}</span></p>
+              {profileLinks.length > 0 && (
+                <div className="profile-bio-links">
+                  {profileLinks.map((link) => (
+                    <a href={ensureProfileUrl(link.value)} key={link.label} target="_blank" rel="noreferrer">{link.label}</a>
+                  ))}
+                </div>
+              )}
+              <button className="profile-bio-toggle profile-bio-toggle-expanded" onClick={() => setBioMenuOpen(false)} type="button" aria-label="Close profile details" aria-expanded="true">
+                <ChevronDown size={18} />
+              </button>
+            </div>
+          )}
         </div>
       </div>
-      {loadingStats ? (
-        <ProfileStatsSkeleton />
-      ) : (
-        <div className="stats profile-stats"><Stat value={repoCount} label="repos" /><Stat value={currentUser.followers} label="followers" /><Stat value={currentUser.following} label="following" /><Stat value={currentUser.stars} label="stars" /></div>
+      {avatarPreviewOpen && (
+        <div className="repo-hero-modal-backdrop" onClick={() => setAvatarPreviewOpen(false)}>
+          <div className="profile-avatar-lightbox" role="dialog" aria-modal="true" aria-label="Profile picture preview" onClick={(event) => event.stopPropagation()}>
+            <button className="profile-avatar-lightbox-close" onClick={() => setAvatarPreviewOpen(false)} type="button" aria-label="Close profile picture preview">×</button>
+            <Avatar photoUrl={quickAvatarUrl} size="large" variant={avatarStyle} />
+          </div>
+        </div>
       )}
       {editorOpen && (
         <div className="repo-hero-modal-backdrop" onClick={() => setEditorOpen(false)}>
@@ -2338,6 +2605,12 @@ function profileDraftFromData(profileData = {}) {
     coverPositionX: profileData?.coverPositionX ?? 50,
     coverPositionY: profileData?.coverPositionY ?? 50
   };
+}
+
+function ensureProfileUrl(value) {
+  const url = String(value || "").trim();
+  if (!url) return "#";
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`;
 }
 
 const profileCoverOptions = [
@@ -2540,6 +2813,52 @@ function normalizeGitHubFilePath(path) {
     .replace(/\\/g, "/")
     .replace(/^\/+/, "")
     .replace(/\/{2,}/g, "/");
+}
+
+function slugForPath(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function titleFromSlug(value) {
+  return String(value || "")
+    .replace(/\.(md|markdown)$/i, "")
+    .split(/[-_]/g)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ") || "Untitled";
+}
+
+function getRepoNotebooks(files = []) {
+  const notebooks = new Map();
+  files
+    .filter((file) => file.type === "file" && /^notes\/[^/]+\/.+\.m(?:d|arkdown)$/i.test(file.path))
+    .forEach((file) => {
+      const [, notebookSlug] = file.path.split("/");
+      if (!notebooks.has(notebookSlug)) {
+        notebooks.set(notebookSlug, {
+          slug: notebookSlug,
+          name: titleFromSlug(notebookSlug),
+          notes: []
+        });
+      }
+      notebooks.get(notebookSlug).notes.push({
+        name: titleFromSlug(file.name),
+        notebookSlug,
+        path: file.path
+      });
+    });
+
+  return Array.from(notebooks.values())
+    .map((notebook) => ({
+      ...notebook,
+      notes: notebook.notes.sort((a, b) => a.name.localeCompare(b.name))
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 }
 
 function getParentFolderPaths(path) {
@@ -2905,19 +3224,6 @@ function ReadmeSkeleton() {
       <Skeleton className="skeleton-text medium" />
       <Skeleton lines={4} />
       <Skeleton className="skeleton-code" />
-    </div>
-  );
-}
-
-function ProfileStatsSkeleton() {
-  return (
-    <div className="stats profile-stats profile-stats-skeleton" aria-label="Loading profile stats">
-      {Array.from({ length: 4 }).map((_, index) => (
-        <div className="stat" key={index}>
-          <Skeleton className="skeleton-stat-number" />
-          <Skeleton className="skeleton-text short" />
-        </div>
-      ))}
     </div>
   );
 }
