@@ -488,6 +488,7 @@ function ReposPage() {
   const [language, setLanguage] = useState("all");
   const [visibility, setVisibility] = useState("all");
   const [sort, setSort] = useState("updated");
+  const [layout, setLayout] = useState(() => getUserPreference("repos", "layout", "rows"));
   const repoSource = userRepos.length > 0 ? userRepos : [];
   const languages = [...new Set(repoSource.map((repo) => repo.language))];
   const filtered = repoSource
@@ -500,6 +501,16 @@ function ReposPage() {
       return 0;
     });
   const repoHeroSlides = buildRepoHeroSlides(repoSource);
+  const layoutOptions = [
+    { value: "rows", label: "Layout: Rows" },
+    { value: "grid-2", label: "Layout: 2 x 2 grid" },
+    { value: "grid-3", label: "Layout: 3 x 3 grid" }
+  ];
+
+  function updateLayout(nextLayout) {
+    setLayout(nextLayout);
+    setUserPreference("repos", "layout", nextLayout);
+  }
 
   return (
     <PageFrame title="" eyebrow="">
@@ -527,6 +538,14 @@ function ReposPage() {
           <option value="stars">Stars</option>
           <option value="name">Name (A-Z)</option>
         </select>
+        <select
+          aria-label="Repository layout"
+          className="repo-layout-select"
+          value={layout}
+          onChange={(event) => updateLayout(event.target.value)}
+        >
+          {layoutOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+        </select>
       </div>
       {loadingRepos ? (
         <RepoListSkeleton />
@@ -538,7 +557,7 @@ function ReposPage() {
           <Button variant="soft" onClick={() => window.location.reload()}>Try again</Button>
         </div>
       ) : filtered.length > 0 ? (
-        <div className="phase-repo-list">{filtered.map((repo) => <PhaseRepoCard key={repo.name} repo={repo} />)}</div>
+        <div className={`phase-repo-list ${layout}`}>{filtered.map((repo) => <PhaseRepoCard key={repo.name} repo={repo} />)}</div>
       ) : (
         <div className="repo-empty-state">
           <Folder size={54} />

@@ -1334,6 +1334,10 @@ label { display: grid; gap: 7px; margin: 12px 0; color: var(--ink2); font-weight
   min-width: 150px;
 }
 
+.phase-filter-bar .repo-layout-select {
+  min-width: 170px;
+}
+
 .new-repo-layout {
   display: grid;
   grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
@@ -1522,6 +1526,35 @@ label { display: grid; gap: 7px; margin: 12px 0; color: var(--ink2); font-weight
 .phase-repo-list {
   display: grid;
   gap: 10px;
+}
+
+.phase-repo-list.grid-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.phase-repo-list.grid-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.phase-repo-list.grid-2 .phase-repo-card,
+.phase-repo-list.grid-3 .phase-repo-card {
+  min-height: 220px;
+}
+
+.phase-repo-list.grid-3 .phase-repo-card {
+  padding: 18px;
+}
+
+.phase-repo-list.grid-3 .phase-repo-card.has-repo-hero .phase-repo-title h3 {
+  font-size: clamp(1.35rem, 2vw, 2.1rem);
+}
+
+.phase-repo-list.grid-2 .phase-repo-actions,
+.phase-repo-list.grid-3 .phase-repo-actions {
+  opacity: 1;
+  transform: none;
 }
 
 .phase-repo-card {
