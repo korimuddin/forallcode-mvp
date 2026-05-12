@@ -35,6 +35,7 @@ import { renderMarkdown } from "./lib/markdownRenderer";
 import { createNotification } from "./lib/notifications";
 import { getUserPreference, setUserPreference } from "./lib/preferences";
 import { createGitHubRepository, fetchGitHubFileContent, fetchGitHubRepoArchive, fetchGitHubRepoOverview, forkGitHubRepository, getCurrentSession, isSupabaseConfigured, saveGitHubRepositoryFile, saveRepoHeroToSupabase, signInWithGitHub, signInWithPassword, supabase, uploadProfileVisualImage, uploadRepoHeroImage } from "./lib/supabase";
+import { SubscriptionProvider } from "./lib/useSubscription";
 import "./styles.css";
 import "./styles/mobile.css";
 
@@ -110,9 +111,11 @@ function useInitialLoading(delay = 420) {
 function App() {
   return (
     <ErrorBoundary>
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
+      <SubscriptionProvider>
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </SubscriptionProvider>
     </ErrorBoundary>
   );
 }
