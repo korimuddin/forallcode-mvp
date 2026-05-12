@@ -826,6 +826,60 @@ p { color: var(--ink2); line-height: 1.65; }
   gap: 18px;
 }
 
+.profile-repos-section {
+  min-width: 0;
+}
+
+.profile-repo-list {
+  display: grid;
+  gap: 16px;
+}
+
+.profile-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 16px;
+}
+
+.profile-pagination button {
+  border: 1px solid #e8e0d4;
+  border-radius: 8px;
+  background: #fffdf9;
+  padding: 6px 12px;
+  color: #6b5f58;
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .18s ease;
+}
+
+.profile-pagination button:hover:not(:disabled):not(.active) {
+  border-color: #c4b8e8;
+  background: #f4efe6;
+}
+
+.profile-pagination button.active {
+  border-color: #9b8fd4;
+  background: #9b8fd4;
+  color: #fffdf9;
+}
+
+.profile-pagination button:disabled {
+  opacity: .35;
+  cursor: not-allowed;
+}
+
+.profile-pagination-ellipsis {
+  padding: 6px 4px;
+  color: #6b5f58;
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+}
+
 .check-list, .flow-list { color: var(--ink2); line-height: 1.8; }
 
 input, textarea, select {

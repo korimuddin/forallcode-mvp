@@ -450,10 +450,13 @@ function MyProfilePage() {
       <ProfileHeader editable profileData={profile} repoCount={userRepos.length} />
       <Workspace compact />
       <div className="two-column">
-        <section>
-          {loading ? <RepoListSkeleton /> : visibleRepos.map((repo) => <RepoCard key={repo.name} repo={repo} actions />)}
-          {!loading && visibleRepos.length === 0 && <Card><h3>No synced repos yet</h3><p>Sign in with GitHub repo access to fill this profile with your repositories.</p></Card>}
-        </section>
+        <PaginatedProfileRepos
+          actions
+          emptyText="Sign in with GitHub repo access to fill this profile with your repositories."
+          emptyTitle="No synced repos yet"
+          loading={loading}
+          repos={visibleRepos}
+        />
         <aside><ActivityCalendar /><RecentChanges repos={visibleRepos} /></aside>
       </div>
     </PageFrame>
@@ -469,17 +472,105 @@ function PublicProfile() {
   return (
     <PageFrame title={isOwnProfile ? profile.displayName : username} eyebrow={`@${username}`}>
       <ProfileHeader publicView profileData={isOwnProfile ? profile : { username, displayName: username }} repoCount={profileRepos.length} />
-      <SectionTitle title="Pinned repos" />
-      <div className="repo-grid">
-        {profileRepos.filter((repo) => repo.pinned).map((repo) => <RepoCard key={repo.name} repo={{ ...repo, owner: username }} />)}
-        {profileRepos.filter((repo) => repo.pinned).length === 0 && <Card><h3>No pinned GitHub repos yet</h3><p>Pinned repositories will appear here once they are selected.</p></Card>}
-      </div>
+      <SectionTitle title="Repositories" />
+      <PaginatedProfileRepos
+        emptyText="Public repositories will appear here once they are synced."
+        emptyTitle="No public GitHub repos yet"
+        repos={profileRepos.map((repo) => ({ ...repo, owner: repo.owner || username }))}
+      />
       <div className="two-column">
         <Card><h3>Public activity</h3>{activity.map((item) => <p key={item.id}>{item.name} {item.action}</p>)}{activity.length === 0 && <p>No public GitHub activity synced yet.</p>}</Card>
         <Card><h3>Skills and badges</h3><div className="tag-row">{["Git mentoring", "TypeScript", "Design systems", "Open source guide"].map((tag) => <Badge key={tag}>{tag}</Badge>)}</div></Card>
       </div>
     </PageFrame>
   );
+}
+
+function PaginatedProfileRepos({ actions = false, emptyText, emptyTitle, loading = false, repos = [] }) {
+  const [page, setPage] = useState(1);
+  const reposPerPage = 6;
+  const totalPages = Math.max(1, Math.ceil(repos.length / reposPerPage));
+  const currentPage = Math.min(page, totalPages);
+  const start = (currentPage - 1) * reposPerPage;
+  const visibleRepos = repos.slice(start, start + reposPerPage);
+  const pageItems = getPaginationItems(currentPage, totalPages);
+
+  useEffect(() => {
+    setPage((current) => Math.min(current, totalPages));
+  }, [totalPages]);
+
+  if (loading) {
+    return (
+      <section>
+        <RepoListSkeleton />
+      </section>
+    );
+  }
+
+  return (
+    <section className="profile-repos-section">
+      {visibleRepos.length > 0 ? (
+        <div className="profile-repo-list">
+          {visibleRepos.map((repo) => <RepoCard key={`${repo.owner}-${repo.name}`} repo={repo} actions={actions} />)}
+        </div>
+      ) : (
+        <Card><h3>{emptyTitle}</h3><p>{emptyText}</p></Card>
+      )}
+      {repos.length > reposPerPage && (
+        <nav className="profile-pagination" aria-label="Repository pages">
+          <button
+            aria-label="Previous page"
+            disabled={currentPage === 1}
+            onClick={() => setPage((value) => Math.max(1, value - 1))}
+            type="button"
+          >
+            &larr;
+          </button>
+          {pageItems.map((item, index) => item === "ellipsis" ? (
+            <span className="profile-pagination-ellipsis" key={`ellipsis-${index}`}>...</span>
+          ) : (
+            <button
+              aria-current={item === currentPage ? "page" : undefined}
+              className={item === currentPage ? "active" : ""}
+              key={item}
+              onClick={() => setPage(item)}
+              type="button"
+            >
+              {item}
+            </button>
+          ))}
+          <button
+            aria-label="Next page"
+            disabled={currentPage === totalPages}
+            onClick={() => setPage((value) => Math.min(totalPages, value + 1))}
+            type="button"
+          >
+            &rarr;
+          </button>
+        </nav>
+      )}
+    </section>
+  );
+}
+
+function getPaginationItems(currentPage, totalPages) {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1);
+  }
+
+  const pages = new Set([1, totalPages, currentPage, currentPage - 1, currentPage + 1]);
+  const sorted = [...pages]
+    .filter((item) => item >= 1 && item <= totalPages)
+    .sort((a, b) => a - b);
+  const items = [];
+
+  sorted.forEach((item, index) => {
+    const previous = sorted[index - 1];
+    if (previous && item - previous > 1) items.push("ellipsis");
+    items.push(item);
+  });
+
+  return items;
 }
 
 function ReposPage() {
