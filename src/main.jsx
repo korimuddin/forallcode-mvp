@@ -1569,7 +1569,7 @@ function RepoPage() {
       )}
 
       <div className="repo-tab-bar">
-        {["Code", "Commits", "Branches", "Visual Map", "Settings", "Notes"].map((tab) => (
+        {["Code", "Commits", "Branches", "Visual Map", "Notes", "Settings"].map((tab) => (
           <button className={activeTab === tab ? "active" : ""} key={tab} onClick={() => setActiveTab(tab)}>{tab}</button>
         ))}
       </div>
@@ -1738,14 +1738,14 @@ function RepoPage() {
         <section className="repo-notes-panel">
           <aside className="repo-notes-sidebar">
             <div>
-              <p className="eyebrow">GitHub notebooks</p>
-              <h3>Notes</h3>
-              <span>Saved in this repo under <code>notes/</code>.</span>
+              <p className="eyebrow">Repo notes</p>
+              <h3>Notebooks</h3>
+              <span>Choose a notebook, then pick or create a page. Everything saves to GitHub under <code>notes/</code>.</span>
             </div>
             <label>
-              Create notebook
+              New notebook
               <div className="repo-notes-create-row">
-                <input value={notebookName} onChange={(event) => setNotebookName(event.target.value)} placeholder="Release notes" />
+                <input value={notebookName} onChange={(event) => setNotebookName(event.target.value)} placeholder="Project notes" />
                 <button onClick={createNotebook} disabled={notesSaving} type="button"><Plus size={15} /></button>
               </div>
             </label>
@@ -1764,17 +1764,17 @@ function RepoPage() {
                   }}
                   type="button"
                 >
-                  <Folder size={15} />
+                  <span className="repo-notebook-book" aria-hidden="true"><BookOpen size={18} /></span>
                   <span>{notebook.name}</span>
                 </button>
               ))}
-              {notebooks.length === 0 && <p>No notebooks yet.</p>}
+              {notebooks.length === 0 && <p>Create your first notebook to start writing pages.</p>}
             </nav>
           </aside>
           <div className="repo-notes-workspace">
             <div className="repo-notes-pages">
               <div>
-                <strong>{selectedNotebook?.name || "No notebook selected"}</strong>
+                <strong>Pages</strong>
                 <span>{selectedNotebook?.notes.length || 0} page{selectedNotebook?.notes.length === 1 ? "" : "s"}</span>
               </div>
               <div className="repo-notes-create-row">
