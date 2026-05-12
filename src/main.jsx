@@ -656,31 +656,36 @@ const learnHeroSlides = [
     eyebrow: "Did you know?",
     title: ".gitignore has been part of Git since the beginning.",
     text: "Git began on April 7, 2005, and ignore rules were designed early to help teams keep untracked local files out of shared history.",
-    tone: "lavender"
+    tone: "lavender",
+    visual: "gitignore"
   },
   {
     eyebrow: "Live learning",
     title: "4k users are learning right now.",
     text: "Tiny daily Git lessons add up. Pick a topic, complete a visual step, and keep your project moving.",
-    tone: "sage"
+    tone: "sage",
+    visual: "stats"
   },
   {
     eyebrow: "More info",
     title: "Git becomes clearer when you can see the shape of the work.",
     text: "Branches, merges, conflicts, releases, and remotes all become easier once the history is visible.",
-    tone: "amber"
+    tone: "amber",
+    visual: "branches"
   },
   {
     eyebrow: "Course nudge",
     title: "Have you considered DevOps?",
     text: "Take a look at the DevOps track to understand CI/CD, environments, deployment strategies, and observability.",
-    tone: "sky"
+    tone: "sky",
+    visual: "devops"
   },
   {
     eyebrow: "Next step",
     title: "Start where you are. Move when ready.",
     text: "Beginner, Intermediate, Advanced, and DevOps tracks are suggestions, not locks.",
-    tone: "rose"
+    tone: "rose",
+    visual: "tracks"
   }
 ];
 
@@ -768,6 +773,7 @@ function CarouselHero({ slides, type }) {
         <p>{activeSlide.text}</p>
         {activeSlide.meta && <span>{activeSlide.meta}</span>}
       </div>
+      {type === "learn" && activeSlide.visual && <LearnHeroVisual kind={activeSlide.visual} />}
       {activeSlide.visual === "computer" && <AnimatedComputer />}
       <div className="carousel-dots" aria-label="Hero slides">
         {slides.map((slide, index) => (
@@ -781,6 +787,73 @@ function CarouselHero({ slides, type }) {
         ))}
       </div>
     </section>
+  );
+}
+
+function LearnHeroVisual({ kind }) {
+  if (kind === "stats") {
+    return (
+      <div className="learn-hero-visual visual-stats" aria-hidden="true">
+        <div className="visual-card">
+          <strong>4k</strong>
+          <span>learning now</span>
+        </div>
+        <i className="pulse one" />
+        <i className="pulse two" />
+        <i className="pulse three" />
+      </div>
+    );
+  }
+
+  if (kind === "branches") {
+    return (
+      <div className="learn-hero-visual visual-branches" aria-hidden="true">
+        <svg viewBox="0 0 260 200" role="img">
+          <path d="M48 158 C84 122 90 78 130 78 C170 78 174 124 214 46" />
+          <path d="M48 158 C94 158 112 146 148 132 C178 120 192 132 220 156" />
+          <circle cx="48" cy="158" r="13" />
+          <circle cx="130" cy="78" r="13" />
+          <circle cx="214" cy="46" r="13" />
+          <circle cx="220" cy="156" r="13" />
+        </svg>
+      </div>
+    );
+  }
+
+  if (kind === "devops") {
+    return (
+      <div className="learn-hero-visual visual-devops" aria-hidden="true">
+        <div className="deploy-ring">
+          <span>CI</span>
+          <span>Test</span>
+          <span>Ship</span>
+        </div>
+        <div className="rocket-trail" />
+      </div>
+    );
+  }
+
+  if (kind === "tracks") {
+    return (
+      <div className="learn-hero-visual visual-tracks" aria-hidden="true">
+        <div className="track beginner">Beginner</div>
+        <div className="track intermediate">Intermediate</div>
+        <div className="track advanced">Advanced</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="learn-hero-visual visual-gitignore" aria-hidden="true">
+      <div className="file-card">
+        <strong>.gitignore</strong>
+        <span>node_modules/</span>
+        <span>.env.local</span>
+        <span>dist/</span>
+      </div>
+      <i className="floating-dot one" />
+      <i className="floating-dot two" />
+    </div>
   );
 }
 

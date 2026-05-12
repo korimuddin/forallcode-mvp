@@ -1151,25 +1151,29 @@ label { display: grid; gap: 7px; margin: 12px 0; color: var(--ink2); font-weight
 
 .carousel-hero.tone-sage {
   background:
-    radial-gradient(circle at 78% 24%, rgba(255, 253, 249, .78), transparent 25%),
+    radial-gradient(circle at 78% 24%, rgba(255, 253, 249, .82), transparent 25%),
+    radial-gradient(circle at 18% 86%, rgba(155, 143, 212, .2), transparent 26%),
     linear-gradient(135deg, var(--sage1), var(--cream2));
 }
 
 .carousel-hero.tone-sky {
   background:
-    radial-gradient(circle at 78% 22%, rgba(255, 253, 249, .74), transparent 25%),
+    radial-gradient(circle at 78% 22%, rgba(255, 253, 249, .78), transparent 25%),
+    radial-gradient(circle at 14% 90%, rgba(246, 214, 159, .24), transparent 26%),
     linear-gradient(135deg, var(--sky1), var(--lavender1));
 }
 
 .carousel-hero.tone-amber {
   background:
-    radial-gradient(circle at 82% 22%, rgba(255, 253, 249, .78), transparent 25%),
+    radial-gradient(circle at 82% 22%, rgba(255, 253, 249, .8), transparent 25%),
+    radial-gradient(circle at 16% 82%, rgba(165, 197, 167, .24), transparent 25%),
     linear-gradient(135deg, var(--amber1), var(--cream2));
 }
 
 .carousel-hero.tone-rose {
   background:
-    radial-gradient(circle at 78% 20%, rgba(255, 253, 249, .72), transparent 25%),
+    radial-gradient(circle at 78% 20%, rgba(255, 253, 249, .78), transparent 25%),
+    radial-gradient(circle at 15% 84%, rgba(204, 224, 240, .28), transparent 26%),
     linear-gradient(135deg, var(--rose1), var(--lavender1));
 }
 
@@ -1244,6 +1248,229 @@ label { display: grid; gap: 7px; margin: 12px 0; color: var(--ink2); font-weight
 .carousel-dots button.active {
   width: 28px;
   background: var(--lavender3);
+}
+
+.learn-hero-visual {
+  position: relative;
+  z-index: 1;
+  width: min(340px, 30vw);
+  min-height: 230px;
+}
+
+.file-card,
+.visual-card,
+.track {
+  border: 1px solid rgba(255, 253, 249, .72);
+  background: rgba(255, 253, 249, .66);
+  box-shadow: 0 20px 50px rgba(77, 62, 54, .12);
+  backdrop-filter: blur(14px);
+}
+
+.file-card {
+  display: grid;
+  gap: 10px;
+  width: 250px;
+  border-radius: 18px;
+  padding: 22px;
+  animation: learn-card-float 4s ease-in-out infinite;
+}
+
+.file-card strong {
+  color: var(--lavender4);
+  font-family: "DM Mono", monospace;
+  font-size: 1.15rem;
+}
+
+.file-card span {
+  border-radius: 999px;
+  background: rgba(155, 143, 212, .16);
+  padding: 8px 10px;
+  color: var(--ink2);
+  font-family: "DM Mono", monospace;
+  font-size: .82rem;
+}
+
+.floating-dot,
+.pulse {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.floating-dot.one {
+  right: 18%;
+  top: 10%;
+  width: 34px;
+  height: 34px;
+  background: var(--amber2);
+  animation: learn-orbit 5s linear infinite;
+}
+
+.floating-dot.two {
+  right: 6%;
+  bottom: 18%;
+  width: 18px;
+  height: 18px;
+  background: var(--sage3);
+  animation: learn-orbit 4s linear reverse infinite;
+}
+
+.visual-card {
+  position: absolute;
+  inset: 42px 42px auto auto;
+  display: grid;
+  place-items: center;
+  width: 176px;
+  height: 176px;
+  border-radius: 32px;
+  animation: stats-lift 3s ease-in-out infinite;
+}
+
+.visual-card strong {
+  color: var(--sage3);
+  font-family: "Lora", serif;
+  font-size: 4rem;
+  line-height: .9;
+}
+
+.visual-card span {
+  color: var(--ink2);
+  font-weight: 900;
+}
+
+.pulse {
+  width: 58px;
+  height: 58px;
+  background: rgba(165, 197, 167, .28);
+  animation: pulse-dot 2.6s ease-in-out infinite;
+}
+
+.pulse.one { left: 12%; top: 18%; }
+.pulse.two { right: 5%; bottom: 18%; animation-delay: .45s; }
+.pulse.three { left: 28%; bottom: 4%; animation-delay: .9s; }
+
+.visual-branches svg {
+  width: 100%;
+  height: 230px;
+  overflow: visible;
+  filter: drop-shadow(0 18px 30px rgba(77, 62, 54, .1));
+}
+
+.visual-branches path {
+  fill: none;
+  stroke: var(--lavender4);
+  stroke-linecap: round;
+  stroke-width: 12;
+  stroke-dasharray: 360;
+  animation: branch-draw 4.4s ease-in-out infinite;
+}
+
+.visual-branches path:nth-child(2) {
+  stroke: var(--sage3);
+  animation-delay: .45s;
+}
+
+.visual-branches circle {
+  fill: var(--white);
+  stroke: var(--amber2);
+  stroke-width: 8;
+  animation: node-pop 2.6s ease-in-out infinite;
+}
+
+.deploy-ring {
+  position: absolute;
+  inset: 26px 14px 18px;
+  border: 2px dashed rgba(12, 68, 124, .28);
+  border-radius: 50%;
+  animation: slow-spin 14s linear infinite;
+}
+
+.deploy-ring span {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border: 1px solid rgba(255, 253, 249, .8);
+  border-radius: 24px;
+  background: rgba(255, 253, 249, .72);
+  color: #0C447C;
+  font-weight: 900;
+  box-shadow: 0 20px 40px rgba(12, 68, 124, .12);
+}
+
+.deploy-ring span:nth-child(1) { left: calc(50% - 36px); top: -28px; }
+.deploy-ring span:nth-child(2) { right: -26px; bottom: 28px; }
+.deploy-ring span:nth-child(3) { left: -26px; bottom: 28px; }
+
+.rocket-trail {
+  position: absolute;
+  left: 44%;
+  top: 46%;
+  width: 42px;
+  height: 42px;
+  border-radius: 50% 50% 50% 10px;
+  background: var(--sky2);
+  box-shadow: -24px 24px 0 -12px var(--amber2), 16px -18px 0 -13px var(--lavender3);
+  transform: rotate(45deg);
+}
+
+.visual-tracks {
+  display: grid;
+  align-content: center;
+  gap: 14px;
+}
+
+.track {
+  width: 260px;
+  border-radius: 18px;
+  padding: 16px 18px;
+  color: var(--ink);
+  font-weight: 900;
+  animation: track-slide 4s ease-in-out infinite;
+}
+
+.track.beginner { background: rgba(221, 213, 240, .78); }
+.track.intermediate { margin-left: 36px; background: rgba(221, 235, 222, .78); animation-delay: .22s; }
+.track.advanced { margin-left: 72px; background: rgba(204, 224, 240, .8); animation-delay: .44s; }
+
+@keyframes learn-card-float {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50% { transform: translateY(-10px) rotate(1deg); }
+}
+
+@keyframes learn-orbit {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-16px, 14px) scale(1.12); }
+}
+
+@keyframes stats-lift {
+  0%, 100% { transform: translateY(0) rotate(1deg); }
+  50% { transform: translateY(-12px) rotate(-1deg); }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: .36; transform: scale(.72); }
+  50% { opacity: 1; transform: scale(1.08); }
+}
+
+@keyframes branch-draw {
+  0%, 100% { stroke-dashoffset: 0; }
+  50% { stroke-dashoffset: 120; }
+}
+
+@keyframes node-pop {
+  0%, 100% { transform: scale(.94); transform-origin: center; }
+  50% { transform: scale(1.08); transform-origin: center; }
+}
+
+@keyframes slow-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes track-slide {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(14px); }
 }
 
 .animated-computer {
