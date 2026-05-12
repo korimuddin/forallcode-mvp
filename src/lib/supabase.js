@@ -159,6 +159,122 @@ export async function fetchGitHubRepoArchive(owner, repo, githubAccessToken, ref
   return response.blob();
 }
 
+export async function createGitHubRepository(session, options) {
+  if (!session?.provider_token) {
+    throw new Error("Sign in with GitHub repo access before creating a repository.");
+  }
+
+  const name = normalizeRepositoryName(options.name);
+  if (!name) throw new Error("Add a repository name first.");
+
+  const response = await fetch("https://api.github.com/user/repos", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${session.provider_token}`,
+      Accept: "application/vnd.github+json",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      name,
+      description: options.description || "",
+      private: options.visibility === "private",
+      auto_init: false
+    })
+  });
+
+  const repository = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new Error(repository?.message || "GitHub could not create this repository.");
+  }
+
+  const files = getRepositoryTemplateFiles(options.template, name, options.description);
+  for (const file of files) {
+    await createGitHubRepositoryFile(session.provider_token, repository.owner.login, repository.name, file.path, file.content);
+  }
+
+  if (supabase && session?.user?.id) {
+    await supabase.from("repositories").upsert({
+      owner_id: session.user.id,
+      github_repo_id: repository.id,
+      name: repository.name,
+      description: repository.description || "",
+      language: "Code",
+      is_private: repository.private,
+      stars_count: repository.stargazers_count || 0,
+      forks_count: repository.forks_count || 0,
+      updated_at: repository.updated_at,
+      created_at: repository.created_at
+    }, { onConflict: "github_repo_id" });
+  }
+
+  return mapGitHubRepo(repository, repository.owner.login);
+}
+
+async function createGitHubRepositoryFile(githubAccessToken, owner, repo, path, content) {
+  const response = await fetch(`https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${encodeGitHubPath(path)}`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${githubAccessToken}`,
+      Accept: "application/vnd.github+json",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      message: `Add ${path}`,
+      content: encodeBase64(content)
+    })
+  });
+
+  if (!response.ok) {
+    const payload = await response.json().catch(() => null);
+    throw new Error(payload?.message || `Could not create ${path} in GitHub.`);
+  }
+}
+
+function getRepositoryTemplateFiles(template, name, description) {
+  const readme = `# ${name}\n\n${description || "A ForAllCode project."}\n\n## Getting started\n\nDescribe the project, how to run it, and how new contributors can help.\n`;
+
+  const templates = {
+    empty: [
+      { path: "README.md", content: readme }
+    ],
+    starter: [
+      { path: "README.md", content: readme },
+      { path: "docs/.gitkeep", content: "" },
+      { path: "src/.gitkeep", content: "" }
+    ],
+    web: [
+      { path: "README.md", content: readme },
+      { path: "index.html", content: "<!doctype html>\n<html lang=\"en\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n    <title>ForAllCode Project</title>\n  </head>\n  <body>\n    <main>\n      <h1>Hello from ForAllCode</h1>\n    </main>\n  </body>\n</html>\n" },
+      { path: "src/styles.css", content: "body {\n  margin: 0;\n  font-family: system-ui, sans-serif;\n  background: #faf7f2;\n  color: #3d3530;\n}\n" }
+    ],
+    docs: [
+      { path: "README.md", content: readme },
+      { path: "docs/index.md", content: `# ${name} docs\n\nStart documenting the project here.\n` },
+      { path: "docs/getting-started.md", content: "# Getting started\n\nAdd setup notes here.\n" }
+    ]
+  };
+
+  return templates[template] || templates.starter;
+}
+
+function normalizeRepositoryName(value) {
+  return String(value || "")
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/[^A-Za-z0-9._-]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function encodeBase64(value) {
+  const bytes = new TextEncoder().encode(value);
+  let binary = "";
+  bytes.forEach((byte) => {
+    binary += String.fromCharCode(byte);
+  });
+  return btoa(binary);
+}
+
 export function getSessionIdentity(session) {
   const metadata = session?.user?.user_metadata || {};
   const emailName = session?.user?.email?.split("@")[0] || "";

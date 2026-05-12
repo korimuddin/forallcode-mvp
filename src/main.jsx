@@ -33,7 +33,7 @@ import { useAuthSession, useDocumentTitle, useIsMobile, useSignedInUserData } fr
 import { renderMarkdown } from "./lib/markdownRenderer";
 import { createNotification } from "./lib/notifications";
 import { getUserPreference, setUserPreference } from "./lib/preferences";
-import { fetchGitHubFileContent, fetchGitHubRepoArchive, fetchGitHubRepoOverview, getCurrentSession, isSupabaseConfigured, saveRepoHeroToSupabase, signInWithGitHub, signInWithPassword, supabase, uploadProfileVisualImage, uploadRepoHeroImage } from "./lib/supabase";
+import { createGitHubRepository, fetchGitHubFileContent, fetchGitHubRepoArchive, fetchGitHubRepoOverview, getCurrentSession, isSupabaseConfigured, saveRepoHeroToSupabase, signInWithGitHub, signInWithPassword, supabase, uploadProfileVisualImage, uploadRepoHeroImage } from "./lib/supabase";
 import "./styles.css";
 import "./styles/mobile.css";
 
@@ -551,8 +551,35 @@ function ReposPage() {
 
 function NewRepoPage() {
   useDocumentTitle("New repository");
+  const navigate = useNavigate();
+  const { profile } = useSignedInUserData();
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
   const [visibility, setVisibility] = useState("public");
   const [template, setTemplate] = useState("starter");
+  const [status, setStatus] = useState("");
+  const [creating, setCreating] = useState(false);
+
+  async function handleCreateRepository() {
+    setStatus("");
+    setCreating(true);
+
+    try {
+      const session = await getCurrentSession();
+      const createdRepo = await createGitHubRepository(session, {
+        name,
+        description,
+        visibility,
+        template
+      });
+      const owner = createdRepo.owner || profile?.username || "repo";
+      navigate(`/${owner}/${createdRepo.name}`);
+    } catch (error) {
+      setStatus(error.message || "Could not create this repository.");
+    } finally {
+      setCreating(false);
+    }
+  }
 
   return (
     <PageFrame title="Create a new repository" eyebrow="New repo">
@@ -562,11 +589,11 @@ function NewRepoPage() {
             <h2>Repository details</h2>
             <label className="new-repo-field">
               <span>Repository name</span>
-              <input placeholder="my-warm-project" />
+              <input value={name} onChange={(event) => setName(event.target.value)} placeholder="my-warm-project" />
             </label>
             <label className="new-repo-field">
               <span>Description</span>
-              <textarea placeholder="A short, welcoming description for contributors." rows={4} />
+              <textarea value={description} onChange={(event) => setDescription(event.target.value)} placeholder="A short, welcoming description for contributors." rows={4} />
             </label>
             <div className="new-repo-options">
               {[
@@ -588,14 +615,15 @@ function NewRepoPage() {
                 <option value="empty">Empty repository</option>
               </select>
             </label>
+            {status && <p className="repo-hero-toast" role="status">{status}</p>}
             <div className="button-row">
-              <Button>Create repository</Button>
+              <Button disabled={creating || !name.trim()} onClick={handleCreateRepository}>{creating ? "Creating..." : "Create repository"}</Button>
               <Button to="/repos" variant="soft">Cancel</Button>
             </div>
           </Card>
         </div>
 
-        <CodebaseMapPanel owner="origin" repo="new-repo" />
+        <CodebaseMapPanel owner={profile?.username || "origin"} repo={name || "new-repo"} />
       </section>
     </PageFrame>
   );
