@@ -18,6 +18,7 @@ import {
   Lock,
   MoreHorizontal,
   Palette,
+  Pencil,
   Plus,
   Settings,
   Sparkles,
@@ -39,6 +40,7 @@ import { isAtLimit } from "./lib/plans";
 import { getUserPreference, setUserPreference } from "./lib/preferences";
 import { createGitHubRepository, fetchGitHubFileContent, fetchGitHubRepoArchive, fetchGitHubRepoOverview, forkGitHubRepository, getCurrentSession, isSupabaseConfigured, saveGitHubRepositoryFile, saveRepoHeroToSupabase, signInWithGitHub, signInWithPassword, supabase, uploadProfileVisualImage, uploadRepoHeroImage } from "./lib/supabase";
 import { trackUsage } from "./lib/trackUsage";
+import { useRepoAccess } from "./lib/useRepoAccess";
 import { SubscriptionProvider, useSubscription } from "./lib/useSubscription";
 import "./styles.css";
 import "./styles/mobile.css";
@@ -46,8 +48,10 @@ import "./styles/mobile.css";
 const About = lazy(() => import("./pages/About"));
 const AdminFeedback = lazy(() => import("./pages/AdminFeedback"));
 const Explore = lazy(() => import("./pages/Explore"));
+const IssueList = lazy(() => import("./pages/IssueList"));
 const LandingDesigner = lazy(() => import("./pages/LandingDesigner"));
 const Notifications = lazy(() => import("./pages/Notifications"));
+const PRList = lazy(() => import("./pages/PRList"));
 const ReadmeStudio = lazy(() => import("./pages/ReadmeStudio"));
 const SettingsAccount = lazy(() => import("./pages/settings/SettingsAccount"));
 const SettingsAppearance = lazy(() => import("./pages/settings/SettingsAppearance"));
@@ -166,6 +170,8 @@ function AppRoutes() {
                 <Route path="privacy" element={<SettingsPrivacy />} />
                 <Route path="danger" element={<SettingsDanger />} />
               </Route>
+              <Route path="/:username/:repo/issues" element={<IssueList />} />
+              <Route path="/:username/:repo/pulls" element={<PRList />} />
               <Route path="/:username/:repo/readme" element={<ReadmeStudio />} />
               <Route path="/:username/:repo/landing" element={<LandingDesigner />} />
               <Route path="/:username/:repo" element={<RepoPage />} />
@@ -1143,6 +1149,7 @@ function RepoPage() {
   const [activeTab, setActiveTab] = useState("Code");
   const [landingHtml, setLandingHtml] = useState("");
   const [repoDetails, setRepoDetails] = useState(null);
+  const [repoRecord, setRepoRecord] = useState(null);
   const [repoDetailsLoading, setRepoDetailsLoading] = useState(true);
   const [repoDetailsError, setRepoDetailsError] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
@@ -1160,6 +1167,7 @@ function RepoPage() {
   const [newFileContent, setNewFileContent] = useState("");
   const [fileActionState, setFileActionState] = useState("");
   const [fileActionMessage, setFileActionMessage] = useState("");
+  const [editingFile, setEditingFile] = useState(false);
   const [activeNotebook, setActiveNotebook] = useState("");
   const [activeNotePath, setActiveNotePath] = useState("");
   const [noteContent, setNoteContent] = useState("");
@@ -1180,6 +1188,7 @@ function RepoPage() {
   const notebooks = getRepoNotebooks(repoDetails?.files || []);
   const selectedNotebook = notebooks.find((notebook) => notebook.slug === activeNotebook) || notebooks[0] || null;
   const selectedNote = selectedNotebook?.notes.find((note) => note.path === activeNotePath) || selectedNotebook?.notes[0] || null;
+  const { canPush } = useRepoAccess(repoRecord?.id, repoRecord?.owner_id);
 
   useEffect(() => {
     const normalizedHero = normalizeRepoHero(repoToHero(data), repo);
@@ -1209,6 +1218,27 @@ function RepoPage() {
     document.addEventListener("pointerdown", closeAddFileMenu);
     return () => document.removeEventListener("pointerdown", closeAddFileMenu);
   }, []);
+
+  useEffect(() => {
+    let alive = true;
+
+    async function loadRepoRecord() {
+      if (!supabase) return;
+      const { data: repository } = await supabase
+        .from("repositories")
+        .select("id, owner_id, profiles!repositories_owner_id_fkey!inner(username)")
+        .eq("name", repo)
+        .eq("profiles.username", username)
+        .maybeSingle();
+
+      if (alive) setRepoRecord(repository || null);
+    }
+
+    loadRepoRecord();
+    return () => {
+      alive = false;
+    };
+  }, [repo, username]);
 
   useEffect(() => {
     let alive = true;
@@ -1294,6 +1324,7 @@ function RepoPage() {
   async function openRepoFile(file) {
     if (file.type === "folder") return;
     setSelectedFile(file);
+    setEditingFile(false);
     setFileLoading(true);
     setFileError("");
 
@@ -1311,6 +1342,11 @@ function RepoPage() {
     } finally {
       setFileLoading(false);
     }
+  }
+
+  function startEditingFile() {
+    setEditingFile(true);
+    setFileActionMessage("File editor opens in the next build step.");
   }
 
   function toggleRepoFolder(folder) {
@@ -1858,9 +1894,11 @@ function RepoPage() {
       )}
 
       <div className="repo-tab-bar">
-        {["Code", "Commits", "Branches", "Visual Map", "Notes", "Settings"].map((tab) => (
-          <button className={activeTab === tab ? "active" : ""} key={tab} onClick={() => setActiveTab(tab)}>{tab}</button>
-        ))}
+        {["Code", "Issues", "Pull requests", "Commits", "Branches", "Visual Map", "Notes", "Settings"].map((tab) => {
+          if (tab === "Issues") return <Link className="repo-tab-link" key={tab} to={`/${username}/${repo}/issues`}>Issues</Link>;
+          if (tab === "Pull requests") return <Link className="repo-tab-link" key={tab} to={`/${username}/${repo}/pulls`}>Pull requests</Link>;
+          return <button className={activeTab === tab ? "active" : ""} key={tab} onClick={() => setActiveTab(tab)}>{tab}</button>;
+        })}
       </div>
 
       {activeTab === "Code" && (
@@ -1924,10 +1962,12 @@ function RepoPage() {
                 {repoDetails?.files?.length === 0 && <p className="empty-state">No files found in this repository.</p>}
               </aside>
               <FilePreview
+                canEdit={canPush}
                 error={fileError}
                 file={openFile}
                 loading={fileLoading}
                 onDownload={downloadSelectedFile}
+                onEdit={startEditingFile}
                 repo={data}
                 repoReadme={repoDetails?.readme}
                 downloading={downloadState === "file"}
@@ -3067,7 +3107,7 @@ function MarkdownPreview({ markdown, className = "readme-render" }) {
   return <div className={className} dangerouslySetInnerHTML={{ __html: renderMarkdown(markdown) }} />;
 }
 
-function FilePreview({ downloading, error, file, loading, onDownload, repo, repoReadme }) {
+function FilePreview({ canEdit = false, downloading, error, file, loading, onDownload, onEdit, repo, repoReadme }) {
   if (loading) return <ReadmeSkeleton />;
 
   if (error) return <RepoDataMessage title="Could not open file" text={error} />;
@@ -3087,6 +3127,11 @@ function FilePreview({ downloading, error, file, loading, onDownload, repo, repo
         <Button variant="soft" onClick={onDownload}>
           <Download size={16} />{downloading ? "Downloading..." : "Download file"}
         </Button>
+        {canEdit && (
+          <button className="file-edit-button" onClick={onEdit} type="button">
+            <Pencil size={14} />Edit file
+          </button>
+        )}
       </div>
       {isMarkdown ? (
         <MarkdownPreview markdown={file.content || `# ${file.name}\n\nThis file is empty.`} />
