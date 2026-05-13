@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
+import { flattenSearchResults, performSearch } from "../../lib/globalSearch";
 import { useSignedInUserData } from "../../lib/hooks";
 
 const defaultLessons = [
@@ -16,8 +17,10 @@ export default function CommandPalette({ lessons = defaultLessons }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
+  const [remoteGroups, setRemoteGroups] = useState([]);
+  const [searching, setSearching] = useState(false);
 
-  const groups = useMemo(() => {
+  const localGroups = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     const matches = (value) => !normalized || value.toLowerCase().includes(normalized);
 
@@ -41,7 +44,45 @@ export default function CommandPalette({ lessons = defaultLessons }) {
     ].filter((group) => group.items.length > 0);
   }, [lessons, query, repos]);
 
+  const groups = query.trim().length > 2 ? remoteGroups : localGroups;
   const flatResults = groups.flatMap((group) => group.items);
+
+  useEffect(() => {
+    if (!open || query.trim().length <= 2) {
+      setRemoteGroups([]);
+      setSearching(false);
+      return undefined;
+    }
+
+    let alive = true;
+    const timer = window.setTimeout(async () => {
+      setSearching(true);
+      try {
+        const results = await performSearch(query, "all");
+        if (!alive) return;
+        const flattened = flattenSearchResults(results);
+        const labels = {
+          repos: "Repositories",
+          users: "Users",
+          lessons: "Lessons",
+          issues: "Issues"
+        };
+        setRemoteGroups(["repos", "users", "lessons", "issues"]
+          .map((type) => ({
+            label: labels[type],
+            items: flattened.filter((item) => item.type === type)
+          }))
+          .filter((group) => group.items.length > 0));
+      } finally {
+        if (alive) setSearching(false);
+      }
+    }, 250);
+
+    return () => {
+      alive = false;
+      window.clearTimeout(timer);
+    };
+  }, [open, query]);
 
   useEffect(() => {
     const openCommand = () => setOpen(true);
@@ -90,7 +131,7 @@ export default function CommandPalette({ lessons = defaultLessons }) {
           <Search size={20} />
           <input
             autoFocus
-            placeholder="Search repos, users, lessons..."
+            placeholder="Search repos, users, issues, lessons..."
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
@@ -119,7 +160,20 @@ export default function CommandPalette({ lessons = defaultLessons }) {
               })}
             </div>
           ))}
+          {searching && <p className="command-empty">Searching ForAllCode...</p>}
           {flatResults.length === 0 && <p className="command-empty">No results found.</p>}
+          {query.trim().length > 0 && (
+            <button
+              className="command-search-all"
+              onClick={() => {
+                navigate(`/search?q=${encodeURIComponent(query.trim())}`);
+                setOpen(false);
+              }}
+              type="button"
+            >
+              Search all results for “{query.trim()}”
+            </button>
+          )}
         </div>
       </section>
     </div>

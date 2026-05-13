@@ -133,6 +133,11 @@
   .mini-features,
   .settings-fields,
   .new-repo-options,
+  .repo-create-shell,
+  .repo-create-owner-row,
+  .repo-create-visibility,
+  .repo-template-grid,
+  .stars-grid,
   .about-difference-grid,
   .explore-featured-grid,
   .explore-repo-grid {

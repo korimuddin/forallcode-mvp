@@ -28,6 +28,7 @@ function RepoIssuesHeader({ repo, username, repoName, activeStatus, onStatusChan
           {openCount > 0 && <span className="repo-tab-count">{openCount}</span>}
         </Link>
         <Link to={`/${username}/${repoName}/pulls`}>Pull requests</Link>
+        <Link to={`/${username}/${repoName}/projects`}>Projects</Link>
         <Link to={`/${username}/${repoName}`}>Commits</Link>
         <Link to={`/${username}/${repoName}`}>Branches</Link>
         <Link to={`/${username}/${repoName}`}>Settings</Link>

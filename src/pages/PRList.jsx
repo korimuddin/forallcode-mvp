@@ -47,6 +47,7 @@ function RepoPRHeader({ activeStatus, counts, canCreate, onStatusChange, repo, r
           Pull requests
           {counts.open > 0 && <span className="repo-tab-count">{counts.open}</span>}
         </Link>
+        <Link to={`/${username}/${repoName}/projects`}>Projects</Link>
         <Link to={`/${username}/${repoName}`}>Commits</Link>
         <Link to={`/${username}/${repoName}`}>Branches</Link>
         <Link to={`/${username}/${repoName}`}>Settings</Link>

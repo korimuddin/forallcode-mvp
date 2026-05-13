@@ -188,6 +188,9 @@ export async function createGitHubRepository(session, options) {
 
   const name = normalizeRepositoryName(options.name);
   if (!name) throw new Error("Add a repository name first.");
+  const addLicence = options.addLicence && options.licenceId && options.licenceId !== "none";
+  const gitignoreTemplate = options.gitignoreTemplate === "React" ? "Node" : options.gitignoreTemplate;
+  const shouldAutoInit = Boolean(options.addReadme || options.addGitignore || addLicence);
 
   const response = await fetch("https://api.github.com/user/repos", {
     method: "POST",
@@ -198,9 +201,11 @@ export async function createGitHubRepository(session, options) {
     },
     body: JSON.stringify({
       name,
-      description: options.description || "",
+      description: options.description || undefined,
       private: options.visibility === "private",
-      auto_init: false
+      auto_init: shouldAutoInit,
+      gitignore_template: options.addGitignore ? gitignoreTemplate || undefined : undefined,
+      license_template: addLicence ? options.licenceId : undefined
     })
   });
 
@@ -209,9 +214,11 @@ export async function createGitHubRepository(session, options) {
     throw new Error(repository?.message || "GitHub could not create this repository.");
   }
 
-  const files = getRepositoryTemplateFiles(options.template, name, options.description);
-  for (const file of files) {
-    await createGitHubRepositoryFile(session.provider_token, repository.owner.login, repository.name, file.path, file.content);
+  if (options.template && !options.usesGitHubInitializers) {
+    const files = getRepositoryTemplateFiles(options.template, name, options.description);
+    for (const file of files) {
+      await createGitHubRepositoryFile(session.provider_token, repository.owner.login, repository.name, file.path, file.content);
+    }
   }
 
   if (supabase && session?.user?.id) {
@@ -220,7 +227,7 @@ export async function createGitHubRepository(session, options) {
       github_repo_id: repository.id,
       name: repository.name,
       description: repository.description || "",
-      language: "Code",
+      language: repository.language || null,
       is_private: repository.private,
       stars_count: repository.stargazers_count || 0,
       forks_count: repository.forks_count || 0,
@@ -230,6 +237,34 @@ export async function createGitHubRepository(session, options) {
   }
 
   return mapGitHubRepo(repository, repository.owner.login);
+}
+
+export async function checkGitHubRepositoryAvailability(session, owner, repoName) {
+  if (!session?.provider_token) {
+    throw new Error("Sign in with GitHub before checking repository names.");
+  }
+
+  const ownerName = normalizeRepositoryName(owner);
+  const name = normalizeRepositoryName(repoName);
+  if (!ownerName || !name) return { available: false, message: "Add an owner and repository name." };
+
+  const response = await fetch(`https://api.github.com/repos/${encodeURIComponent(ownerName)}/${encodeURIComponent(name)}`, {
+    headers: {
+      Authorization: `Bearer ${session.provider_token}`,
+      Accept: "application/vnd.github+json"
+    }
+  });
+
+  if (response.status === 404) {
+    return { available: true, message: "Repository name is available." };
+  }
+
+  if (response.ok) {
+    return { available: false, message: "That repository name is already taken." };
+  }
+
+  const payload = await response.json().catch(() => null);
+  throw new Error(payload?.message || "Could not check repository availability.");
 }
 
 async function createGitHubRepositoryFile(githubAccessToken, owner, repo, path, content) {

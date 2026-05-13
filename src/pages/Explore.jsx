@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Search, Star } from "lucide-react";
 import IllustratedAvatar from "../components/ui/IllustratedAvatar";
 import Skeleton from "../components/ui/Skeleton";
@@ -22,11 +22,14 @@ const filters = ["All", "Repos", "Workspaces", "Developers"];
 
 export default function Explore() {
   useDocumentTitle("Explore");
+  const [searchParams] = useSearchParams();
+  const topicFilter = searchParams.get("topic") || "";
   const [sessionChecked, setSessionChecked] = useState(false);
   const [session, setSession] = useState(null);
   const [repos, setRepos] = useState([]);
   const [workspaces, setWorkspaces] = useState([]);
   const [featured, setFeatured] = useState([]);
+  const [topTopics, setTopTopics] = useState([]);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [activeFilter, setActiveFilter] = useState("All");
@@ -60,7 +63,8 @@ export default function Explore() {
     loadRepos(0, true);
     loadFeatured();
     loadWorkspaces();
-  }, [language, sort, search]);
+    loadTopTopics();
+  }, [language, sort, search, topicFilter]);
 
   async function loadFeatured() {
     if (!supabase) {
@@ -93,9 +97,10 @@ export default function Explore() {
 
     let query = supabase
       .from("repositories")
-      .select("*, profiles(username, display_name, avatar_style)")
+      .select("*, profiles(username, display_name, avatar_style), repo_topics(topic)")
       .eq("is_private", false);
 
+    if (topicFilter) query = query.filter("repo_topics.topic", "eq", topicFilter);
     if (language !== "All languages") query = query.eq("language", language);
     if (search.trim()) {
       const term = `%${search.trim()}%`;
@@ -133,6 +138,28 @@ export default function Explore() {
     setWorkspaces(data || []);
   }
 
+  async function loadTopTopics() {
+    if (!supabase) {
+      setTopTopics([]);
+      return;
+    }
+
+    const { data } = await supabase
+      .from("repo_topics")
+      .select("topic")
+      .limit(200);
+
+    const counts = (data || []).reduce((map, item) => {
+      map[item.topic] = (map[item.topic] || 0) + 1;
+      return map;
+    }, {});
+
+    setTopTopics(Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 20)
+      .map(([topic, count]) => ({ topic, count })));
+  }
+
   function filterRepos(items) {
     const term = search.trim().toLowerCase();
     return items.filter((repo) => {
@@ -160,7 +187,7 @@ export default function Explore() {
     <main className="explore-page">
       <header className="explore-header">
         <h1>Explore</h1>
-        <p>Discover repos, workspaces, and developers.</p>
+        <p>{topicFilter ? `Discover repos tagged ${topicFilter}.` : "Discover repos, workspaces, and developers."}</p>
       </header>
 
       {sessionChecked && supabase && !session && (
@@ -206,8 +233,11 @@ export default function Explore() {
         <div>
           <div className="explore-section-heading">
             <p className="eyebrow">Repositories</p>
-            <span>Public repos ordered by stars</span>
+            <span>{topicFilter ? `Filtered by #${topicFilter}` : "Public repos ordered by stars"}</span>
           </div>
+          {topicFilter && (
+            <Link className="explore-clear-topic" to="/explore">Clear topic filter</Link>
+          )}
           <div className="explore-repo-grid">
             {loading && visibleRepos.length === 0
               ? <ExploreGridSkeleton />
@@ -222,6 +252,20 @@ export default function Explore() {
         </div>
 
         <aside className="explore-workspaces">
+          <div className="explore-topics-card">
+            <div className="explore-section-heading">
+              <p className="eyebrow">Topics</p>
+              <span>Most used tags</span>
+            </div>
+            <div className="explore-topic-pills">
+              {topTopics.map((item) => (
+                <Link className={topicFilter === item.topic ? "active" : ""} key={item.topic} to={`/explore?topic=${encodeURIComponent(item.topic)}`}>
+                  {item.topic}<span>{item.count}</span>
+                </Link>
+              ))}
+              {topTopics.length === 0 && <p className="explore-empty">Topics will appear as repos add them.</p>}
+            </div>
+          </div>
           <div className="explore-section-heading">
             <p className="eyebrow">Public workspaces</p>
             <span>Developers who've shared their desk</span>
@@ -289,6 +333,13 @@ function ExploreRepoCard({ repo }) {
         <LanguagePill language={repo.language} />
         <span><Star size={14} />{repo.stars_count || 0}</span>
       </div>
+      {repo.repo_topics?.length > 0 && (
+        <div className="explore-card-topics">
+          {repo.repo_topics.slice(0, 4).map((item) => (
+            <Link key={item.topic} to={`/explore?topic=${encodeURIComponent(item.topic)}`}>{item.topic}</Link>
+          ))}
+        </div>
+      )}
     </article>
   );
 }

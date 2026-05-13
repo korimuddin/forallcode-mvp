@@ -28,6 +28,8 @@ import {
 import CommandPalette from "./components/layout/CommandPalette";
 import TopNav from "./components/layout/TopNav";
 import { AdminGuard } from "./components/admin/AdminGuard";
+import TopicEditor from "./components/repo/TopicEditor";
+import TopicPills from "./components/repo/TopicPills";
 import ErrorBoundary from "./components/ui/ErrorBoundary";
 import FeedbackForm from "./components/ui/FeedbackForm";
 import IllustratedAvatar, { avatarVariants } from "./components/ui/IllustratedAvatar";
@@ -66,7 +68,11 @@ const IssueList = lazy(() => import("./pages/IssueList"));
 const LandingDesigner = lazy(() => import("./pages/LandingDesigner"));
 const Notifications = lazy(() => import("./pages/Notifications"));
 const PRList = lazy(() => import("./pages/PRList"));
+const ProjectBoard = lazy(() => import("./pages/ProjectBoard"));
 const ReadmeStudio = lazy(() => import("./pages/ReadmeStudio"));
+const RepoNew = lazy(() => import("./pages/RepoNew"));
+const SearchPage = lazy(() => import("./pages/Search"));
+const StarsPage = lazy(() => import("./pages/Stars"));
 const SettingsAccount = lazy(() => import("./pages/settings/SettingsAccount"));
 const SettingsAppearance = lazy(() => import("./pages/settings/SettingsAppearance"));
 const SettingsDanger = lazy(() => import("./pages/settings/SettingsDanger"));
@@ -178,7 +184,9 @@ function AppRoutes() {
               <Route path="/workspace" element={<WorkspacePage />} />
               <Route path="/profile" element={<MyProfilePage />} />
               <Route path="/repos" element={<ReposPage />} />
-              <Route path="/repos/new" element={<NewRepoPage />} />
+              <Route path="/repos/new" element={<RepoNew />} />
+              <Route path="/search" element={<SearchPage />} />
+              <Route path="/stars" element={<StarsPage />} />
               <Route path="/explore" element={<Explore />} />
               <Route path="/notifications" element={<Notifications />} />
               <Route path="/upgrade" element={<Upgrade />} />
@@ -218,6 +226,7 @@ function AppRoutes() {
               </Route>
               <Route path="/:username/:repo/issues" element={<IssueList />} />
               <Route path="/:username/:repo/pulls" element={<PRList />} />
+              <Route path="/:username/:repo/projects" element={<ProjectBoard />} />
               <Route path="/:username/:repo/readme" element={<ReadmeStudio />} />
               <Route path="/:username/:repo/landing" element={<LandingDesigner />} />
               <Route path="/:username/:repo" element={<RepoPage />} />
@@ -1223,6 +1232,9 @@ function RepoPage() {
   const [landingHtml, setLandingHtml] = useState("");
   const [repoDetails, setRepoDetails] = useState(null);
   const [repoRecord, setRepoRecord] = useState(null);
+  const [repoTopics, setRepoTopics] = useState([]);
+  const [topicEditorOpen, setTopicEditorOpen] = useState(false);
+  const [topicStatus, setTopicStatus] = useState("");
   const [repoDetailsLoading, setRepoDetailsLoading] = useState(true);
   const [repoDetailsError, setRepoDetailsError] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
@@ -1261,7 +1273,7 @@ function RepoPage() {
   const notebooks = getRepoNotebooks(repoDetails?.files || []);
   const selectedNotebook = notebooks.find((notebook) => notebook.slug === activeNotebook) || notebooks[0] || null;
   const selectedNote = selectedNotebook?.notes.find((note) => note.path === activeNotePath) || selectedNotebook?.notes[0] || null;
-  const { canPush } = useRepoAccess(repoRecord?.id, repoRecord?.owner_id);
+  const { canPush, canManageRepo } = useRepoAccess(repoRecord?.id, repoRecord?.owner_id);
 
   useEffect(() => {
     const normalizedHero = normalizeRepoHero(repoToHero(data), repo);
@@ -1299,12 +1311,15 @@ function RepoPage() {
       if (!supabase) return;
       const { data: repository } = await supabase
         .from("repositories")
-        .select("id, owner_id, profiles!repositories_owner_id_fkey!inner(username)")
+        .select("id, owner_id, profiles!repositories_owner_id_fkey!inner(username), repo_topics(topic)")
         .eq("name", repo)
         .eq("profiles.username", username)
         .maybeSingle();
 
-      if (alive) setRepoRecord(repository || null);
+      if (alive) {
+        setRepoRecord(repository || null);
+        setRepoTopics((repository?.repo_topics || []).map((item) => item.topic).sort());
+      }
     }
 
     loadRepoRecord();
@@ -1829,6 +1844,41 @@ function RepoPage() {
     }
   }
 
+  async function saveRepoTopics(nextTopics) {
+    if (!supabase || !repoRecord?.id) return;
+    setTopicStatus("");
+
+    try {
+      const cleanedTopics = Array.from(new Set(nextTopics)).slice(0, 20);
+      const current = new Set(repoTopics);
+      const next = new Set(cleanedTopics);
+      const toAdd = cleanedTopics.filter((topic) => !current.has(topic));
+      const toRemove = repoTopics.filter((topic) => !next.has(topic));
+
+      if (toRemove.length > 0) {
+        const { error: deleteError } = await supabase
+          .from("repo_topics")
+          .delete()
+          .eq("repo_id", repoRecord.id)
+          .in("topic", toRemove);
+        if (deleteError) throw deleteError;
+      }
+
+      if (toAdd.length > 0) {
+        const { error: insertError } = await supabase
+          .from("repo_topics")
+          .insert(toAdd.map((topic) => ({ repo_id: repoRecord.id, topic })));
+        if (insertError) throw insertError;
+      }
+
+      setRepoTopics(cleanedTopics);
+      setTopicEditorOpen(false);
+      setTopicStatus("Topics saved.");
+    } catch (error) {
+      setTopicStatus(error.message || "Could not save topics.");
+    }
+  }
+
   function clearRepoHeroImage() {
     setHeroDraft((current) => ({ ...current, image: "", positionX: 50, positionY: 50 }));
   }
@@ -1865,7 +1915,19 @@ function RepoPage() {
       .eq("id", session.user.id)
       .maybeSingle();
 
-    if (!repository?.owner_id || repository.owner_id === session.user.id) return;
+    if (!repository?.id) return;
+
+    const { error: starError } = await supabase
+      .from("stars")
+      .upsert({ user_id: session.user.id, repo_id: repository.id }, { onConflict: "user_id,repo_id" });
+    if (starError) {
+      setRepoActionMessage(starError.message || "Could not star this repository.");
+      return;
+    }
+
+    setRepoActionMessage("Repository added to your starred repos.");
+
+    if (!repository.owner_id || repository.owner_id === session.user.id) return;
     await createNotification(supabase, {
       userId: repository.owner_id,
       type: "star",
@@ -1889,6 +1951,8 @@ function RepoPage() {
           <div className="repo-breadcrumb"><Link to="/repos">{username}</Link><b>/</b><strong>{repo}</strong></div>
           <h1 style={{ fontFamily: repoHero.fontFamily || heroFontOptions[0].value }}>{repoHero.title || repo}</h1>
           <p>{data.description}</p>
+          <TopicPills editable={canManageRepo} onEdit={() => setTopicEditorOpen(true)} topics={repoTopics} />
+          {topicStatus && <p className="repo-topic-status">{topicStatus}</p>}
           <div className="phase-repo-meta">
             <LanguagePill language={data.language} />
             <span><Star size={14} />{data.stars}</span>
@@ -1970,11 +2034,19 @@ function RepoPage() {
           </div>
         </div>
       )}
+      {topicEditorOpen && (
+        <TopicEditor
+          onClose={() => setTopicEditorOpen(false)}
+          onSave={saveRepoTopics}
+          topics={repoTopics}
+        />
+      )}
 
       <div className="repo-tab-bar">
-        {["Code", "Issues", "Pull requests", "Commits", "Branches", "Visual Map", "Notes", "Settings"].map((tab) => {
+        {["Code", "Issues", "Pull requests", "Projects", "Commits", "Branches", "Visual Map", "Notes", "Settings"].map((tab) => {
           if (tab === "Issues") return <Link className="repo-tab-link" key={tab} to={`/${username}/${repo}/issues`}>Issues</Link>;
           if (tab === "Pull requests") return <Link className="repo-tab-link" key={tab} to={`/${username}/${repo}/pulls`}>Pull requests</Link>;
+          if (tab === "Projects") return <Link className="repo-tab-link" key={tab} to={`/${username}/${repo}/projects`}>Projects</Link>;
           return <button className={activeTab === tab ? "active" : ""} key={tab} onClick={() => setActiveTab(tab)}>{tab}</button>;
         })}
       </div>

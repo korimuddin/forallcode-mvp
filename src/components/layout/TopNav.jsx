@@ -384,6 +384,7 @@ export default function TopNav() {
                   <Link to="/profile">My profile</Link>
                   <Link to="/workspace">My workspace</Link>
                   <Link to="/repos">My repos</Link>
+                  <Link to="/stars">Starred repos</Link>
                   <span className="dropdown-divider" />
                   <Link to="/settings/account">Settings</Link>
                   <span className="dropdown-divider" />
