@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AdminPageHeader } from "../../components/admin/AdminLayout";
 import DataTable from "../../components/admin/DataTable";
 import StatCard from "../../components/admin/StatCard";
@@ -26,6 +26,9 @@ export default function AdminMarketplace() {
   const [loading, setLoading] = useState(true);
   const [saveState, setSaveState] = useState("idle");
   const [error, setError] = useState("");
+  const [courses, setCourses] = useState([]);
+  const [revenueRows, setRevenueRows] = useState([]);
+  const [reviews, setReviews] = useState([]);
 
   useEffect(() => {
     let alive = true;
@@ -41,11 +44,12 @@ export default function AdminMarketplace() {
       setError("");
 
       try {
-        const { data, error: settingsError } = await supabase
-          .from("marketplace_settings")
-          .select("*")
-          .eq("id", 1)
-          .maybeSingle();
+        const [{ data, error: settingsError }, { data: courseData }, { data: purchases }, { data: reviewData }] = await Promise.all([
+          supabase.from("marketplace_settings").select("*").eq("id", 1).maybeSingle(),
+          supabase.from("marketplace_courses").select("*, profiles(username, display_name)").order("created_at", { ascending: false }),
+          supabase.from("course_purchases").select("amount_gbp, author_payout_gbp, platform_fee_gbp"),
+          supabase.from("course_reviews").select("rating")
+        ]);
         if (settingsError) throw settingsError;
         if (!alive) return;
         if (data) {
@@ -56,6 +60,9 @@ export default function AdminMarketplace() {
             max_price_gbp: Number(data.max_price_gbp ?? 99)
           });
         }
+        setCourses(courseData || []);
+        setRevenueRows(purchases || []);
+        setReviews(reviewData || []);
       } catch (loadError) {
         if (!alive) return;
         setError(loadError.message || "Could not load marketplace settings.");
@@ -72,6 +79,29 @@ export default function AdminMarketplace() {
 
   const platformRevenuePct = Math.max(0, 100 - Number(settings.author_revenue_pct || 0));
   const readinessIssues = getReadinessIssues(settings);
+  const pendingCourses = courses.filter((course) => course.status === "pending_review");
+  const approvedCourses = courses.filter((course) => course.status === "approved");
+  const totalRevenue = revenueRows.reduce((sum, row) => sum + Number(row.amount_gbp || 0), 0);
+  const averageRating = reviews.length
+    ? reviews.reduce((sum, row) => sum + Number(row.rating || 0), 0) / reviews.length
+    : 0;
+  const courseRows = useMemo(() => pendingCourses.map((course) => ({
+    course: (
+      <div>
+        <strong>{course.title}</strong>
+        <small>{course.description || "No description"}</small>
+      </div>
+    ),
+    author: course.profiles?.display_name || course.profiles?.username || "Unknown",
+    submitted: new Date(course.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }),
+    status: course.status,
+    actions: (
+      <div className="admin-inline-actions">
+        <button onClick={() => updateCourseStatus(course.id, "approved")} type="button">Approve</button>
+        <button onClick={() => updateCourseStatus(course.id, "changes_requested")} type="button">Request changes</button>
+      </div>
+    )
+  })), [pendingCourses]);
 
   async function saveSettings() {
     setSaveState("saving");
@@ -102,6 +132,19 @@ export default function AdminMarketplace() {
     if (saveState === "saved") setSaveState("idle");
   }
 
+  async function updateCourseStatus(courseId, status) {
+    setError("");
+    const { error: updateError } = await supabase
+      .from("marketplace_courses")
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq("id", courseId);
+    if (updateError) {
+      setError(updateError.message || "Could not update course status.");
+      return;
+    }
+    setCourses((current) => current.map((course) => course.id === courseId ? { ...course, status } : course));
+  }
+
   return (
     <div className="admin-marketplace-page">
       <AdminPageHeader title="Marketplace" subtitle="Phase 7 launch controls, review queues, and revenue settings." />
@@ -112,10 +155,10 @@ export default function AdminMarketplace() {
       ) : (
         <>
           <section className="admin-stat-grid">
-            <StatCard label="Submitted courses" value="0" delta={0} deltaLabel="pending review" accent="#c8a055" />
-            <StatCard label="Approved courses" value="0" delta={0} deltaLabel="live" accent="#7aaa72" />
-            <StatCard label="Total revenue" value="£0" delta={0} deltaLabel="this month" accent="#9b8fd4" />
-            <StatCard label="Avg rating" value="0.0/5" accent="#6aa8d4" />
+            <StatCard label="Submitted courses" value={pendingCourses.length} delta={0} deltaLabel="pending review" accent="#c8a055" />
+            <StatCard label="Approved courses" value={approvedCourses.length} delta={0} deltaLabel="live" accent="#7aaa72" />
+            <StatCard label="Total revenue" value={`£${totalRevenue.toFixed(2)}`} delta={0} deltaLabel="all time" accent="#9b8fd4" />
+            <StatCard label="Avg rating" value={`${averageRating.toFixed(1)}/5`} accent="#6aa8d4" />
           </section>
 
           <section className={readinessIssues.length ? "admin-readiness-card warn" : "admin-readiness-card"}>
@@ -210,7 +253,7 @@ export default function AdminMarketplace() {
 
           <section>
             <h2 className="admin-section-title">Course submissions</h2>
-            <DataTable columns={emptyColumns} data={[]} emptyMessage="No course submissions yet" />
+            <DataTable columns={emptyColumns} data={courseRows} emptyMessage="No course submissions yet" />
           </section>
 
           <section>

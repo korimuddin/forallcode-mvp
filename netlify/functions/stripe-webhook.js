@@ -28,6 +28,47 @@ exports.handler = async (event) => {
 
   switch (stripeEvent.type) {
     case "checkout.session.completed": {
+      if (session.mode === "payment" && session.metadata?.course_id) {
+        const courseId = session.metadata.course_id;
+        const userId = session.metadata.supabase_user_id;
+        const price = Number(session.amount_total || 0) / 100;
+        const authorPayout = Number((price * 0.7).toFixed(2));
+        const platformFee = Number((price * 0.3).toFixed(2));
+
+        const { data: existing } = await supabase
+          .from("course_purchases")
+          .select("id")
+          .eq("user_id", userId)
+          .eq("course_id", courseId)
+          .maybeSingle();
+
+        if (!existing?.id) {
+          await supabase.from("course_purchases").insert({
+            user_id: userId,
+            course_id: courseId,
+            stripe_payment_id: session.payment_intent,
+            amount_gbp: price,
+            author_payout_gbp: authorPayout,
+            platform_fee_gbp: platformFee
+          });
+
+          const { data: course } = await supabase
+            .from("marketplace_courses")
+            .select("student_count")
+            .eq("id", courseId)
+            .maybeSingle();
+
+          await supabase
+            .from("marketplace_courses")
+            .update({
+              student_count: Number(course?.student_count || 0) + 1,
+              updated_at: new Date().toISOString()
+            })
+            .eq("id", courseId);
+        }
+        break;
+      }
+
       if (session.mode === "payment" && session.metadata?.cert_type) {
         const userId = session.metadata.supabase_user_id;
         const certType = session.metadata.cert_type;

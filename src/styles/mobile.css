@@ -522,4 +522,44 @@
   .certificate-card h1 {
     font-size: 30px;
   }
+
+  .marketplace-page {
+    width: calc(100% - 24px);
+    padding-top: 18px;
+  }
+
+  .marketplace-hero,
+  .marketplace-filters,
+  .course-detail-hero,
+  .course-create-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .marketplace-hero {
+    padding: 26px;
+  }
+
+  .marketplace-grid,
+  .course-detail-hero,
+  .course-learn-grid,
+  .course-create-form,
+  .course-lesson-editor article {
+    grid-template-columns: 1fr;
+  }
+
+  .marketplace-search {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .course-purchase-card {
+    position: static;
+  }
+
+  .course-detail-tabs,
+  .course-create-steps {
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
 }

@@ -345,7 +345,7 @@ export default function TopNav() {
             <Link to="/certification/git-fundamentals">Git Fundamentals Certificate</Link>
           </NavDropdown>
           <NavLink to="/explore">Explore</NavLink>
-          <button className="nav-static-link" type="button" aria-disabled="true">Marketplace</button>
+          <NavLink to="/marketplace">Marketplace</NavLink>
         </nav>
       )}
 

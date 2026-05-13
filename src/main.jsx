@@ -70,6 +70,8 @@ const CertificateView = lazy(() => import("./pages/CertificateView"));
 const CertificationAssessment = lazy(() => import("./pages/CertificationAssessment"));
 const CertificationInfo = lazy(() => import("./pages/CertificationInfo"));
 const CertificationResult = lazy(() => import("./pages/CertificationResult"));
+const CourseCreate = lazy(() => import("./pages/CourseCreate"));
+const CourseDetail = lazy(() => import("./pages/CourseDetail"));
 const Explore = lazy(() => import("./pages/Explore"));
 const DiscussionDetail = lazy(() => import("./pages/DiscussionDetail"));
 const DiscussionList = lazy(() => import("./pages/DiscussionList"));
@@ -79,6 +81,7 @@ const GistList = lazy(() => import("./pages/GistList"));
 const GistNew = lazy(() => import("./pages/GistNew"));
 const IssueList = lazy(() => import("./pages/IssueList"));
 const LandingDesigner = lazy(() => import("./pages/LandingDesigner"));
+const Marketplace = lazy(() => import("./pages/Marketplace"));
 const Notifications = lazy(() => import("./pages/Notifications"));
 const PRList = lazy(() => import("./pages/PRList"));
 const Portfolio = lazy(() => import("./pages/Portfolio"));
@@ -216,6 +219,9 @@ function AppRoutes() {
               <Route path="/certification/git-fundamentals/assessment" element={<CertificationAssessment />} />
               <Route path="/certification/git-fundamentals/result" element={<CertificationResult />} />
               <Route path="/certificates/:verificationCode" element={<CertificateView />} />
+              <Route path="/marketplace" element={<Marketplace />} />
+              <Route path="/marketplace/create" element={<CourseCreate />} />
+              <Route path="/marketplace/:slug" element={<CourseDetail />} />
               <Route
                 path="/admin"
                 element={(
