@@ -28,6 +28,7 @@ import {
 import CommandPalette from "./components/layout/CommandPalette";
 import TopNav from "./components/layout/TopNav";
 import { AdminGuard } from "./components/admin/AdminGuard";
+import FeedEvent from "./components/feed/FeedEvent";
 import TopicEditor from "./components/repo/TopicEditor";
 import TopicPills from "./components/repo/TopicPills";
 import ErrorBoundary from "./components/ui/ErrorBoundary";
@@ -37,6 +38,7 @@ import { LimitBanner } from "./components/ui/LimitBanner";
 import Skeleton from "./components/ui/Skeleton";
 import { learnLessons, learnTracks } from "./data/learnLessons";
 import { useAuthSession, useDocumentTitle, useIsMobile, useSignedInUserData } from "./lib/hooks";
+import { createFeedEvent } from "./lib/createFeedEvent";
 import { renderMarkdown } from "./lib/markdownRenderer";
 import { createNotification } from "./lib/notifications";
 import { isAtLimit } from "./lib/plans";
@@ -64,6 +66,9 @@ const AdminTraffic = lazy(() => import("./pages/admin/AdminTraffic"));
 const AdminUserDetail = lazy(() => import("./pages/admin/AdminUserDetail"));
 const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
 const Explore = lazy(() => import("./pages/Explore"));
+const DiscussionDetail = lazy(() => import("./pages/DiscussionDetail"));
+const DiscussionList = lazy(() => import("./pages/DiscussionList"));
+const DiscussionNew = lazy(() => import("./pages/DiscussionNew"));
 const GistDetail = lazy(() => import("./pages/GistDetail"));
 const GistList = lazy(() => import("./pages/GistList"));
 const GistNew = lazy(() => import("./pages/GistNew"));
@@ -71,6 +76,7 @@ const IssueList = lazy(() => import("./pages/IssueList"));
 const LandingDesigner = lazy(() => import("./pages/LandingDesigner"));
 const Notifications = lazy(() => import("./pages/Notifications"));
 const PRList = lazy(() => import("./pages/PRList"));
+const Portfolio = lazy(() => import("./pages/Portfolio"));
 const ProjectBoard = lazy(() => import("./pages/ProjectBoard"));
 const ReadmeStudio = lazy(() => import("./pages/ReadmeStudio"));
 const RepoInsights = lazy(() => import("./pages/RepoInsights"));
@@ -158,6 +164,7 @@ function App() {
 function AppRoutes() {
   const location = useLocation();
   const isEntryPage = location.pathname === "/";
+  const isPortfolioPage = /^\/[^/]+\/portfolio\/?$/.test(location.pathname);
   const { session, checked } = useAuthSession();
 
   useEffect(() => {
@@ -171,10 +178,10 @@ function AppRoutes() {
 
   return (
     <>
-      {!isEntryPage && <CommandPalette />}
-      <div className={isEntryPage ? "app-shell entry-shell" : "app-shell"}>
-        {!isEntryPage && <TopNav />}
-        {!isEntryPage && <ImpersonationBanner />}
+      {!isEntryPage && !isPortfolioPage && <CommandPalette />}
+      <div className={isEntryPage ? "app-shell entry-shell" : isPortfolioPage ? "app-shell portfolio-shell" : "app-shell"}>
+        {!isEntryPage && !isPortfolioPage && <TopNav />}
+        {!isEntryPage && !isPortfolioPage && <ImpersonationBanner />}
         <main>
           <Suspense fallback={<RouteFallback />}>
             <Routes>
@@ -233,16 +240,20 @@ function AppRoutes() {
               </Route>
               <Route path="/:username/:repo/issues" element={<IssueList />} />
               <Route path="/:username/:repo/pulls" element={<PRList />} />
+              <Route path="/:username/:repo/discussions/new" element={<DiscussionNew />} />
+              <Route path="/:username/:repo/discussions/:number" element={<DiscussionDetail />} />
+              <Route path="/:username/:repo/discussions" element={<DiscussionList />} />
               <Route path="/:username/:repo/projects" element={<ProjectBoard />} />
               <Route path="/:username/:repo/insights" element={<RepoInsights />} />
               <Route path="/:username/:repo/readme" element={<ReadmeStudio />} />
               <Route path="/:username/:repo/landing" element={<LandingDesigner />} />
               <Route path="/:username/:repo" element={<RepoPage />} />
+              <Route path="/:username/portfolio" element={<Portfolio />} />
               <Route path="/:username" element={<PublicProfile />} />
             </Routes>
           </Suspense>
         </main>
-        {!isEntryPage && <Footer />}
+        {!isEntryPage && !isPortfolioPage && <Footer />}
       </div>
     </>
   );
@@ -466,10 +477,68 @@ function AuthCallback() {
 
 function DashboardPage() {
   useDocumentTitle("Dashboard");
-  const { profile, repos: userRepos, activity, loading, error } = useSignedInUserData();
+  const { session, profile, repos: userRepos, loading, error } = useSignedInUserData();
+  const [feedEvents, setFeedEvents] = useState([]);
+  const [feedLoading, setFeedLoading] = useState(true);
+  const [feedError, setFeedError] = useState("");
   const displayName = profile?.displayName || "there";
   const firstName = displayName.split(" ")[0] || displayName;
   const visibleRepos = userRepos.slice(0, 2);
+
+  useEffect(() => {
+    let alive = true;
+
+    async function loadFollowingFeed() {
+      if (!supabase || !session?.user?.id) {
+        setFeedEvents([]);
+        setFeedLoading(false);
+        return;
+      }
+
+      setFeedLoading(true);
+      setFeedError("");
+
+      try {
+        const { data: followingRows, error: followingError } = await supabase
+          .from("follows")
+          .select("following_id")
+          .eq("follower_id", session.user.id);
+        if (followingError) throw followingError;
+
+        const followingIds = (followingRows || []).map((row) => row.following_id).filter(Boolean);
+        if (followingIds.length === 0) {
+          if (alive) setFeedEvents([]);
+          return;
+        }
+
+        const { data: events, error: eventsError } = await supabase
+          .from("feed_events")
+          .select(`
+            *,
+            profiles!feed_events_actor_id_fkey(username, display_name, avatar_style, avatar_url),
+            repositories(name, description, language, stars_count, is_private, profiles!repositories_owner_id_fkey(username)),
+            issues(number, title, status),
+            pull_requests(number, title, status)
+          `)
+          .in("actor_id", followingIds)
+          .order("created_at", { ascending: false })
+          .limit(30);
+        if (eventsError) throw eventsError;
+
+        if (alive) setFeedEvents((events || []).filter((event) => !event.repositories?.is_private));
+      } catch (loadError) {
+        if (alive) setFeedError(loadError.message || "Could not load followed activity.");
+      } finally {
+        if (alive) setFeedLoading(false);
+      }
+    }
+
+    loadFollowingFeed();
+    return () => {
+      alive = false;
+    };
+  }, [session?.user?.id]);
+
   return (
     <PageFrame title="" eyebrow="">
       <section className="phase-dashboard-hero">
@@ -493,15 +562,15 @@ function DashboardPage() {
             <Link to="/following">Manage</Link>
           </div>
           <Card>
-            {loading ? <DashboardActivitySkeleton /> : activity.map((item) => (
-              <div className="phase-activity-row" key={`${item.name}-${item.action}`}>
-                <span className="phase-initials">{item.initials}</span>
-                <div><strong>{item.name}</strong><p>{item.action}</p></div>
-                {item.live && <span className="live-pill">Live</span>}
-                <time>{item.time}</time>
+            {feedLoading ? <DashboardActivitySkeleton /> : feedEvents.map((event) => <FeedEvent event={event} key={event.id} />)}
+            {!feedLoading && feedError && <p className="auth-error">{feedError}</p>}
+            {!feedLoading && !feedError && feedEvents.length === 0 && (
+              <div className="dashboard-feed-empty">
+                <h3>No followed activity yet</h3>
+                <p>Follow developers from Explore to turn this into a daily stream of repos, lessons, pull requests, and ideas.</p>
+                <Button to="/explore" variant="soft">Find developers</Button>
               </div>
-            ))}
-            {!loading && activity.length === 0 && <p className="empty-helper">No GitHub activity from followed accounts yet.</p>}
+            )}
           </Card>
 
           <div className="phase-section-head compact">
@@ -558,6 +627,7 @@ function MyProfilePage() {
   return (
     <PageFrame>
       <ProfileHeader editable profileData={profile} repoCount={userRepos.length} />
+      {profile?.username && <ProfilePortfolioActions username={profile.username} editable />}
       <Workspace compact />
       <div className="two-column">
         <PaginatedProfileRepos
@@ -582,6 +652,7 @@ function PublicProfile() {
   return (
     <PageFrame title={isOwnProfile ? profile.displayName : username} eyebrow={`@${username}`}>
       <ProfileHeader publicView profileData={isOwnProfile ? profile : { username, displayName: username }} repoCount={profileRepos.length} />
+      <ProfilePortfolioActions username={username} editable={isOwnProfile} />
       <SectionTitle title="Repositories" />
       <PaginatedProfileRepos
         emptyText="Public repositories will appear here once they are synced."
@@ -593,6 +664,16 @@ function PublicProfile() {
         <Card><h3>Skills and badges</h3><div className="tag-row">{["Git mentoring", "TypeScript", "Design systems", "Open source guide"].map((tag) => <Badge key={tag}>{tag}</Badge>)}</div></Card>
       </div>
     </PageFrame>
+  );
+}
+
+function ProfilePortfolioActions({ editable = false, username }) {
+  if (!username) return null;
+  return (
+    <div className="profile-portfolio-actions" role="navigation" aria-label="Profile views">
+      <Link className="profile-portfolio-tab" to={`/${username}/portfolio`}>Portfolio</Link>
+      {editable && <Link className="button soft" to={`/${username}/portfolio?edit=1`}>Edit portfolio</Link>}
+    </div>
   );
 }
 
@@ -833,6 +914,20 @@ function NewRepoPage() {
       });
       if (visibility === "private") {
         trackUsage(session?.user?.id, "private_repo_created", { repo_name: createdRepo.name || name }).catch(() => {});
+      }
+      if (visibility !== "private" && session?.user?.id && supabase) {
+        const { data: storedRepo } = await supabase
+          .from("repositories")
+          .select("id")
+          .eq("owner_id", session.user.id)
+          .eq("name", createdRepo.name || name)
+          .maybeSingle();
+        createFeedEvent(supabase, {
+          actorId: session.user.id,
+          eventType: "repo_created",
+          repoId: storedRepo?.id || null,
+          metadata: { repo_name: createdRepo.name || name }
+        }).catch(() => {});
       }
       const owner = createdRepo.owner || profile?.username || "repo";
       navigate(`/${owner}/${createdRepo.name}`);
@@ -1914,7 +2009,7 @@ function RepoPage() {
 
     const { data: repository } = await supabase
       .from("repositories")
-      .select("id, owner_id")
+      .select("id, owner_id, is_private, name")
       .eq("name", repo)
       .maybeSingle();
     const { data: actor } = await supabase
@@ -1934,6 +2029,14 @@ function RepoPage() {
     }
 
     setRepoActionMessage("Repository added to your starred repos.");
+    if (!repository.is_private) {
+      createFeedEvent(supabase, {
+        actorId: session.user.id,
+        eventType: "repo_starred",
+        repoId: repository.id,
+        metadata: { repo_name: repository.name || repo }
+      }).catch(() => {});
+    }
 
     if (!repository.owner_id || repository.owner_id === session.user.id) return;
     await createNotification(supabase, {
@@ -2051,10 +2154,11 @@ function RepoPage() {
       )}
 
       <div className="repo-tab-bar">
-        {["Code", "Issues", "Pull requests", "Projects", "Insights", "Commits", "Branches", "Visual Map", "Notes", "Settings"].map((tab) => {
-          if (tab === "Issues") return <Link className="repo-tab-link" key={tab} to={`/${username}/${repo}/issues`}>Issues</Link>;
-          if (tab === "Pull requests") return <Link className="repo-tab-link" key={tab} to={`/${username}/${repo}/pulls`}>Pull requests</Link>;
-          if (tab === "Projects") return <Link className="repo-tab-link" key={tab} to={`/${username}/${repo}/projects`}>Projects</Link>;
+        {["Code", "Issues", "Pull requests", "Discussions", "Projects", "Insights", "Commits", "Branches", "Visual Map", "Notes", "Settings"].map((tab) => {
+            if (tab === "Issues") return <Link className="repo-tab-link" key={tab} to={`/${username}/${repo}/issues`}>Issues</Link>;
+            if (tab === "Pull requests") return <Link className="repo-tab-link" key={tab} to={`/${username}/${repo}/pulls`}>Pull requests</Link>;
+            if (tab === "Discussions") return <Link className="repo-tab-link" key={tab} to={`/${username}/${repo}/discussions`}>Discussions</Link>;
+            if (tab === "Projects") return <Link className="repo-tab-link" key={tab} to={`/${username}/${repo}/projects`}>Projects</Link>;
           if (tab === "Insights" && canMerge) return <Link className="repo-tab-link" key={tab} to={`/${username}/${repo}/insights`}>Insights</Link>;
           if (tab === "Insights") return null;
           return <button className={activeTab === tab ? "active" : ""} key={tab} onClick={() => setActiveTab(tab)}>{tab}</button>;
@@ -2420,6 +2524,16 @@ function LearnPage() {
       }, { onConflict: "user_id,lesson_slug" });
       if (!wasComplete) {
         trackUsage(session.user.id, "lesson_completed", { lesson_slug: lesson.slug }).catch(() => {});
+        createFeedEvent(supabase, {
+          actorId: session.user.id,
+          eventType: "lesson_completed",
+          metadata: {
+            lesson_slug: lesson.slug,
+            lesson_title: lesson.title,
+            track: lesson.track,
+            track_name: learnTracks.find((track) => track.track === lesson.track)?.label || lesson.track
+          }
+        }).catch(() => {});
       }
     }
   }
@@ -2692,7 +2806,7 @@ function RepoCard({ repo, actions = false }) {
     if (!session?.user?.id) return;
     const { data: repository } = await supabase
       .from("repositories")
-      .select("id, owner_id")
+      .select("id, owner_id, is_private, name")
       .eq("name", repo.name)
       .maybeSingle();
     const { data: actor } = await supabase
@@ -2700,6 +2814,14 @@ function RepoCard({ repo, actions = false }) {
       .select("display_name")
       .eq("id", session.user.id)
       .maybeSingle();
+    if (repository?.id && !repository.is_private) {
+      createFeedEvent(supabase, {
+        actorId: session.user.id,
+        eventType: "repo_starred",
+        repoId: repository.id,
+        metadata: { repo_name: repository.name || repo.name }
+      }).catch(() => {});
+    }
     if (!repository?.owner_id || repository.owner_id === session.user.id) return;
     await createNotification(supabase, {
       userId: repository.owner_id,
@@ -2738,7 +2860,7 @@ function PhaseRepoCard({ repo }) {
     if (!session?.user?.id) return;
     const { data: repository } = await supabase
       .from("repositories")
-      .select("id, owner_id")
+      .select("id, owner_id, is_private, name")
       .eq("name", repo.name)
       .maybeSingle();
     const { data: actor } = await supabase
@@ -2746,6 +2868,14 @@ function PhaseRepoCard({ repo }) {
       .select("display_name")
       .eq("id", session.user.id)
       .maybeSingle();
+    if (repository?.id && !repository.is_private) {
+      createFeedEvent(supabase, {
+        actorId: session.user.id,
+        eventType: "repo_starred",
+        repoId: repository.id,
+        metadata: { repo_name: repository.name || repo.name }
+      }).catch(() => {});
+    }
     if (!repository?.owner_id || repository.owner_id === session.user.id) return;
     await createNotification(supabase, {
       userId: repository.owner_id,

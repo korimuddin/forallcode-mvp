@@ -4,6 +4,7 @@ import { FolderGit2 } from "lucide-react";
 import RepoCreateForm from "../components/repo/RepoCreateForm";
 import { LimitBanner } from "../components/ui/LimitBanner";
 import { useAuthSession, useDocumentTitle, useSignedInUserData } from "../lib/hooks";
+import { createFeedEvent } from "../lib/createFeedEvent";
 import { isAtLimit } from "../lib/plans";
 import { checkGitHubRepositoryAvailability, createGitHubRepository, supabase } from "../lib/supabase";
 import { trackUsage } from "../lib/trackUsage";
@@ -150,6 +151,20 @@ export default function RepoNew() {
 
       if (form.visibility === "private") {
         trackUsage(session?.user?.id, "private_repo_created", { repo_name: createdRepo.name }).catch(() => {});
+      }
+      if (form.visibility !== "private" && supabase && session?.user?.id) {
+        const { data: storedRepo } = await supabase
+          .from("repositories")
+          .select("id")
+          .eq("owner_id", session.user.id)
+          .eq("name", createdRepo.name)
+          .maybeSingle();
+        createFeedEvent(supabase, {
+          actorId: session.user.id,
+          eventType: "repo_created",
+          repoId: storedRepo?.id || null,
+          metadata: { repo_name: createdRepo.name }
+        }).catch(() => {});
       }
 
       navigate(`/${createdRepo.owner || form.owner}/${createdRepo.name}`);

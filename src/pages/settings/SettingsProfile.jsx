@@ -33,7 +33,9 @@ const initialProfile = {
   linkedin: "",
   avatarStyle: "sage",
   avatarUrl: "",
-  cover: gradients[0]
+  cover: gradients[0],
+  professionalTitle: "",
+  skills: ""
 };
 
 export default function SettingsProfile() {
@@ -84,7 +86,9 @@ export default function SettingsProfile() {
           cover: storedProfile.cover_gradient || current.cover,
           github: storedProfile.github_url || current.github,
           twitter: storedProfile.twitter_url || current.twitter,
-          linkedin: storedProfile.linkedin_url || current.linkedin
+          linkedin: storedProfile.linkedin_url || current.linkedin,
+          professionalTitle: storedProfile.professional_title || current.professionalTitle,
+          skills: Array.isArray(storedProfile.skills) ? storedProfile.skills.join(", ") : current.skills
         }));
       }
     }
@@ -122,7 +126,9 @@ export default function SettingsProfile() {
           cover_gradient: profile.cover,
           github_url: profile.github,
           twitter_url: profile.twitter,
-          linkedin_url: profile.linkedin
+          linkedin_url: profile.linkedin,
+          professional_title: profile.professionalTitle,
+          skills: profile.skills.split(",").map((skill) => skill.trim()).filter(Boolean)
         }, { onConflict: "id" });
       if (error) console.warn("Could not sync profile settings to Supabase.", error);
     }
@@ -173,12 +179,14 @@ export default function SettingsProfile() {
           <SettingsInput label="Display name" value={profile.displayName} onChange={(value) => updateProfile("displayName", value)} />
           <SettingsInput label="Username" value={profile.username} onChange={(value) => updateProfile("username", value)} helpText={`forallcode.dev/${profile.username || "username"}`} />
         </div>
+        <SettingsInput label="Professional title" value={profile.professionalTitle} onChange={(value) => updateProfile("professionalTitle", value)} placeholder="Frontend developer, maintainer, creative technologist" />
         <SettingsInput label="Bio" value={profile.bio} onChange={(value) => updateProfile("bio", value)} maxLength={160} multiline helpText={`${profile.bio.length}/160 characters`} />
         <div className="settings-fields">
           <SettingsInput label="Pronouns" value={profile.pronouns} onChange={(value) => updateProfile("pronouns", value)} placeholder="e.g. she/her, they/them" />
           <SettingsInput label="Location" value={profile.location} onChange={(value) => updateProfile("location", value)} placeholder="Edinburgh, Scotland" />
         </div>
         <SettingsInput label="Website" value={profile.website} onChange={(value) => updateProfile("website", value)} placeholder="https://yoursite.com" />
+        <SettingsInput label="Skills" value={profile.skills} onChange={(value) => updateProfile("skills", value)} placeholder="React, Supabase, Design systems" helpText="Separate skills with commas. These appear on your portfolio." />
       </SettingsSection>
 
       <SettingsSection title="Social links">

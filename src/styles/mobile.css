@@ -50,6 +50,30 @@
 }
 
 @media (max-width: 640px) {
+  .portfolio-hero {
+    padding: 42px 18px;
+  }
+
+  .portfolio-main {
+    width: min(100% - 24px, 1120px);
+    gap: 28px;
+  }
+
+  .portfolio-editor-profile {
+    grid-template-columns: 1fr;
+  }
+
+  .portfolio-editor-fields {
+    padding-left: 0;
+  }
+
+  .profile-portfolio-actions {
+    justify-content: flex-start;
+    width: min(100% - 24px, 1180px);
+  }
+}
+
+@media (max-width: 640px) {
   html,
   body {
     overflow-x: hidden;

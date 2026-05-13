@@ -86,6 +86,8 @@ export function useSignedInUserData() {
               coverImageUrl: impersonatedProfile.cover_image_url || "",
               coverPositionX: impersonatedProfile.cover_position_x ?? 50,
               coverPositionY: impersonatedProfile.cover_position_y ?? 50,
+              professionalTitle: impersonatedProfile.professional_title || "",
+              skills: impersonatedProfile.skills || [],
               impersonating: true
             });
             setRepos((impersonatedRepos || []).map((repo) => mapStoredRepository(repo, impersonatedProfile.username)));
@@ -122,7 +124,9 @@ export function useSignedInUserData() {
             coverGradient: storedProfile.cover_gradient || current?.coverGradient || "",
             coverImageUrl: storedProfile.cover_image_url || current?.coverImageUrl || "",
             coverPositionX: storedProfile.cover_position_x ?? current?.coverPositionX ?? 50,
-            coverPositionY: storedProfile.cover_position_y ?? current?.coverPositionY ?? 50
+            coverPositionY: storedProfile.cover_position_y ?? current?.coverPositionY ?? 50,
+            professionalTitle: storedProfile.professional_title || current?.professionalTitle || "",
+            skills: storedProfile.skills || current?.skills || []
           }));
         }
 

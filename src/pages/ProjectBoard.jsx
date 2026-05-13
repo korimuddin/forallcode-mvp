@@ -31,6 +31,7 @@ function ProjectRepoHeader({ repo, repoName, showInsights, username }) {
         <Link to={`/${username}/${repoName}`}>Code</Link>
         <Link to={`/${username}/${repoName}/issues`}>Issues</Link>
         <Link to={`/${username}/${repoName}/pulls`}>Pull requests</Link>
+        <Link to={`/${username}/${repoName}/discussions`}>Discussions</Link>
         <Link className="active" to={`/${username}/${repoName}/projects`}>Projects</Link>
         {showInsights && <Link to={`/${username}/${repoName}/insights`}>Insights</Link>}
         <Link to={`/${username}/${repoName}`}>Commits</Link>

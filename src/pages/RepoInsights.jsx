@@ -45,6 +45,7 @@ function RepoInsightsHeader({ repo, repoName, username }) {
         <Link to={`/${username}/${repoName}`}>Code</Link>
         <Link to={`/${username}/${repoName}/issues`}>Issues</Link>
         <Link to={`/${username}/${repoName}/pulls`}>Pull requests</Link>
+        <Link to={`/${username}/${repoName}/discussions`}>Discussions</Link>
         <Link to={`/${username}/${repoName}/projects`}>Projects</Link>
         <Link className="active" to={`/${username}/${repoName}/insights`}>Insights</Link>
         <Link to={`/${username}/${repoName}`}>Commits</Link>

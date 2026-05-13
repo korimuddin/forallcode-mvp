@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Search, Star } from "lucide-react";
+import RisingRepos from "../components/explore/RisingRepos";
+import TrendingDevelopers from "../components/explore/TrendingDevelopers";
+import TrendingTopics from "../components/explore/TrendingTopics";
 import IllustratedAvatar from "../components/ui/IllustratedAvatar";
 import Skeleton from "../components/ui/Skeleton";
 import { useDocumentTitle } from "../lib/hooks";
@@ -19,6 +22,7 @@ const languageStyles = {
 };
 
 const filters = ["All", "Repos", "Workspaces", "Developers"];
+const exploreTabs = ["Featured", "Trending", "Rising", "Topics", "Developers"];
 
 export default function Explore() {
   useDocumentTitle("Explore");
@@ -37,6 +41,11 @@ export default function Explore() {
   const [sort, setSort] = useState("stars");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState(topicFilter ? "Topics" : "Featured");
+  const [timeRange, setTimeRange] = useState("week");
+  const [trendingDevelopers, setTrendingDevelopers] = useState([]);
+  const [trendingTopics, setTrendingTopics] = useState([]);
+  const [risingRepos, setRisingRepos] = useState([]);
 
   useEffect(() => {
     async function checkSession() {
@@ -65,6 +74,14 @@ export default function Explore() {
     loadWorkspaces();
     loadTopTopics();
   }, [language, sort, search, topicFilter]);
+
+  useEffect(() => {
+    loadDiscoverySections();
+  }, [session?.provider_token, timeRange]);
+
+  useEffect(() => {
+    if (topicFilter) setActiveTab("Topics");
+  }, [topicFilter]);
 
   async function loadFeatured() {
     if (!supabase) {
@@ -160,6 +177,183 @@ export default function Explore() {
       .map(([topic, count]) => ({ topic, count })));
   }
 
+  async function loadDiscoverySections() {
+    await Promise.all([
+      loadTrendingDevelopers(),
+      loadTrendingTopics(),
+      loadRisingRepos()
+    ]);
+  }
+
+  function getCutoffDate() {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - (timeRange === "month" ? 30 : 7));
+    return cutoff;
+  }
+
+  async function fetchGitHubJson(url) {
+    const headers = {
+      Accept: "application/vnd.github+json"
+    };
+    if (session?.provider_token) headers.Authorization = `Bearer ${session.provider_token}`;
+    const response = await fetch(url, { headers });
+    if (!response.ok) throw new Error("GitHub discovery request failed.");
+    return response.json();
+  }
+
+  async function fetchGitHubTrendingRepos() {
+    const cutoff = getCutoffDate().toISOString().slice(0, 10);
+    const query = `created:>=${cutoff} stars:>${timeRange === "month" ? 20 : 8}`;
+    const payload = await fetchGitHubJson(`https://api.github.com/search/repositories?q=${encodeURIComponent(query)}&sort=stars&order=desc&per_page=12`);
+    return payload.items || [];
+  }
+
+  async function loadTrendingDevelopers() {
+    const localDevelopers = [];
+
+    if (supabase) {
+      const cutoff = getCutoffDate().toISOString();
+      const { data } = await supabase
+        .from("feed_events")
+        .select("actor_id, profiles!feed_events_actor_id_fkey(id, username, display_name, avatar_style, avatar_url, professional_title, bio)")
+        .gte("created_at", cutoff)
+        .order("created_at", { ascending: false })
+        .limit(300);
+
+      const grouped = (data || []).reduce((map, event) => {
+        if (!event.actor_id || !event.profiles?.username) return map;
+        const existing = map.get(event.actor_id) || { id: event.actor_id, profile: event.profiles, count: 0 };
+        existing.count += 1;
+        map.set(event.actor_id, existing);
+        return map;
+      }, new Map());
+      localDevelopers.push(...[...grouped.values()].sort((a, b) => b.count - a.count));
+    }
+
+    const githubDevelopers = await loadGitHubDevelopers().catch(() => []);
+    setTrendingDevelopers(mergeByUsername(localDevelopers, githubDevelopers).slice(0, 6));
+  }
+
+  async function loadGitHubDevelopers() {
+    const query = "type:user followers:>100 repos:>5";
+    const payload = await fetchGitHubJson(`https://api.github.com/search/users?q=${encodeURIComponent(query)}&sort=followers&order=desc&per_page=6`);
+    const users = payload.items || [];
+    const details = await Promise.all(users.map((user) => (
+      fetchGitHubJson(user.url).catch(() => user)
+    )));
+
+    return details.map((user) => ({
+      id: `github-${user.login}`,
+      count: user.followers || user.score || 0,
+      metricLabel: `${(user.followers || 0).toLocaleString()} GitHub followers`,
+      profile: {
+        username: user.login,
+        display_name: user.name || user.login,
+        avatar_url: user.avatar_url,
+        professional_title: user.bio || `${user.public_repos || 0} public repos on GitHub`,
+        bio: user.bio || "",
+        avatar_style: "sky"
+      }
+    }));
+  }
+
+  async function loadTrendingTopics() {
+    let localRows = [];
+    if (supabase) {
+      const cutoff = getCutoffDate().toISOString();
+      const { data } = await supabase
+        .from("repo_topics")
+        .select("topic, repositories!inner(updated_at, is_private)")
+        .eq("repositories.is_private", false)
+        .gte("repositories.updated_at", cutoff)
+        .limit(600);
+      localRows = data || [];
+    }
+
+    const githubRepos = await fetchGitHubTrendingRepos().catch(() => []);
+    const githubRows = githubRepos.flatMap((repo) => (repo.topics || []).map((topic) => ({ topic })));
+    const counts = [...localRows, ...githubRows].reduce((map, item) => {
+      if (!item.topic) return map;
+      map[item.topic] = (map[item.topic] || 0) + 1;
+      return map;
+    }, {});
+
+    setTrendingTopics(Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 24)
+      .map(([topic, count]) => ({ topic, count })));
+  }
+
+  async function loadRisingRepos() {
+    const localRising = [];
+
+    if (supabase) {
+      const cutoffDate = getCutoffDate().toISOString().slice(0, 10);
+      const { data } = await supabase
+        .from("repo_snapshots")
+        .select("*, repositories(*, profiles!repositories_owner_id_fkey(username, display_name, avatar_style))")
+        .gte("snapshot_date", cutoffDate)
+        .order("snapshot_date", { ascending: true })
+        .limit(600);
+
+      const byRepo = new Map();
+      (data || []).forEach((snapshot) => {
+        const repo = snapshot.repositories;
+        if (!repo || repo.is_private) return;
+        const current = byRepo.get(snapshot.repo_id);
+        if (!current || new Date(snapshot.snapshot_date) < new Date(current.snapshot_date)) {
+          byRepo.set(snapshot.repo_id, snapshot);
+        }
+      });
+
+      localRising.push(...[...byRepo.values()].map((snapshot) => ({
+        id: snapshot.repo_id,
+        repository: snapshot.repositories,
+        velocity: Math.max(0, (snapshot.repositories?.stars_count || 0) - (snapshot.stars_count || 0))
+      })));
+    }
+
+    const githubRising = await loadGitHubRisingRepos().catch(() => []);
+    const merged = [...localRising, ...githubRising]
+      .sort((a, b) => b.velocity - a.velocity || (b.repository?.stars_count || 0) - (a.repository?.stars_count || 0))
+      .slice(0, 10);
+
+    if (merged.length || !supabase) {
+      setRisingRepos(merged);
+      return;
+    }
+
+    const { data: fallbackRepos } = await supabase
+      .from("repositories")
+      .select("*, profiles!repositories_owner_id_fkey(username, display_name, avatar_style)")
+      .eq("is_private", false)
+      .order("stars_count", { ascending: false })
+      .limit(10);
+
+    setRisingRepos((fallbackRepos || []).map((repo) => ({ id: repo.id, repository: repo, velocity: 0 })));
+  }
+
+  async function loadGitHubRisingRepos() {
+    const repos = await fetchGitHubTrendingRepos();
+    return repos.map((repo) => ({
+      id: `github-${repo.id}`,
+      externalUrl: repo.html_url,
+      velocity: repo.stargazers_count || 0,
+      repository: {
+        id: `github-${repo.id}`,
+        name: repo.name,
+        description: repo.description || "",
+        language: repo.language || "Code",
+        stars_count: repo.stargazers_count || 0,
+        profiles: {
+          username: repo.owner?.login,
+          display_name: repo.owner?.login,
+          avatar_style: "sky"
+        }
+      }
+    }));
+  }
+
   function filterRepos(items) {
     const term = search.trim().toLowerCase();
     return items.filter((repo) => {
@@ -219,17 +413,46 @@ export default function Explore() {
         </label>
       </section>
 
-      <section className="explore-featured-section">
-        <div className="explore-section-heading">
-          <p className="eyebrow">Featured</p>
-          <span>Handpicked by ForAllCode</span>
+      <section className="explore-discovery-tabs" aria-label="Explore discovery sections">
+        <div className="explore-tab-row">
+          {exploreTabs.map((tab) => (
+            <button className={activeTab === tab ? "active" : ""} key={tab} onClick={() => setActiveTab(tab)} type="button">
+              {tab}
+            </button>
+          ))}
         </div>
-        <div className="explore-featured-grid">
-          {featured.slice(0, 2).map((repo, index) => <FeaturedCard index={index} key={repo.id || repo.name} repo={repo} />)}
-        </div>
+        {["Trending", "Rising", "Topics", "Developers"].includes(activeTab) && (
+          <div className="explore-range-toggle" aria-label="Discovery time range">
+            <button className={timeRange === "week" ? "active" : ""} onClick={() => setTimeRange("week")} type="button">This week</button>
+            <button className={timeRange === "month" ? "active" : ""} onClick={() => setTimeRange("month")} type="button">This month</button>
+          </div>
+        )}
       </section>
 
-      <section className="explore-main-grid">
+      {activeTab === "Featured" && (
+        <section className="explore-featured-section">
+          <div className="explore-section-heading">
+            <p className="eyebrow">Featured</p>
+            <span>Handpicked by ForAllCode</span>
+          </div>
+          <div className="explore-featured-grid">
+            {featured.slice(0, 2).map((repo, index) => <FeaturedCard index={index} key={repo.id || repo.name} repo={repo} />)}
+          </div>
+        </section>
+      )}
+
+      {activeTab === "Trending" && (
+        <section className="explore-discovery-grid">
+          <TrendingDevelopers developers={trendingDevelopers} range={timeRange} />
+          <TrendingTopics topics={trendingTopics} range={timeRange} />
+        </section>
+      )}
+
+      {activeTab === "Rising" && <RisingRepos repos={risingRepos} range={timeRange} />}
+      {activeTab === "Topics" && <TrendingTopics topics={trendingTopics.length ? trendingTopics : topTopics} range={timeRange} />}
+      {activeTab === "Developers" && <TrendingDevelopers developers={trendingDevelopers} range={timeRange} />}
+
+      {activeTab === "Featured" && <section className="explore-main-grid">
         <div>
           <div className="explore-section-heading">
             <p className="eyebrow">Repositories</p>
@@ -273,7 +496,7 @@ export default function Explore() {
           {visibleWorkspaces.map((profile) => <WorkspaceCard key={profile.id || profile.username} profile={profile} />)}
           {visibleWorkspaces.length === 0 && <p className="explore-empty">No shared workspaces match those filters.</p>}
         </aside>
-      </section>
+      </section>}
     </main>
   );
 }
@@ -303,6 +526,16 @@ function sortRepos(items, sort) {
     if (sort === "recent") return new Date(b.updated_at || 0) - new Date(a.updated_at || 0);
     if (sort === "newest") return new Date(b.created_at || 0) - new Date(a.created_at || 0);
     return (b.stars_count || 0) - (a.stars_count || 0);
+  });
+}
+
+function mergeByUsername(primary, secondary) {
+  const seen = new Set();
+  return [...primary, ...secondary].filter((item) => {
+    const username = item.profile?.username;
+    if (!username || seen.has(username)) return false;
+    seen.add(username);
+    return true;
   });
 }
 

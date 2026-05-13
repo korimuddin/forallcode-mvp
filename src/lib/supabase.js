@@ -452,6 +452,36 @@ export async function uploadProfileVisualImage(session, kind, imageBlob) {
   return data.publicUrl;
 }
 
+export async function uploadPortfolioScreenshot(session, repoName, imageFile) {
+  if (!supabase) throw new Error("Supabase is not configured.");
+  if (!session?.user?.id) throw new Error("Sign in before uploading portfolio screenshots.");
+  if (!imageFile) throw new Error("Choose a screenshot first.");
+
+  const safeRepo = slugForStorage(repoName || "project");
+  const extension = imageFile.type === "image/png"
+    ? "png"
+    : imageFile.type === "image/webp"
+      ? "webp"
+      : imageFile.type === "image/gif"
+        ? "gif"
+        : "jpg";
+  const path = `${session.user.id}/${safeRepo}/screenshot-${Date.now()}.${extension}`;
+  const { error } = await supabase.storage
+    .from("portfolio-screenshots")
+    .upload(path, imageFile, {
+      cacheControl: "31536000",
+      contentType: imageFile.type || "image/jpeg",
+      upsert: true
+    });
+
+  if (error) {
+    throw new Error(error.message || "Could not upload this portfolio screenshot.");
+  }
+
+  const { data } = supabase.storage.from("portfolio-screenshots").getPublicUrl(path);
+  return data.publicUrl;
+}
+
 export function mapGitHubRepo(repo, ownerUsername) {
   return {
     githubRepoId: repo.id,
