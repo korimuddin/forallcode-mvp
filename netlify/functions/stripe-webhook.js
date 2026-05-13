@@ -20,6 +20,12 @@ exports.handler = async (event) => {
 
   const session = stripeEvent.data.object;
 
+  await supabase.from("system_status").upsert({
+    key: "last_stripe_webhook",
+    value: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  }, { onConflict: "key" });
+
   switch (stripeEvent.type) {
     case "checkout.session.completed": {
       const userId = session.metadata.supabase_user_id;

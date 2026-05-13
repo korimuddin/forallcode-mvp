@@ -1,4 +1,5 @@
 import React from "react";
+import { supabase } from "../../lib/supabase";
 
 export default class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -12,6 +13,7 @@ export default class ErrorBoundary extends React.Component {
 
   componentDidCatch(error, info) {
     console.error("ForAllCode caught an error", error, info);
+    logFrontendError(error, info);
   }
 
   render() {
@@ -25,5 +27,21 @@ export default class ErrorBoundary extends React.Component {
         <button type="button" onClick={() => window.location.reload()}>Reload page</button>
       </main>
     );
+  }
+}
+
+async function logFrontendError(error, info) {
+  if (!supabase) return;
+
+  try {
+    const { data } = await supabase.auth.getUser();
+    await supabase.from("error_log").insert({
+      user_id: data?.user?.id || null,
+      error_message: error?.message || "Unknown frontend error",
+      error_stack: `${error?.stack || ""}\n${info?.componentStack || ""}`.slice(0, 2000),
+      page_path: window.location.pathname
+    });
+  } catch (logError) {
+    console.error("Could not log ForAllCode error", logError);
   }
 }

@@ -53,6 +53,47 @@ export function useSignedInUserData() {
       setError("");
 
       try {
+        const impersonatingId = typeof window !== "undefined"
+          ? window.sessionStorage.getItem("impersonating_user_id")
+          : "";
+
+        if (impersonatingId && supabase) {
+          const { data: impersonatedProfile, error: profileError } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", impersonatingId)
+            .single();
+          if (profileError) throw profileError;
+
+          const { data: impersonatedRepos, error: reposError } = await supabase
+            .from("repositories")
+            .select("*")
+            .eq("owner_id", impersonatingId)
+            .order("updated_at", { ascending: false });
+          if (reposError) throw reposError;
+
+          if (!cancelled) {
+            setProfile({
+              username: impersonatedProfile.username,
+              displayName: impersonatedProfile.display_name || impersonatedProfile.username,
+              bio: impersonatedProfile.bio || "",
+              pronouns: impersonatedProfile.pronouns || "",
+              location: impersonatedProfile.location || "",
+              website: impersonatedProfile.website || "",
+              avatarStyle: impersonatedProfile.avatar_style || "sage",
+              avatarUrl: impersonatedProfile.avatar_url || "",
+              coverGradient: impersonatedProfile.cover_gradient || "",
+              coverImageUrl: impersonatedProfile.cover_image_url || "",
+              coverPositionX: impersonatedProfile.cover_position_x ?? 50,
+              coverPositionY: impersonatedProfile.cover_position_y ?? 50,
+              impersonating: true
+            });
+            setRepos((impersonatedRepos || []).map((repo) => mapStoredRepository(repo, impersonatedProfile.username)));
+            setActivity([]);
+          }
+          return;
+        }
+
         const identity = getSessionIdentity(session);
         const localProfile = getUserPreference(session.user.id, "profile", null);
         setProfile({

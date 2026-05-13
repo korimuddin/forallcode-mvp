@@ -59,6 +59,16 @@ CREATE TABLE IF NOT EXISTS marketplace_settings (
 
 INSERT INTO marketplace_settings DEFAULT VALUES ON CONFLICT DO NOTHING;
 
+CREATE TABLE IF NOT EXISTS lessons (
+  slug TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  track INT,
+  tag TEXT,
+  is_published BOOLEAN DEFAULT true,
+  is_featured BOOLEAN DEFAULT false,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 CREATE INDEX IF NOT EXISTS profiles_created_at_idx ON profiles(created_at);
 CREATE INDEX IF NOT EXISTS profiles_updated_at_idx ON profiles(updated_at);
 CREATE INDEX IF NOT EXISTS learn_progress_lesson_slug_idx ON learn_progress(lesson_slug);
@@ -82,6 +92,70 @@ BEGIN
       TO authenticated
       USING (auth.uid() = '906e01d3-a655-4299-9269-437900cda4df'::uuid)
       WITH CHECK (auth.uid() = '906e01d3-a655-4299-9269-437900cda4df'::uuid);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'repositories'
+      AND policyname = 'Admin can manage repositories'
+  ) THEN
+    CREATE POLICY "Admin can manage repositories"
+      ON repositories
+      FOR ALL
+      TO authenticated
+      USING (auth.uid() = '906e01d3-a655-4299-9269-437900cda4df'::uuid)
+      WITH CHECK (auth.uid() = '906e01d3-a655-4299-9269-437900cda4df'::uuid);
+  END IF;
+END $$;
+
+ALTER TABLE lessons ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'lessons'
+      AND policyname = 'Lessons are readable'
+  ) THEN
+    CREATE POLICY "Lessons are readable"
+      ON lessons
+      FOR SELECT
+      USING (true);
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'lessons'
+      AND policyname = 'Admin can manage lessons'
+  ) THEN
+    CREATE POLICY "Admin can manage lessons"
+      ON lessons
+      FOR ALL
+      TO authenticated
+      USING (auth.uid() = '906e01d3-a655-4299-9269-437900cda4df'::uuid)
+      WITH CHECK (auth.uid() = '906e01d3-a655-4299-9269-437900cda4df'::uuid);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'error_log'
+      AND policyname = 'Users can insert frontend errors'
+  ) THEN
+    CREATE POLICY "Users can insert frontend errors"
+      ON error_log
+      FOR INSERT
+      TO authenticated, anon
+      WITH CHECK (true);
   END IF;
 END $$;
 

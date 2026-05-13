@@ -49,8 +49,17 @@ import "./styles/mobile.css";
 const About = lazy(() => import("./pages/About"));
 const AdminFeedback = lazy(() => import("./pages/AdminFeedback"));
 const AdminLayout = lazy(() => import("./components/admin/AdminLayout"));
+const AdminCourseStats = lazy(() => import("./pages/admin/AdminCourseStats"));
+const AdminContent = lazy(() => import("./pages/admin/AdminContent"));
+const AdminDataUsage = lazy(() => import("./pages/admin/AdminDataUsage"));
+const AdminMarketplace = lazy(() => import("./pages/admin/AdminMarketplace"));
+const AdminNotifications = lazy(() => import("./pages/admin/AdminNotifications"));
 const AdminOverview = lazy(() => import("./pages/admin/AdminOverview"));
 const AdminPlaceholder = lazy(() => import("./pages/admin/AdminPlaceholder"));
+const AdminSubscriptions = lazy(() => import("./pages/admin/AdminSubscriptions"));
+const AdminSystem = lazy(() => import("./pages/admin/AdminSystem"));
+const AdminTraffic = lazy(() => import("./pages/admin/AdminTraffic"));
+const AdminUserDetail = lazy(() => import("./pages/admin/AdminUserDetail"));
 const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
 const Explore = lazy(() => import("./pages/Explore"));
 const IssueList = lazy(() => import("./pages/IssueList"));
@@ -139,12 +148,23 @@ function App() {
 function AppRoutes() {
   const location = useLocation();
   const isEntryPage = location.pathname === "/";
+  const { session, checked } = useAuthSession();
+
+  useEffect(() => {
+    if (!checked || isEntryPage) return;
+    trackUsage(session?.user?.id, "page_view", {
+      path: location.pathname,
+      referrer: document.referrer || "",
+      user_agent: navigator.userAgent || ""
+    }).catch(() => {});
+  }, [checked, isEntryPage, location.pathname, session?.user?.id]);
 
   return (
     <>
       {!isEntryPage && <CommandPalette />}
       <div className={isEntryPage ? "app-shell entry-shell" : "app-shell"}>
         {!isEntryPage && <TopNav />}
+        {!isEntryPage && <ImpersonationBanner />}
         <main>
           <Suspense fallback={<RouteFallback />}>
             <Routes>
@@ -174,15 +194,15 @@ function AppRoutes() {
                 <Route index element={<Navigate to="/admin/overview" replace />} />
                 <Route path="overview" element={<AdminOverview />} />
                 <Route path="users" element={<AdminUsers />} />
-                <Route path="users/:id" element={<AdminPlaceholder title="User detail" subtitle="Account, subscription, and activity details." />} />
-                <Route path="courses" element={<AdminPlaceholder title="Course stats" subtitle="Learn centre engagement and completion data." />} />
-                <Route path="content" element={<AdminPlaceholder title="Content" subtitle="Learning content and editorial tools." />} />
-                <Route path="data" element={<AdminPlaceholder title="Data usage" subtitle="Storage, sync, and usage-event reporting." />} />
-                <Route path="traffic" element={<AdminPlaceholder title="Traffic" subtitle="Visitor, signup, and country analytics." />} />
-                <Route path="subscriptions" element={<AdminPlaceholder title="Subscriptions" subtitle="Plan, billing, and Stripe subscription status." />} />
-                <Route path="marketplace" element={<AdminPlaceholder title="Marketplace" subtitle="Marketplace settings and launch controls." />} />
-                <Route path="notifications" element={<AdminPlaceholder title="Notifications" subtitle="Notification delivery and engagement." />} />
-                <Route path="system" element={<AdminPlaceholder title="System health" subtitle="Supabase, Stripe, GitHub API, and error logs." />} />
+                <Route path="users/:id" element={<AdminUserDetail />} />
+                <Route path="courses" element={<AdminCourseStats />} />
+                <Route path="content" element={<AdminContent />} />
+                <Route path="data" element={<AdminDataUsage />} />
+                <Route path="traffic" element={<AdminTraffic />} />
+                <Route path="subscriptions" element={<AdminSubscriptions />} />
+                <Route path="marketplace" element={<AdminMarketplace />} />
+                <Route path="notifications" element={<AdminNotifications />} />
+                <Route path="system" element={<AdminSystem />} />
                 <Route path="feedback" element={<AdminFeedback />} />
               </Route>
               <Route path="/settings" element={<SettingsLayout />}>
@@ -208,6 +228,33 @@ function AppRoutes() {
         {!isEntryPage && <Footer />}
       </div>
     </>
+  );
+}
+
+function ImpersonationBanner() {
+  const [impersonating, setImpersonating] = useState(() => (
+    typeof window !== "undefined"
+      ? {
+          id: window.sessionStorage.getItem("impersonating_user_id"),
+          username: window.sessionStorage.getItem("impersonating_username")
+        }
+      : { id: "", username: "" }
+  ));
+
+  if (!impersonating.id) return null;
+
+  function exitImpersonation() {
+    window.sessionStorage.removeItem("impersonating_user_id");
+    window.sessionStorage.removeItem("impersonating_username");
+    setImpersonating({ id: "", username: "" });
+    window.location.href = "/admin/users";
+  }
+
+  return (
+    <div className="impersonation-banner">
+      <span>Impersonating @{impersonating.username || "user"}</span>
+      <button onClick={exitImpersonation} type="button">Exit impersonation</button>
+    </div>
   );
 }
 
@@ -1723,6 +1770,11 @@ function RepoPage() {
       const session = await getCurrentSession();
       const imageBlob = await compressHeroImageToBlob(file);
       const image = await uploadRepoHeroImage(session, username, repo, imageBlob);
+      trackUsage(session.user.id, "hero_image_uploaded", {
+        repo_name: repo,
+        owner: username,
+        size: imageBlob.size
+      }).catch(() => {});
       const nextHero = {
         ...heroDraft,
         title: heroDraft.title || repo,
@@ -2172,6 +2224,7 @@ function LearnPage() {
   useDocumentTitle("Learn");
   const isMobile = useIsMobile();
   const { session, checked } = useAuthSession();
+  const viewedLessonsRef = useRef(new Set());
   const [activeTrack, setActiveTrack] = useState("beginner");
   const [expandedTracks, setExpandedTracks] = useState(() => new Set(["beginner"]));
   const [active, setActive] = useState(lessons[0].slug);
@@ -2213,6 +2266,18 @@ function LearnPage() {
       alive = false;
     };
   }, [checked, session]);
+
+  useEffect(() => {
+    if (!checked || showOnboarding || !session?.user?.id || !lesson?.slug) return;
+    const viewKey = `${session.user.id}:${lesson.slug}`;
+    if (viewedLessonsRef.current.has(viewKey)) return;
+    viewedLessonsRef.current.add(viewKey);
+    trackUsage(session.user.id, "lesson_viewed", {
+      lesson_slug: lesson.slug,
+      track: lesson.track,
+      tag: lesson.tag
+    }).catch(() => {});
+  }, [checked, lesson?.slug, session?.user?.id, showOnboarding]);
 
   function openRecommendedTrack(trackId) {
     const track = learnTracks.find((item) => item.id === trackId) || learnTracks[0];
