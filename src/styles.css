@@ -10257,6 +10257,26 @@ pre { padding: 14px; overflow: auto; }
     linear-gradient(135deg, var(--sage), var(--cream2) 54%, var(--white));
 }
 
+.cert-hero.cli-cert {
+  background:
+    radial-gradient(circle at 78% 24%, rgba(221, 213, 240, .58), transparent 28%),
+    linear-gradient(135deg, var(--amber), var(--cream2) 54%, var(--white));
+}
+
+.cert-hero.cli-cert .cert-hero-icon {
+  color: var(--amber3);
+}
+
+.cert-hero.open-source-cert {
+  background:
+    radial-gradient(circle at 78% 24%, rgba(221, 213, 240, .54), transparent 28%),
+    linear-gradient(135deg, var(--sage), var(--cream2) 54%, var(--white));
+}
+
+.cert-hero.open-source-cert .cert-hero-icon {
+  color: var(--sage3);
+}
+
 .cert-hero::after {
   content: "";
   position: absolute;
@@ -10360,6 +10380,51 @@ pre { padding: 14px; overflow: auto; }
 .cert-syllabus {
   margin-top: 16px;
   padding: 26px;
+}
+
+.cert-social-proof {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(280px, .85fr);
+  gap: 18px;
+  margin-top: 16px;
+  border: 1px solid var(--sage2);
+  border-radius: 22px;
+  background: linear-gradient(135deg, var(--white), rgba(200, 216, 196, .34));
+  padding: 28px;
+}
+
+.cert-social-proof h2 {
+  margin: 6px 0 10px;
+  color: var(--ink);
+  font-family: "Lora", serif;
+  font-size: 28px;
+  line-height: 1.12;
+}
+
+.cert-social-proof p {
+  color: var(--ink2);
+  line-height: 1.65;
+}
+
+.cert-social-proof article {
+  border: 1px solid var(--cream3);
+  border-radius: 18px;
+  background: var(--white);
+  padding: 20px;
+}
+
+.cert-social-proof article span {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 34px;
+}
+
+.cert-social-proof article strong {
+  display: block;
+  color: var(--ink);
+  font-family: "Lora", serif;
+  font-size: 18px;
+  line-height: 1.25;
 }
 
 .cert-format-note {
@@ -10469,6 +10534,58 @@ pre { padding: 14px; overflow: auto; }
   background: linear-gradient(90deg, #7aaa72, var(--sage2));
 }
 
+.open-source-assessment .cert-progress span {
+  background: linear-gradient(90deg, #7aaa72, var(--sage2));
+}
+
+.cli-assessment .cert-progress span {
+  background: linear-gradient(90deg, var(--amber3), var(--amber2));
+}
+
+.cli-section-sidebar button.active {
+  border-color: var(--amber2);
+  background: rgba(245, 228, 196, .46);
+}
+
+.cli-section-sidebar button.active i,
+.cli-section-sidebar button.complete i {
+  border-color: var(--amber3);
+  background: var(--amber3);
+}
+
+.cert-question-inline-code {
+  border-radius: 4px;
+  background: var(--cream2);
+  padding: 2px 6px;
+  color: var(--lavender3);
+  font-family: "DM Mono", monospace;
+  font-size: 13px;
+}
+
+.cert-question-code {
+  margin: 14px 0;
+  overflow: auto;
+  border-radius: 10px;
+  background: #2c2824;
+  padding: 14px 16px;
+  color: var(--ink3);
+  font-family: "DM Mono", monospace;
+  font-size: 12px;
+  line-height: 1.65;
+  text-align: left;
+}
+
+.cert-scenario-note {
+  margin-bottom: 14px;
+  border: 1px solid var(--cream3);
+  border-radius: 10px;
+  background: var(--cream2);
+  padding: 10px 14px;
+  color: var(--ink2);
+  font-size: 12px;
+  font-style: italic;
+}
+
 .cert-assessment-header {
   display: flex;
   align-items: flex-start;
@@ -10512,12 +10629,14 @@ pre { padding: 14px; overflow: auto; }
   transition: width .18s ease;
 }
 
-.cert-assessment h2 {
+.cert-assessment h2,
+.cert-question-text {
   margin-bottom: 18px;
   color: var(--ink);
   font-family: "Lora", serif;
   font-size: 22px;
   line-height: 1.35;
+  white-space: pre-line;
 }
 
 .cert-options {
@@ -10664,6 +10783,12 @@ pre { padding: 14px; overflow: auto; }
 .certificate-card h1 {
   margin-bottom: 16px;
   font-size: 38px;
+}
+
+.certificate-icon {
+  margin-bottom: 16px;
+  font-size: 48px;
+  line-height: 1;
 }
 
 .certificate-card h2 {

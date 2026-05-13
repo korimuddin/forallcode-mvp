@@ -70,6 +70,9 @@ const CertificateView = lazy(() => import("./pages/CertificateView"));
 const CertificationAssessment = lazy(() => import("./pages/CertificationAssessment"));
 const CertificationInfo = lazy(() => import("./pages/CertificationInfo"));
 const CertificationResult = lazy(() => import("./pages/CertificationResult"));
+const CLIAssessment = lazy(() => import("./pages/CLIAssessment"));
+const CLICertInfo = lazy(() => import("./pages/CLICertInfo"));
+const CLIResult = lazy(() => import("./pages/CLIResult"));
 const CourseCreate = lazy(() => import("./pages/CourseCreate"));
 const CourseDetail = lazy(() => import("./pages/CourseDetail"));
 const Explore = lazy(() => import("./pages/Explore"));
@@ -86,6 +89,9 @@ const IssueList = lazy(() => import("./pages/IssueList"));
 const LandingDesigner = lazy(() => import("./pages/LandingDesigner"));
 const Marketplace = lazy(() => import("./pages/Marketplace"));
 const Notifications = lazy(() => import("./pages/Notifications"));
+const OpenSourceAssessment = lazy(() => import("./pages/OpenSourceAssessment"));
+const OpenSourceCertInfo = lazy(() => import("./pages/OpenSourceCertInfo"));
+const OpenSourceResult = lazy(() => import("./pages/OpenSourceResult"));
 const PRList = lazy(() => import("./pages/PRList"));
 const Portfolio = lazy(() => import("./pages/Portfolio"));
 const ProjectBoard = lazy(() => import("./pages/ProjectBoard"));
@@ -224,6 +230,12 @@ function AppRoutes() {
               <Route path="/certification/git-for-teams" element={<GitTeamsCertInfo />} />
               <Route path="/certification/git-for-teams/assessment" element={<GitTeamsAssessment />} />
               <Route path="/certification/git-for-teams/result" element={<GitTeamsResult />} />
+              <Route path="/certification/command-line-essentials" element={<CLICertInfo />} />
+              <Route path="/certification/command-line-essentials/assessment" element={<CLIAssessment />} />
+              <Route path="/certification/command-line-essentials/result" element={<CLIResult />} />
+              <Route path="/certification/open-source-contributor" element={<OpenSourceCertInfo />} />
+              <Route path="/certification/open-source-contributor/assessment" element={<OpenSourceAssessment />} />
+              <Route path="/certification/open-source-contributor/result" element={<OpenSourceResult />} />
               <Route path="/certificates/:verificationCode" element={<CertificateView />} />
               <Route path="/marketplace" element={<Marketplace />} />
               <Route path="/marketplace/create" element={<CourseCreate />} />
@@ -2573,11 +2585,13 @@ function LearnPage() {
         <div>
           <p className="eyebrow">Certification</p>
           <h2>ForAllCode Certificates</h2>
-          <p>Earn public certificates for Git Fundamentals and Git for Teams, then share them with collaborators, employers, or your profile.</p>
+          <p>Earn public certificates for Git Fundamentals, Git for Teams, Command Line Essentials, and Open Source contribution, then share them with collaborators, employers, or your profile.</p>
         </div>
         <div className="learn-cert-actions">
           <Button to="/certification/git-fundamentals" variant="soft">Git Fundamentals</Button>
           <Button to="/certification/git-for-teams" variant="soft">Git for Teams</Button>
+          <Button to="/certification/command-line-essentials" variant="soft">Command Line</Button>
+          <Button to="/certification/open-source-contributor" variant="soft">Open Source</Button>
         </div>
       </section>
       {isMobile && (
@@ -2663,6 +2677,8 @@ function LearnComfortCheck({ selected, leaving, onSelect }) {
       <div className="learn-onboarding-cert-links">
         <Link className="learn-cert-onboarding-link" to="/certification/git-fundamentals">Explore the Git Fundamentals Certificate</Link>
         <Link className="learn-cert-onboarding-link" to="/certification/git-for-teams">Explore the Git for Teams Certificate</Link>
+        <Link className="learn-cert-onboarding-link" to="/certification/command-line-essentials">Explore the Command Line Essentials Certificate</Link>
+        <Link className="learn-cert-onboarding-link" to="/certification/open-source-contributor">Explore the Open Source Contributor Certificate</Link>
       </div>
     </section>
   );

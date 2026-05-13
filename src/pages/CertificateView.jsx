@@ -15,6 +15,21 @@ const certificateDisplay = {
     subtitle: "Certificate of Proficiency",
     colour: "#7aaa72",
     backPath: "/certification/git-for-teams"
+  },
+  "command-line-essentials": {
+    name: "Command Line Essentials",
+    subtitle: "Certificate of Proficiency",
+    colour: "#c8a055",
+    backPath: "/certification/command-line-essentials"
+  },
+  "open-source-contributor": {
+    name: "Open Source Contributor",
+    subtitle: "Certificate of Proficiency",
+    colour: "#7aaa72",
+    icon: "🌱",
+    backPath: "/certification/open-source-contributor",
+    linkedInDescription: "Demonstrated understanding of the open source contribution lifecycle — from finding projects to getting PRs merged.",
+    postTitle: "I just earned the Open Source Contributor Certificate from ForAllCode"
   }
 };
 
@@ -59,6 +74,11 @@ export default function CertificateView() {
   const linkedInShareUrl = useMemo(() => (
     `https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME&name=${encodeURIComponent(display.name)}&organizationId=&issueYear=${issued.getFullYear()}&issueMonth=${issued.getMonth() + 1}&certUrl=${encodeURIComponent(certUrl)}&certId=${cert?.verification_code || ""}`
   ), [cert?.verification_code, certUrl, display.name, issued]);
+  const linkedInPostUrl = useMemo(() => {
+    if (!display.postTitle) return "";
+    const postTitle = display.linkedInDescription ? `${display.postTitle} — ${display.linkedInDescription}` : display.postTitle;
+    return `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(certUrl)}&title=${encodeURIComponent(postTitle)}`;
+  }, [certUrl, display.linkedInDescription, display.postTitle]);
 
   async function copyLink() {
     await navigator.clipboard?.writeText(certUrl);
@@ -94,12 +114,14 @@ export default function CertificateView() {
         <p className="certificate-kicker">This certifies that</p>
         <h1>{profile?.display_name || profile?.username || "A ForAllCode learner"}</h1>
         <p className="certificate-kicker">has successfully completed</p>
+        {display.icon && <div className="certificate-icon" aria-hidden="true">{display.icon}</div>}
         <h2>{display.name}</h2>
         <p className="certificate-date">Issued {issued.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</p>
         <p className="certificate-code">Verification code: {cert.verification_code}</p>
         <div className="certificate-actions">
           <button className="button soft" onClick={copyLink} type="button"><Copy size={15} />{copied ? "Copied" : "Copy certificate link"}</button>
           <a className="button primary" href={linkedInShareUrl} rel="noreferrer" target="_blank"><ExternalLink size={15} />Share on LinkedIn</a>
+          {linkedInPostUrl && <a className="button soft" href={linkedInPostUrl} rel="noreferrer" target="_blank"><ExternalLink size={15} />Share as LinkedIn post</a>}
           <Link className="button soft" to={display.backPath}>View certification</Link>
         </div>
       </section>

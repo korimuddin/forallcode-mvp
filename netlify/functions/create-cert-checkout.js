@@ -22,6 +22,16 @@ exports.handler = async (event) => {
         amount: 2500,
         name: "ForAllCode Git for Teams Certificate",
         path: "git-for-teams"
+      },
+      "command-line-essentials": {
+        amount: 2000,
+        name: "ForAllCode Command Line Essentials Certificate",
+        path: "command-line-essentials"
+      },
+      "open-source-contributor": {
+        amount: 2000,
+        name: "ForAllCode Open Source Contributor Certificate",
+        path: "open-source-contributor"
       }
     };
     const product = certProducts[certType] || certProducts["git-fundamentals"];

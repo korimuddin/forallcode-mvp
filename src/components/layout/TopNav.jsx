@@ -344,6 +344,8 @@ export default function TopNav() {
             <Link to="/learn">Browse all lessons</Link>
             <Link to="/certification/git-fundamentals">Git Fundamentals Certificate</Link>
             <Link to="/certification/git-for-teams">Git for Teams Certificate</Link>
+            <Link to="/certification/command-line-essentials">Command Line Essentials Certificate</Link>
+            <Link to="/certification/open-source-contributor">Open Source Contributor Certificate</Link>
           </NavDropdown>
           <NavLink to="/explore">Explore</NavLink>
           <NavLink to="/marketplace">Marketplace</NavLink>

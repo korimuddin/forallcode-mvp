@@ -500,7 +500,8 @@
   .cert-info-grid,
   .cert-checklist,
   .cert-info-grid.cert-area-grid,
-  .cert-assessment-layout {
+  .cert-assessment-layout,
+  .cert-social-proof {
     grid-template-columns: 1fr;
   }
 
