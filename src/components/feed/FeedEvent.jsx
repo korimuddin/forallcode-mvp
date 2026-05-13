@@ -12,6 +12,7 @@ const eventCopy = {
   pr_merged: "merged a pull request",
   lesson_completed: "completed a lesson",
   discussion_started: "started a discussion",
+  discussion_commented: "commented on a discussion",
   release_published: "published a release"
 };
 

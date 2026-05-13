@@ -14,18 +14,18 @@ import {
   Link2,
   List,
   ListOrdered,
+  Lock,
   Quote,
   Save,
   Strikethrough
 } from "lucide-react";
 import BlockInserter from "../components/readme/BlockInserter";
-import { readmeTemplateOptions, readmeTemplates } from "../data/readmeTemplates";
+import { allReadmeTemplateOptions, readmeTemplates } from "../data/readmeTemplates";
 import { useDocumentTitle } from "../lib/hooks";
 import { renderMarkdown } from "../lib/markdownRenderer";
 import { getCurrentSession, supabase } from "../lib/supabase";
 import { trackUsage } from "../lib/trackUsage";
-
-const ownerUsername = "";
+import { useSubscription } from "../lib/useSubscription";
 
 const toolbarGroups = [
   [
@@ -54,11 +54,14 @@ const toolbarGroups = [
 ];
 
 export default function ReadmeStudio() {
-  const { username = ownerUsername, repo = "" } = useParams();
+  const { username = "", repo = "" } = useParams();
   useDocumentTitle(`${repo} README Studio`);
   const textareaRef = useRef(null);
   const sessionRef = useRef(null);
   const userIdRef = useRef(null);
+  const { isPro } = useSubscription();
+  const [authChecked, setAuthChecked] = useState(false);
+  const [currentUsername, setCurrentUsername] = useState("");
   const [markdown, setMarkdown] = useState(readmeTemplates.blank);
   const [renderedMarkdown, setRenderedMarkdown] = useState(readmeTemplates.blank);
   const [mobileView, setMobileView] = useState("edit");
@@ -68,7 +71,7 @@ export default function ReadmeStudio() {
   const [saveState, setSaveState] = useState("idle");
   const [status, setStatus] = useState("Ready");
 
-  const isOwner = username === ownerUsername;
+  const isOwner = authChecked && username === currentUsername;
 
   useEffect(() => {
     async function loadReadme() {
@@ -78,6 +81,8 @@ export default function ReadmeStudio() {
         const session = await getCurrentSession();
         sessionRef.current = session;
         userIdRef.current = session?.user?.id || null;
+        const metadata = session?.user?.user_metadata || {};
+        setCurrentUsername(metadata.user_name || metadata.preferred_username || metadata.userName || "");
 
         if (supabase && session?.user?.id) {
           const { data } = await supabase
@@ -118,6 +123,8 @@ export default function ReadmeStudio() {
         setMarkdown(readmeTemplates.blank.replace("Project Name", repo));
         setIsDirty(false);
         setStatus("Starter template loaded");
+      } finally {
+        setAuthChecked(true);
       }
     }
 
@@ -152,6 +159,14 @@ export default function ReadmeStudio() {
     const words = markdown.trim() ? markdown.trim().split(/\s+/).length : 0;
     return { words, characters: markdown.length };
   }, [markdown]);
+
+  if (!authChecked) {
+    return (
+      <section className="readme-studio-page">
+        <Skeleton className="readme-studio-loading" />
+      </section>
+    );
+  }
 
   if (!isOwner) {
     return <Navigate to={`/${username}/${repo}`} replace />;
@@ -339,10 +354,16 @@ export default function ReadmeStudio() {
     setStatus("Exported README.md");
   }
 
-  function applyTemplate(templateKey) {
+  function applyTemplate(template) {
+    if (template.isPro && !isPro) {
+      setStatus("Upgrade to Pro to use this README template.");
+      setTemplatesOpen(false);
+      return;
+    }
     if (markdown.trim() && !window.confirm("Replace the current README content with this template?")) return;
 
-    updateMarkdown(readmeTemplates[templateKey].replace("Project Name", repo));
+    const templateContent = template.content || readmeTemplates[template.key];
+    updateMarkdown(applyTemplateName(templateContent, repo));
     setTemplatesOpen(false);
     setStatus("Template loaded");
   }
@@ -376,8 +397,21 @@ export default function ReadmeStudio() {
             </button>
             {templatesOpen && (
               <div className="readme-template-dropdown">
-                {readmeTemplateOptions.map((template) => (
-                  <button type="button" key={template.key} onClick={() => applyTemplate(template.key)}>{template.label}</button>
+                {allReadmeTemplateOptions.map((template) => (
+                  <button
+                    className={template.isPro && !isPro ? "locked" : ""}
+                    type="button"
+                    key={template.id || template.key}
+                    onClick={() => applyTemplate(template)}
+                  >
+                    <span className="readme-template-title">
+                      <span>{template.emoji} {template.name || template.label}</span>
+                      {template.isPro && (
+                        <b className="readme-pro-badge">{isPro ? "PRO" : <><Lock size={10} /> PRO</>}</b>
+                      )}
+                    </span>
+                    {template.description && <small>{template.description}</small>}
+                  </button>
                 ))}
               </div>
             )}
@@ -438,4 +472,17 @@ export default function ReadmeStudio() {
       <p className="readme-studio-status" aria-live="polite">{status}</p>
     </section>
   );
+}
+
+function applyTemplateName(content, repo) {
+  return content
+    .replaceAll("Project Name", repo)
+    .replaceAll("Product Name", repo)
+    .replaceAll("project-name", repo)
+    .replaceAll("library-name", repo)
+    .replaceAll("cli-name", repo)
+    .replaceAll("Game Name", repo)
+    .replaceAll("App Name", repo)
+    .replaceAll("Documentation Name", `${repo} docs`)
+    .replaceAll("Analysis Title", `${repo} analysis`);
 }

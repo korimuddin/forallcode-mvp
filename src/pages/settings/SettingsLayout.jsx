@@ -3,6 +3,7 @@ import {
   Bell,
   Brush,
   Github,
+  Globe,
   Lock,
   Monitor,
   Shield,
@@ -28,6 +29,7 @@ const settingsGroups = [
     items: [
       { label: "Notifications", path: "notifications", icon: Bell },
       { label: "Integrations", path: "integrations", icon: Github },
+      { label: "Domains", path: "domains", icon: Globe },
       { label: "Privacy", path: "privacy", icon: Shield },
       { label: "Danger zone", path: "danger", icon: TriangleAlert, danger: true }
     ]

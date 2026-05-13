@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Search, Star } from "lucide-react";
 import RisingRepos from "../components/explore/RisingRepos";
+import SpotlightCard from "../components/explore/SpotlightCard";
 import TrendingDevelopers from "../components/explore/TrendingDevelopers";
 import TrendingTopics from "../components/explore/TrendingTopics";
 import IllustratedAvatar from "../components/ui/IllustratedAvatar";
@@ -33,6 +34,7 @@ export default function Explore() {
   const [repos, setRepos] = useState([]);
   const [workspaces, setWorkspaces] = useState([]);
   const [featured, setFeatured] = useState([]);
+  const [spotlights, setSpotlights] = useState([]);
   const [topTopics, setTopTopics] = useState([]);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
@@ -71,6 +73,7 @@ export default function Explore() {
     setHasMore(true);
     loadRepos(0, true);
     loadFeatured();
+    loadSpotlights();
     loadWorkspaces();
     loadTopTopics();
   }, [language, sort, search, topicFilter]);
@@ -98,6 +101,47 @@ export default function Explore() {
       .limit(2);
 
     setFeatured(data || []);
+  }
+
+  async function loadSpotlights() {
+    if (!supabase) {
+      setSpotlights([]);
+      return;
+    }
+
+    const today = new Date().toISOString().slice(0, 10);
+    const { data: entries, error } = await supabase
+      .from("spotlight_entries")
+      .select("*")
+      .lte("week_of", today)
+      .order("week_of", { ascending: false })
+      .limit(3);
+
+    if (error || !entries?.length) {
+      setSpotlights([]);
+      return;
+    }
+
+    const userIds = [...new Set(entries.map((entry) => entry.user_id).filter(Boolean))];
+    const repoIds = [...new Set(entries.map((entry) => entry.featured_repo_id).filter(Boolean))];
+
+    const [profilesResult, reposResult] = await Promise.all([
+      userIds.length
+        ? supabase.from("profiles").select("id, username, display_name, avatar_style, avatar_url").in("id", userIds)
+        : Promise.resolve({ data: [] }),
+      repoIds.length
+        ? supabase.from("repositories").select("id, owner_id, name, description").in("id", repoIds)
+        : Promise.resolve({ data: [] })
+    ]);
+
+    const profilesById = new Map((profilesResult.data || []).map((profile) => [profile.id, profile]));
+    const reposById = new Map((reposResult.data || []).map((repo) => [repo.id, repo]));
+
+    setSpotlights(entries.map((entry) => ({
+      ...entry,
+      profiles: profilesById.get(entry.user_id),
+      repositories: reposById.get(entry.featured_repo_id)
+    })));
   }
 
   async function loadRepos(nextPage = page, replace = false) {
@@ -430,15 +474,31 @@ export default function Explore() {
       </section>
 
       {activeTab === "Featured" && (
-        <section className="explore-featured-section">
-          <div className="explore-section-heading">
-            <p className="eyebrow">Featured</p>
-            <span>Handpicked by ForAllCode</span>
-          </div>
-          <div className="explore-featured-grid">
-            {featured.slice(0, 2).map((repo, index) => <FeaturedCard index={index} key={repo.id || repo.name} repo={repo} />)}
-          </div>
-        </section>
+        <>
+          <section className="explore-spotlight-section">
+            <div className="explore-section-heading">
+              <p className="eyebrow">Developer spotlight</p>
+              <span>Weekly notes from the ForAllCode community</span>
+            </div>
+            {spotlights.length > 0 ? (
+              <div className="spotlight-grid">
+                {spotlights.map((entry) => <SpotlightCard entry={entry} key={entry.id} />)}
+              </div>
+            ) : (
+              <p className="explore-empty spotlight-empty">This week's spotlight is being prepared.</p>
+            )}
+          </section>
+
+          <section className="explore-featured-section">
+            <div className="explore-section-heading">
+              <p className="eyebrow">Featured</p>
+              <span>Handpicked by ForAllCode</span>
+            </div>
+            <div className="explore-featured-grid">
+              {featured.slice(0, 2).map((repo, index) => <FeaturedCard index={index} key={repo.id || repo.name} repo={repo} />)}
+            </div>
+          </section>
+        </>
       )}
 
       {activeTab === "Trending" && (

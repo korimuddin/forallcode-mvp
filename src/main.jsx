@@ -86,6 +86,7 @@ const StarsPage = lazy(() => import("./pages/Stars"));
 const SettingsAccount = lazy(() => import("./pages/settings/SettingsAccount"));
 const SettingsAppearance = lazy(() => import("./pages/settings/SettingsAppearance"));
 const SettingsDanger = lazy(() => import("./pages/settings/SettingsDanger"));
+const SettingsDomains = lazy(() => import("./pages/settings/SettingsDomains"));
 const SettingsIntegrations = lazy(() => import("./pages/settings/SettingsIntegrations"));
 const SettingsLayout = lazy(() => import("./pages/settings/SettingsLayout"));
 const SettingsNotifications = lazy(() => import("./pages/settings/SettingsNotifications"));
@@ -235,6 +236,7 @@ function AppRoutes() {
                 <Route path="appearance" element={<SettingsAppearance />} />
                 <Route path="notifications" element={<SettingsNotifications />} />
                 <Route path="integrations" element={<SettingsIntegrations />} />
+                <Route path="domains" element={<SettingsDomains />} />
                 <Route path="privacy" element={<SettingsPrivacy />} />
                 <Route path="danger" element={<SettingsDanger />} />
               </Route>
@@ -567,7 +569,7 @@ function DashboardPage() {
             {!feedLoading && !feedError && feedEvents.length === 0 && (
               <div className="dashboard-feed-empty">
                 <h3>No followed activity yet</h3>
-                <p>Follow developers from Explore to turn this into a daily stream of repos, lessons, pull requests, and ideas.</p>
+                <p>Follow some developers to see their activity.</p>
                 <Button to="/explore" variant="soft">Find developers</Button>
               </div>
             )}

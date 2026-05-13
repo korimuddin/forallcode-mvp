@@ -22,6 +22,10 @@
     overflow: hidden;
   }
 
+  .domain-connect-form {
+    grid-template-columns: 1fr;
+  }
+
   .landing-designer-panel {
     width: 100%;
     height: 300px;
@@ -169,7 +173,8 @@
   .gist-visibility-row,
   .about-difference-grid,
   .explore-featured-grid,
-  .explore-repo-grid {
+  .explore-repo-grid,
+  .spotlight-grid {
     grid-template-columns: 1fr;
   }
 
