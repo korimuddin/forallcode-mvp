@@ -27,6 +27,7 @@ import {
 import CommandPalette from "./components/layout/CommandPalette";
 import TopNav from "./components/layout/TopNav";
 import ErrorBoundary from "./components/ui/ErrorBoundary";
+import FeedbackForm from "./components/ui/FeedbackForm";
 import IllustratedAvatar, { avatarVariants } from "./components/ui/IllustratedAvatar";
 import { LimitBanner } from "./components/ui/LimitBanner";
 import Skeleton from "./components/ui/Skeleton";
@@ -37,11 +38,13 @@ import { createNotification } from "./lib/notifications";
 import { isAtLimit } from "./lib/plans";
 import { getUserPreference, setUserPreference } from "./lib/preferences";
 import { createGitHubRepository, fetchGitHubFileContent, fetchGitHubRepoArchive, fetchGitHubRepoOverview, forkGitHubRepository, getCurrentSession, isSupabaseConfigured, saveGitHubRepositoryFile, saveRepoHeroToSupabase, signInWithGitHub, signInWithPassword, supabase, uploadProfileVisualImage, uploadRepoHeroImage } from "./lib/supabase";
+import { trackUsage } from "./lib/trackUsage";
 import { SubscriptionProvider, useSubscription } from "./lib/useSubscription";
 import "./styles.css";
 import "./styles/mobile.css";
 
 const About = lazy(() => import("./pages/About"));
+const AdminFeedback = lazy(() => import("./pages/AdminFeedback"));
 const Explore = lazy(() => import("./pages/Explore"));
 const LandingDesigner = lazy(() => import("./pages/LandingDesigner"));
 const Notifications = lazy(() => import("./pages/Notifications"));
@@ -55,6 +58,8 @@ const SettingsNotifications = lazy(() => import("./pages/settings/SettingsNotifi
 const SettingsPrivacy = lazy(() => import("./pages/settings/SettingsPrivacy"));
 const SettingsProfile = lazy(() => import("./pages/settings/SettingsProfile"));
 const SettingsWorkspace = lazy(() => import("./pages/settings/SettingsWorkspace"));
+const Upgrade = lazy(() => import("./pages/Upgrade"));
+const UpgradeSuccess = lazy(() => import("./pages/UpgradeSuccess"));
 
 const currentUser = {
   username: "",
@@ -147,6 +152,9 @@ function AppRoutes() {
               <Route path="/repos/new" element={<NewRepoPage />} />
               <Route path="/explore" element={<Explore />} />
               <Route path="/notifications" element={<Notifications />} />
+              <Route path="/admin/feedback" element={<AdminFeedback />} />
+              <Route path="/upgrade" element={<Upgrade />} />
+              <Route path="/upgrade/success" element={<UpgradeSuccess />} />
               <Route path="/settings" element={<SettingsLayout />}>
                 <Route index element={<Navigate to="/settings/account" replace />} />
                 <Route path="account" element={<SettingsAccount />} />
@@ -383,6 +391,7 @@ function DashboardPage() {
 
       <div className="phase-dashboard-grid">
         <section>
+          <FeedbackForm />
           <div className="phase-section-head">
             <div><p className="eyebrow">FOLLOWED</p><h2>Users and projects</h2></div>
             <Link to="/following">Manage</Link>
@@ -616,16 +625,14 @@ function ReposPage() {
       <CarouselHero slides={repoHeroSlides} type="repos" />
       <div className="repos-page-header">
         <h1>Repositories</h1>
-        <div>
+        <div className="repos-header-actions">
           <Button variant="soft"><Github size={16} />Import from GitHub</Button>
-          <Button to="/repos/new"><Plus size={16} />New repository</Button>
+          <div className="new-repo-action-stack">
+            <Button to="/repos/new"><Plus size={16} />New repository</Button>
+            {!isPro && <span>{privateRepoCount} of {limits.privateRepos} private repos used</span>}
+          </div>
         </div>
       </div>
-      {!isPro && (
-        <div className="limit-indicator">
-          Private repos: {privateRepoCount} / {limits.privateRepos}
-        </div>
-      )}
       <LimitBanner limitKey="privateRepos" currentCount={privateRepoCount} />
       <div className="phase-filter-bar">
         <input placeholder="Search repositories..." value={query} onChange={(event) => setQuery(event.target.value)} />
@@ -728,6 +735,9 @@ function NewRepoPage() {
         visibility,
         template
       });
+      if (visibility === "private") {
+        trackUsage(session?.user?.id, "private_repo_created", { repo_name: createdRepo.name || name }).catch(() => {});
+      }
       const owner = createdRepo.owner || profile?.username || "repo";
       navigate(`/${owner}/${createdRepo.name}`);
     } catch (error) {
@@ -2183,6 +2193,7 @@ function LearnPage() {
   }
 
   async function markLessonComplete() {
+    const wasComplete = completedLessons.has(lesson.slug);
     const next = new Set(completedLessons);
     next.add(lesson.slug);
     setCompletedLessons(next);
@@ -2194,6 +2205,9 @@ function LearnPage() {
         completed: true,
         completed_at: new Date().toISOString()
       }, { onConflict: "user_id,lesson_slug" });
+      if (!wasComplete) {
+        trackUsage(session.user.id, "lesson_completed", { lesson_slug: lesson.slug }).catch(() => {});
+      }
     }
   }
 
@@ -2371,6 +2385,9 @@ function Workspace({ compact = false, interactive = false }) {
   const addNote = () => {
     if (stickyNoteAtLimit) return;
     setNotes([...notes, { id: Date.now(), colour: defaultNoteColour, content: "New idea", x: 34, y: 56 }]);
+    if (workspaceUserId && workspaceUserId !== "local") {
+      trackUsage(workspaceUserId, "sticky_note_added").catch(() => {});
+    }
   };
   return (
     <section className={compact ? "workspace compact" : "workspace"}>
@@ -2379,6 +2396,12 @@ function Workspace({ compact = false, interactive = false }) {
         {interactive && !isPro && <span className="limit-indicator">Sticky notes: {notes.length} / {limits.stickyNotes}</span>}
         {interactive && <Button disabled={stickyNoteAtLimit} onClick={addNote}><Plus size={16} />Sticky note</Button>}
       </div>
+      {interactive && !isPro && (
+        <p className="workspace-limit-note">
+          {notes.length} of {limits.stickyNotes} sticky notes used.
+          {notes.length >= limits.stickyNotes - 1 && <Link to="/upgrade">Upgrade for unlimited →</Link>}
+        </p>
+      )}
       {interactive && <LimitBanner limitKey="stickyNotes" currentCount={notes.length} />}
       <div className={focus ? "desk focus-on" : "desk"}>
         <DeskIllustration />

@@ -7,6 +7,7 @@ import { ProGate } from "../components/ui/ProGate";
 import { useDocumentTitle, useIsMobile } from "../lib/hooks";
 import { isAtLimit } from "../lib/plans";
 import { getCurrentSession, supabase } from "../lib/supabase";
+import { trackUsage } from "../lib/trackUsage";
 import { useSubscription } from "../lib/useSubscription";
 
 const ownerUsername = "";
@@ -324,7 +325,10 @@ export default function LandingDesigner() {
 
       if (error) throw error;
 
-      if (!currentRepoHasLanding) setLandingPageCount((count) => count + 1);
+      if (!currentRepoHasLanding) {
+        setLandingPageCount((count) => count + 1);
+        trackUsage(userId, "landing_page_created", { repo_name: repo }).catch(() => {});
+      }
       setCurrentRepoHasLanding(true);
       setPublishState("published");
       setStatus(`Published at ${username}.forallcode.dev/${repo}`);

@@ -23,6 +23,7 @@ import { readmeTemplateOptions, readmeTemplates } from "../data/readmeTemplates"
 import { useDocumentTitle } from "../lib/hooks";
 import { renderMarkdown } from "../lib/markdownRenderer";
 import { getCurrentSession, supabase } from "../lib/supabase";
+import { trackUsage } from "../lib/trackUsage";
 
 const ownerUsername = "";
 
@@ -319,6 +320,7 @@ export default function ReadmeStudio() {
       setIsDirty(false);
       setSaveState("saved");
       setStatus("README saved to GitHub");
+      trackUsage(session?.user?.id, "readme_saved", { repo_name: repo }).catch(() => {});
       window.setTimeout(() => setSaveState("idle"), 2000);
     } catch (error) {
       setSaveState("idle");

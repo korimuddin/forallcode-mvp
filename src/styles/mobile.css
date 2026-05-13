@@ -424,4 +424,20 @@
     align-items: stretch;
     flex-direction: column;
   }
+
+  .plan-cards,
+  .upgrade-faq-grid,
+  .success-feature-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .upgrade-page,
+  .upgrade-success-page {
+    padding-inline: 16px;
+  }
+
+  .settings-plan-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
 }

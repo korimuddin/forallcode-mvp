@@ -4,8 +4,10 @@ import SettingsInput from "../../components/settings/SettingsInput";
 import SettingsSection from "../../components/settings/SettingsSection";
 import { SettingsActions, SettingsPageHeader, SettingsSaveButton } from "../../components/settings/SettingsControls";
 import IllustratedAvatar from "../../components/ui/IllustratedAvatar";
+import { UpgradeButton } from "../../components/ui/UpgradeButton";
 import { getUserPreference, setUserPreference } from "../../lib/preferences";
 import { signInWithGitHub, supabase } from "../../lib/supabase";
+import { useSubscription } from "../../lib/useSubscription";
 
 const defaultAccount = {
   displayName: "",
@@ -29,6 +31,86 @@ function useSaveStatus() {
   }
 
   return [status, run];
+}
+
+function formatRenewalDate(value) {
+  if (!value) return "after your current billing period";
+  return new Date(value).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric"
+  });
+}
+
+function BillingSection() {
+  const { subscription, isPro, isCancelling } = useSubscription();
+  const [billingStatus, setBillingStatus] = useState("");
+  const [openingPortal, setOpeningPortal] = useState(false);
+
+  async function handleManageBilling() {
+    setBillingStatus("");
+    setOpeningPortal(true);
+
+    try {
+      if (!supabase) throw new Error("Supabase is not configured.");
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user?.id) throw new Error("Please sign in before managing billing.");
+
+      const response = await fetch("/.netlify/functions/create-billing-portal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user.id,
+          returnUrl: `${window.location.origin}/settings/account`
+        })
+      });
+
+      const payload = await response.json();
+      if (!response.ok || !payload.url) {
+        throw new Error(payload.error || "Could not open billing portal.");
+      }
+
+      window.location.href = payload.url;
+    } catch (error) {
+      setBillingStatus(error.message || "Could not open billing portal.");
+      setOpeningPortal(false);
+    }
+  }
+
+  if (!isPro) {
+    return (
+      <SettingsSection title="Plan" description="You are on the Free plan.">
+        <div className="settings-plan-card">
+          <div>
+            <strong>ForAllCode Free</strong>
+            <span>Public repos, learning, README Studio, one landing page, and five sticky notes.</span>
+          </div>
+          <UpgradeButton />
+        </div>
+      </SettingsSection>
+    );
+  }
+
+  return (
+    <SettingsSection title="Plan" description="You are on ForAllCode Pro.">
+      <div className="settings-plan-card pro">
+        <div>
+          <strong>ForAllCode Pro — £10/month</strong>
+          {isCancelling ? (
+            <span className="settings-billing-warning">
+              Cancels at end of billing period ({formatRenewalDate(subscription.current_period_end)})
+            </span>
+          ) : (
+            <span>Renews {formatRenewalDate(subscription.current_period_end)}</span>
+          )}
+        </div>
+        <button className="settings-ghost" disabled={openingPortal} onClick={handleManageBilling} type="button">
+          {openingPortal ? "Opening..." : "Manage billing →"}
+        </button>
+      </div>
+      {billingStatus && <p className="settings-error">{billingStatus}</p>}
+    </SettingsSection>
+  );
 }
 
 export default function SettingsAccount() {
@@ -182,6 +264,8 @@ export default function SettingsAccount() {
           )}
         </div>
       </SettingsSection>
+
+      <BillingSection />
 
       <SettingsSection title="Sessions">
         <p className="settings-muted">You are currently signed in.</p>
