@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
+import { Lock } from "lucide-react";
 import SettingsSection from "../../components/settings/SettingsSection";
-import { FocusToggle, SettingsActions, SettingsPageHeader, SettingsRadioCards, SettingsSaveButton, SettingsSwatches } from "../../components/settings/SettingsControls";
+import { FocusToggle, SettingsActions, SettingsPageHeader, SettingsSaveButton, SettingsSwatches } from "../../components/settings/SettingsControls";
+import { DESK_THEMES } from "../../data/deskThemes";
 import { getUserPreference, setUserPreference } from "../../lib/preferences";
 import { supabase } from "../../lib/supabase";
+import { useSubscription } from "../../lib/useSubscription";
 
 const noteColours = [
   { label: "Lavender", value: "lavender", colour: "#ddd5f0" },
@@ -12,6 +15,7 @@ const noteColours = [
 ];
 
 export default function SettingsWorkspace() {
+  const { isPro } = useSubscription();
   const [session, setSession] = useState(null);
   const [settings, setSettings] = useState({
     deskTheme: "classic",
@@ -22,6 +26,8 @@ export default function SettingsWorkspace() {
     defaultNoteColour: "lavender"
   });
   const [status, setStatus] = useState("default");
+
+  const visibleDeskTheme = !isPro && DESK_THEMES[settings.deskTheme]?.isPro ? "classic" : settings.deskTheme;
 
   useEffect(() => {
     async function loadSettings() {
@@ -57,17 +63,29 @@ export default function SettingsWorkspace() {
     setSettings((current) => ({ ...current, [key]: value }));
   }
 
+  function selectDeskTheme(themeId) {
+    const theme = DESK_THEMES[themeId];
+    if (!theme) return;
+    if (theme.isPro && !isPro) {
+      setStatus("locked");
+      setTimeout(() => setStatus("default"), 1800);
+      return;
+    }
+    updateSetting("deskTheme", themeId);
+  }
+
   async function handleSave() {
     setStatus("saving");
-    if (session?.user?.id) setUserPreference(session.user.id, "workspace", settings);
+    const settingsToSave = { ...settings, deskTheme: visibleDeskTheme };
+    if (session?.user?.id) setUserPreference(session.user.id, "workspace", settingsToSave);
     if (supabase && session?.user?.id) {
       const { error } = await supabase.from("workspace_settings").upsert({
         user_id: session.user.id,
-        focus_mode: settings.focusMode,
-        desk_theme: settings.deskTheme,
-        show_clock: settings.showClock,
-        show_decorations: settings.showDecorations,
-        default_note_colour: settings.defaultNoteColour
+        focus_mode: settingsToSave.focusMode,
+        desk_theme: settingsToSave.deskTheme,
+        show_clock: settingsToSave.showClock,
+        show_decorations: settingsToSave.showDecorations,
+        default_note_colour: settingsToSave.defaultNoteColour
       }, { onConflict: "user_id" });
       if (error) console.warn("Could not sync workspace settings to Supabase.", error);
     }
@@ -80,16 +98,8 @@ export default function SettingsWorkspace() {
       <SettingsPageHeader title="Workspace" subtitle="Personalise your desk." />
 
       <SettingsSection title="Desk theme">
-        <SettingsRadioCards
-          value={settings.deskTheme}
-          onChange={(value) => updateSetting("deskTheme", value)}
-          options={[
-            { value: "classic", label: "Classic", description: "Cream tones, warm white desk.", preview: <DeskPreview tone="#fffdf9" accent="#ddd5f0" /> },
-            { value: "cosy", label: "Cosy", description: "Warmer surface with amber accents.", preview: <DeskPreview tone="#f5e4c4" accent="#f5d5d8" /> },
-            { value: "minimal", label: "Minimal", description: "Lighter, calmer, less decoration.", preview: <DeskPreview tone="#faf7f2" accent="#cce0f0" /> },
-            { value: "night", label: "Night owl", description: "A darker desk surface.", preview: <DeskPreview tone="#6b5f58" accent="#9b8fd4" />, disabled: true }
-          ]}
-        />
+        <ThemeSelector currentTheme={visibleDeskTheme} isPro={isPro} onSelect={selectDeskTheme} />
+        {status === "locked" && <p className="settings-helper amber">Premium desk themes are included with ForAllCode Pro.</p>}
       </SettingsSection>
 
       <SettingsSection title="Decorations">
@@ -113,13 +123,45 @@ export default function SettingsWorkspace() {
   );
 }
 
-function DeskPreview({ tone, accent }) {
+function ThemeSelector({ currentTheme, isPro, onSelect }) {
+  return (
+    <div className="desk-theme-grid">
+      {Object.entries(DESK_THEMES).map(([id, theme]) => {
+        const locked = theme.isPro && !isPro;
+        const active = currentTheme === id;
+        return (
+          <button
+            className={`desk-theme-card ${active ? "active" : ""} ${locked ? "locked" : ""}`}
+            key={id}
+            onClick={() => onSelect(id)}
+            type="button"
+          >
+            <DeskPreview theme={theme} />
+            <span className="desk-theme-card-footer">
+              <span>
+                <strong>{theme.name}</strong>
+                <small>{theme.isPro ? "Premium workspace theme" : "Included with Free"}</small>
+              </span>
+              {theme.isPro && <b>{locked ? <Lock size={12} /> : null} PRO</b>}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function DeskPreview({ theme }) {
   return (
     <svg aria-hidden="true" viewBox="0 0 120 72">
-      <rect width="120" height="72" rx="12" fill={tone} />
-      <rect x="22" y="14" width="46" height="28" rx="6" fill="#fffdf9" stroke="#e8e0d4" />
-      <rect x="75" y="16" width="18" height="18" rx="6" fill={accent} />
-      <rect x="28" y="50" width="54" height="6" rx="3" fill="#e8e0d4" />
+      <rect width="120" height="72" rx="12" fill={theme.desk} />
+      <rect x="12" y="48" width="96" height="8" rx="4" fill={theme.deskEdge} />
+      <rect x="22" y="14" width="46" height="28" rx="6" fill={theme.monitor} stroke={theme.deskEdge} />
+      <rect x="28" y="20" width="34" height="16" rx="3" fill={theme.screen} />
+      <rect x="75" y="16" width="18" height="18" rx="6" fill={theme.mug} stroke={theme.deskEdge} />
+      <rect x="82" y="42" width="18" height="18" rx="5" fill={theme.plant} />
+      <circle cx="94" cy="40" r="8" fill={theme.leaf} />
+      <rect x="28" y="58" width="54" height="5" rx="3" fill={theme.keyboard} />
     </svg>
   );
 }

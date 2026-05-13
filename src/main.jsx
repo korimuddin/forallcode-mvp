@@ -36,6 +36,7 @@ import FeedbackForm from "./components/ui/FeedbackForm";
 import IllustratedAvatar, { avatarVariants } from "./components/ui/IllustratedAvatar";
 import { LimitBanner } from "./components/ui/LimitBanner";
 import Skeleton from "./components/ui/Skeleton";
+import DeskIllustration from "./components/workspace/DeskIllustration";
 import { learnLessons, learnTracks } from "./data/learnLessons";
 import { useAuthSession, useDocumentTitle, useIsMobile, useSignedInUserData } from "./lib/hooks";
 import { createFeedEvent } from "./lib/createFeedEvent";
@@ -65,6 +66,10 @@ const AdminSystem = lazy(() => import("./pages/admin/AdminSystem"));
 const AdminTraffic = lazy(() => import("./pages/admin/AdminTraffic"));
 const AdminUserDetail = lazy(() => import("./pages/admin/AdminUserDetail"));
 const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
+const CertificateView = lazy(() => import("./pages/CertificateView"));
+const CertificationAssessment = lazy(() => import("./pages/CertificationAssessment"));
+const CertificationInfo = lazy(() => import("./pages/CertificationInfo"));
+const CertificationResult = lazy(() => import("./pages/CertificationResult"));
 const Explore = lazy(() => import("./pages/Explore"));
 const DiscussionDetail = lazy(() => import("./pages/DiscussionDetail"));
 const DiscussionList = lazy(() => import("./pages/DiscussionList"));
@@ -166,6 +171,7 @@ function AppRoutes() {
   const location = useLocation();
   const isEntryPage = location.pathname === "/";
   const isPortfolioPage = /^\/[^/]+\/portfolio\/?$/.test(location.pathname);
+  const isCertificatePage = /^\/certificates\/[^/]+\/?$/.test(location.pathname);
   const { session, checked } = useAuthSession();
 
   useEffect(() => {
@@ -179,10 +185,10 @@ function AppRoutes() {
 
   return (
     <>
-      {!isEntryPage && !isPortfolioPage && <CommandPalette />}
-      <div className={isEntryPage ? "app-shell entry-shell" : isPortfolioPage ? "app-shell portfolio-shell" : "app-shell"}>
-        {!isEntryPage && !isPortfolioPage && <TopNav />}
-        {!isEntryPage && !isPortfolioPage && <ImpersonationBanner />}
+      {!isEntryPage && !isPortfolioPage && !isCertificatePage && <CommandPalette />}
+      <div className={isEntryPage ? "app-shell entry-shell" : isPortfolioPage ? "app-shell portfolio-shell" : isCertificatePage ? "app-shell certificate-shell" : "app-shell"}>
+        {!isEntryPage && !isPortfolioPage && !isCertificatePage && <TopNav />}
+        {!isEntryPage && !isPortfolioPage && !isCertificatePage && <ImpersonationBanner />}
         <main>
           <Suspense fallback={<RouteFallback />}>
             <Routes>
@@ -206,6 +212,10 @@ function AppRoutes() {
               <Route path="/notifications" element={<Notifications />} />
               <Route path="/upgrade" element={<Upgrade />} />
               <Route path="/upgrade/success" element={<UpgradeSuccess />} />
+              <Route path="/certification/git-fundamentals" element={<CertificationInfo />} />
+              <Route path="/certification/git-fundamentals/assessment" element={<CertificationAssessment />} />
+              <Route path="/certification/git-fundamentals/result" element={<CertificationResult />} />
+              <Route path="/certificates/:verificationCode" element={<CertificateView />} />
               <Route
                 path="/admin"
                 element={(
@@ -255,7 +265,7 @@ function AppRoutes() {
             </Routes>
           </Suspense>
         </main>
-        {!isEntryPage && !isPortfolioPage && <Footer />}
+        {!isEntryPage && !isPortfolioPage && !isCertificatePage && <Footer />}
       </div>
     </>
   );
@@ -2547,6 +2557,14 @@ function LearnPage() {
   return (
     <PageFrame title="Learn Git visually" eyebrow="Learn">
       <CarouselHero slides={learnHeroSlides} type="learn" />
+      <section className="learn-cert-card">
+        <div>
+          <p className="eyebrow">Certification</p>
+          <h2>Git Fundamentals Certificate</h2>
+          <p>Take the 20-question assessment and earn a public certificate you can share with collaborators, employers, or your profile.</p>
+        </div>
+        <Button to="/certification/git-fundamentals" variant="soft">View certificate</Button>
+      </section>
       {isMobile && (
         <select className="learn-mobile-select" value={active} onChange={(event) => chooseLesson(event.target.value)} aria-label="Choose lesson">
           {lessons.map((item) => (
@@ -2627,6 +2645,7 @@ function LearnComfortCheck({ selected, leaving, onSelect }) {
         ))}
       </div>
       <p className="learn-reassurance">You can always switch tracks or go back to basics — these are suggestions, not locks.</p>
+      <Link className="learn-cert-onboarding-link" to="/certification/git-fundamentals">Explore the Git Fundamentals Certificate</Link>
     </section>
   );
 }
@@ -2674,6 +2693,9 @@ function Workspace({ compact = false, interactive = false }) {
     { id: 2, content: "Draft public roadmap", completed: false },
     { id: 3, content: "Polish landing designer", completed: false }
   ]);
+  const [deskTheme, setDeskTheme] = useState("classic");
+  const [showClock, setShowClock] = useState(true);
+  const [showDecorations, setShowDecorations] = useState(true);
   const [defaultNoteColour, setDefaultNoteColour] = useState("amber");
 
   useEffect(() => {
@@ -2689,7 +2711,25 @@ function Workspace({ compact = false, interactive = false }) {
       setWorkspaceUserId(userId);
       if (workspacePrefs) {
         setFocus(Boolean(workspacePrefs.focusMode));
+        setDeskTheme(workspacePrefs.deskTheme || "classic");
+        setShowClock(workspacePrefs.showClock ?? true);
+        setShowDecorations(workspacePrefs.showDecorations ?? true);
         setDefaultNoteColour(workspacePrefs.defaultNoteColour || "amber");
+      }
+      if (!workspacePrefs && supabase && session?.user?.id) {
+        const { data: stored } = await supabase
+          .from("workspace_settings")
+          .select("desk_theme, show_clock, show_decorations, focus_mode, default_note_colour")
+          .eq("user_id", session.user.id)
+          .maybeSingle();
+        if (!alive) return;
+        if (stored) {
+          setFocus(Boolean(stored.focus_mode));
+          setDeskTheme(stored.desk_theme || "classic");
+          setShowClock(stored.show_clock ?? true);
+          setShowDecorations(stored.show_decorations ?? true);
+          setDefaultNoteColour(stored.default_note_colour || "amber");
+        }
       }
       if (deskPrefs) {
         setFocus(Boolean(deskPrefs.focus));
@@ -2733,7 +2773,7 @@ function Workspace({ compact = false, interactive = false }) {
       )}
       {interactive && <LimitBanner limitKey="stickyNotes" currentCount={notes.length} />}
       <div className={focus ? "desk focus-on" : "desk"}>
-        <DeskIllustration />
+        <DeskIllustration theme={deskTheme} showClock={showClock} showDecorations={showDecorations} />
         {notes.map((note) => (
           <textarea
             key={note.id}
@@ -2762,41 +2802,6 @@ function Workspace({ compact = false, interactive = false }) {
 
 function DeskPreview() {
   return <div className="desk-preview"><DeskIllustration /></div>;
-}
-
-function DeskIllustration() {
-  const [date, setDate] = useState(new Date());
-  useEffect(() => {
-    const id = window.setInterval(() => setDate(new Date()), 1000);
-    return () => window.clearInterval(id);
-  }, []);
-  const minute = date.getMinutes() * 6;
-  const hour = (date.getHours() % 12) * 30 + date.getMinutes() / 2;
-  return (
-    <svg viewBox="0 0 900 520" role="img" aria-label="Pastel illustrated workspace desk">
-      <rect x="18" y="18" width="864" height="484" rx="28" fill="#f4efe6" stroke="#e8e0d4" />
-      <rect x="185" y="70" width="360" height="210" rx="20" fill="#fffdf9" stroke="#e8e0d4" />
-      <rect x="215" y="100" width="300" height="150" rx="12" fill="#3d3530" opacity=".9" />
-      <path d="M248 134h142M248 166h210M248 198h118M248 230h174" stroke="#c8d8c4" strokeWidth="9" strokeLinecap="round" />
-      <rect x="292" y="288" width="150" height="16" rx="8" fill="#c4b8e8" />
-      <rect x="214" y="326" width="316" height="82" rx="18" fill="#fffdf9" stroke="#e8e0d4" />
-      {Array.from({ length: 12 }).map((_, i) => <rect key={i} x={236 + i * 22} y="348" width="14" height="12" rx="4" fill="#ddd5f0" />)}
-      <rect x="615" y="92" width="76" height="86" rx="18" fill="#f5e4c4" stroke="#e8e0d4" />
-      <path d="M690 116c42 0 42 42 0 42" fill="none" stroke="#e8e0d4" strokeWidth="10" />
-      <path d="M640 70c-8-18 8-28 0-44M668 70c-8-18 8-28 0-44" stroke="#9c918c" strokeWidth="5" strokeLinecap="round" />
-      <circle cx="748" cy="118" r="54" fill="#fffdf9" stroke="#e8e0d4" />
-      <line x1="748" y1="118" x2="748" y2="84" stroke="#7a6dc4" strokeWidth="5" transform={`rotate(${minute} 748 118)`} />
-      <line x1="748" y1="118" x2="748" y2="94" stroke="#3d3530" strokeWidth="6" transform={`rotate(${hour} 748 118)`} />
-      <circle cx="748" cy="118" r="5" fill="#3d3530" />
-      <rect x="650" y="325" width="92" height="88" rx="18" fill="#c8d8c4" stroke="#e8e0d4" />
-      <path d="M696 325c-42-54-98-28-54 10M696 325c34-68 92-32 44 8" fill="#a8c4a2" />
-      <rect x="640" y="410" width="116" height="26" rx="13" fill="#e8e0d4" />
-      <circle cx="110" cy="104" r="11" fill="#d4848c" />
-      <rect x="86" y="114" width="116" height="86" rx="10" fill="#f5d5d8" stroke="#e8e0d4" transform="rotate(-8 144 157)" />
-      <circle cx="775" cy="322" r="11" fill="#7aaa72" />
-      <rect x="733" y="334" width="112" height="82" rx="10" fill="#c8d8c4" stroke="#e8e0d4" transform="rotate(7 789 375)" />
-    </svg>
-  );
 }
 
 function RepoCard({ repo, actions = false }) {

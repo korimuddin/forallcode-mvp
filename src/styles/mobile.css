@@ -479,4 +479,47 @@
     align-items: stretch;
     flex-direction: column;
   }
+
+  .desk-theme-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cert-page {
+    width: calc(100% - 24px);
+    padding-top: 18px;
+  }
+
+  .cert-hero,
+  .cert-card,
+  .cert-assessment,
+  .cert-result,
+  .certificate-card {
+    padding: 24px;
+  }
+
+  .cert-info-grid,
+  .cert-checklist {
+    grid-template-columns: 1fr;
+  }
+
+  .cert-assessment-header,
+  .cert-assessment-actions,
+  .cert-hero-actions,
+  .certificate-actions,
+  .learn-cert-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .cert-timer {
+    justify-content: center;
+  }
+
+  .certificate-public-page {
+    padding: 18px;
+  }
+
+  .certificate-card h1 {
+    font-size: 30px;
+  }
 }

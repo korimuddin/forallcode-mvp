@@ -342,6 +342,7 @@ export default function TopNav() {
             </div>
             <span className="dropdown-divider" />
             <Link to="/learn">Browse all lessons</Link>
+            <Link to="/certification/git-fundamentals">Git Fundamentals Certificate</Link>
           </NavDropdown>
           <NavLink to="/explore">Explore</NavLink>
           <button className="nav-static-link" type="button" aria-disabled="true">Marketplace</button>

@@ -28,6 +28,33 @@ exports.handler = async (event) => {
 
   switch (stripeEvent.type) {
     case "checkout.session.completed": {
+      if (session.mode === "payment" && session.metadata?.cert_type) {
+        const userId = session.metadata.supabase_user_id;
+        const certType = session.metadata.cert_type;
+        const { data: existing } = await supabase
+          .from("certifications")
+          .select("id")
+          .eq("user_id", userId)
+          .eq("cert_type", certType)
+          .maybeSingle();
+
+        if (existing?.id) {
+          await supabase
+            .from("certifications")
+            .update({ stripe_payment_id: session.payment_intent })
+            .eq("id", existing.id);
+        } else {
+          await supabase.from("certifications").insert({
+            user_id: userId,
+            cert_type: certType,
+            stripe_payment_id: session.payment_intent
+          });
+        }
+        break;
+      }
+
+      if (session.mode !== "subscription") break;
+
       const userId = session.metadata.supabase_user_id;
       const stripeSubscriptionId = session.subscription;
       const stripeSubscription = await stripe.subscriptions.retrieve(stripeSubscriptionId);
