@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import CommandPalette from "./components/layout/CommandPalette";
 import TopNav from "./components/layout/TopNav";
+import { AdminGuard } from "./components/admin/AdminGuard";
 import ErrorBoundary from "./components/ui/ErrorBoundary";
 import FeedbackForm from "./components/ui/FeedbackForm";
 import IllustratedAvatar, { avatarVariants } from "./components/ui/IllustratedAvatar";
@@ -47,6 +48,10 @@ import "./styles/mobile.css";
 
 const About = lazy(() => import("./pages/About"));
 const AdminFeedback = lazy(() => import("./pages/AdminFeedback"));
+const AdminLayout = lazy(() => import("./components/admin/AdminLayout"));
+const AdminOverview = lazy(() => import("./pages/admin/AdminOverview"));
+const AdminPlaceholder = lazy(() => import("./pages/admin/AdminPlaceholder"));
+const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
 const Explore = lazy(() => import("./pages/Explore"));
 const IssueList = lazy(() => import("./pages/IssueList"));
 const LandingDesigner = lazy(() => import("./pages/LandingDesigner"));
@@ -156,9 +161,30 @@ function AppRoutes() {
               <Route path="/repos/new" element={<NewRepoPage />} />
               <Route path="/explore" element={<Explore />} />
               <Route path="/notifications" element={<Notifications />} />
-              <Route path="/admin/feedback" element={<AdminFeedback />} />
               <Route path="/upgrade" element={<Upgrade />} />
               <Route path="/upgrade/success" element={<UpgradeSuccess />} />
+              <Route
+                path="/admin"
+                element={(
+                  <AdminGuard>
+                    <AdminLayout />
+                  </AdminGuard>
+                )}
+              >
+                <Route index element={<Navigate to="/admin/overview" replace />} />
+                <Route path="overview" element={<AdminOverview />} />
+                <Route path="users" element={<AdminUsers />} />
+                <Route path="users/:id" element={<AdminPlaceholder title="User detail" subtitle="Account, subscription, and activity details." />} />
+                <Route path="courses" element={<AdminPlaceholder title="Course stats" subtitle="Learn centre engagement and completion data." />} />
+                <Route path="content" element={<AdminPlaceholder title="Content" subtitle="Learning content and editorial tools." />} />
+                <Route path="data" element={<AdminPlaceholder title="Data usage" subtitle="Storage, sync, and usage-event reporting." />} />
+                <Route path="traffic" element={<AdminPlaceholder title="Traffic" subtitle="Visitor, signup, and country analytics." />} />
+                <Route path="subscriptions" element={<AdminPlaceholder title="Subscriptions" subtitle="Plan, billing, and Stripe subscription status." />} />
+                <Route path="marketplace" element={<AdminPlaceholder title="Marketplace" subtitle="Marketplace settings and launch controls." />} />
+                <Route path="notifications" element={<AdminPlaceholder title="Notifications" subtitle="Notification delivery and engagement." />} />
+                <Route path="system" element={<AdminPlaceholder title="System health" subtitle="Supabase, Stripe, GitHub API, and error logs." />} />
+                <Route path="feedback" element={<AdminFeedback />} />
+              </Route>
               <Route path="/settings" element={<SettingsLayout />}>
                 <Route index element={<Navigate to="/settings/account" replace />} />
                 <Route path="account" element={<SettingsAccount />} />
