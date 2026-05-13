@@ -343,6 +343,7 @@ export default function TopNav() {
             <span className="dropdown-divider" />
             <Link to="/learn">Browse all lessons</Link>
             <Link to="/certification/git-fundamentals">Git Fundamentals Certificate</Link>
+            <Link to="/certification/git-for-teams">Git for Teams Certificate</Link>
           </NavDropdown>
           <NavLink to="/explore">Explore</NavLink>
           <NavLink to="/marketplace">Marketplace</NavLink>

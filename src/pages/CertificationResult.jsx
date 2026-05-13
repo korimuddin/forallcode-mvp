@@ -4,7 +4,12 @@ import { Award, RotateCcw } from "lucide-react";
 import { useDocumentTitle } from "../lib/hooks";
 import { supabase } from "../lib/supabase";
 
-export default function CertificationResult() {
+export default function CertificationResult({
+  certType = "git-fundamentals",
+  name = "Git Fundamentals",
+  passPercent = 70,
+  retryPath = "/certification/git-fundamentals/assessment"
+}) {
   useDocumentTitle("Certification Result");
   const [searchParams] = useSearchParams();
   const score = Number(searchParams.get("score") || 0);
@@ -20,7 +25,7 @@ export default function CertificationResult() {
         .from("certifications")
         .select("certificate_url")
         .eq("user_id", userData.user.id)
-        .eq("cert_type", "git-fundamentals")
+        .eq("cert_type", certType)
         .maybeSingle();
       setCertificateUrl(data?.certificate_url || "");
     }
@@ -33,12 +38,12 @@ export default function CertificationResult() {
       <section className={passed ? "cert-result passed" : "cert-result"}>
         <Award size={42} />
         <p className="eyebrow">Assessment complete</p>
-        <h1>{passed ? "You passed Git Fundamentals" : "Not quite this time"}</h1>
+        <h1>{passed ? `You passed ${name}` : "Not quite this time"}</h1>
         <p className="cert-score">{score}%</p>
-        <p>{passed ? "Your certificate is ready to share. That is a lovely little milestone." : "You need 70% to pass. Review the lessons and try again when you are ready."}</p>
+        <p>{passed ? "Your certificate is ready to share. That is a lovely little milestone." : `You need ${passPercent}% to pass. Review the lessons and purchase a retake when you are ready.`}</p>
         <div className="cert-hero-actions">
           {passed && certificateUrl && <Link className="button primary" to={certificateUrl}>View certificate</Link>}
-          {!passed && <Link className="button primary" to="/certification/git-fundamentals/assessment"><RotateCcw size={15} />Try again</Link>}
+          {!passed && <Link className="button primary" to={retryPath}><RotateCcw size={15} />Try again</Link>}
           <Link className="button soft" to="/dashboard">Back to dashboard</Link>
         </div>
       </section>

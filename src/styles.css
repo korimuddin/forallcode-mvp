@@ -5660,6 +5660,17 @@ pre { padding: 14px; overflow: auto; }
   flex: 0 0 auto;
 }
 
+.learn-cert-actions,
+.learn-onboarding-cert-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.learn-cert-actions {
+  justify-content: flex-end;
+}
+
 @keyframes learn-library-in {
   from { opacity: 0; transform: translateY(18px); }
   to { opacity: 1; transform: translateY(0); }
@@ -10240,6 +10251,12 @@ pre { padding: 14px; overflow: auto; }
     linear-gradient(135deg, var(--lavender), var(--cream2) 54%, var(--sage));
 }
 
+.cert-hero.git-teams {
+  background:
+    radial-gradient(circle at 78% 24%, rgba(221, 213, 240, .64), transparent 28%),
+    linear-gradient(135deg, var(--sage), var(--cream2) 54%, var(--white));
+}
+
 .cert-hero::after {
   content: "";
   position: absolute;
@@ -10307,6 +10324,10 @@ pre { padding: 14px; overflow: auto; }
   margin-top: 16px;
 }
 
+.cert-info-grid.cert-area-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .cert-info-grid article,
 .cert-checklist span {
   border: 1px solid var(--cream3);
@@ -10341,6 +10362,12 @@ pre { padding: 14px; overflow: auto; }
   padding: 26px;
 }
 
+.cert-format-note {
+  margin-top: 14px;
+  color: var(--ink2);
+  line-height: 1.7;
+}
+
 .cert-checklist {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -10368,6 +10395,78 @@ pre { padding: 14px; overflow: auto; }
   max-width: 860px;
   margin: 28px auto;
   padding: 32px;
+}
+
+.cert-assessment-layout {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 16px;
+}
+
+.cert-section-sidebar {
+  position: sticky;
+  top: 92px;
+  align-self: start;
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--cream3);
+  border-radius: 18px;
+  background: var(--white);
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+
+.cert-section-sidebar button {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  padding: 8px;
+  color: var(--ink3);
+  font-family: "DM Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: left;
+}
+
+.cert-section-sidebar button i {
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--cream3);
+  border-radius: 50%;
+  background: var(--cream2);
+}
+
+.cert-section-sidebar button.active {
+  border-color: var(--sage2);
+  background: rgba(200, 216, 196, .35);
+  color: var(--ink);
+}
+
+.cert-section-sidebar button.active i {
+  border-color: #7aaa72;
+  background: #7aaa72;
+}
+
+.cert-section-sidebar button.complete i {
+  border-color: #7aaa72;
+  background: #7aaa72;
+}
+
+.cert-question-section {
+  margin-bottom: 8px;
+  color: var(--ink3);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.git-teams-assessment .cert-progress span {
+  background: linear-gradient(90deg, #7aaa72, var(--sage2));
 }
 
 .cert-assessment-header {
@@ -10496,9 +10595,10 @@ pre { padding: 14px; overflow: auto; }
 }
 
 .certificate-card {
+  --certificate-colour: var(--lavender3);
   position: relative;
   width: min(100%, 720px);
-  border: 2px solid var(--lavender);
+  border: 2px solid var(--certificate-colour);
   border-radius: 24px;
   background: var(--white);
   padding: 48px 56px;
@@ -10510,7 +10610,7 @@ pre { padding: 14px; overflow: auto; }
   position: absolute;
   width: 42px;
   height: 42px;
-  border-color: var(--lavender);
+  border-color: var(--certificate-colour);
   border-style: solid;
 }
 
@@ -10539,12 +10639,19 @@ pre { padding: 14px; overflow: auto; }
 }
 
 .certificate-brand {
-  margin-bottom: 32px;
+  margin-bottom: 12px;
   color: var(--ink3);
   font-family: "Lora", serif;
   font-size: 14px;
   letter-spacing: .1em;
   text-transform: uppercase;
+}
+
+.certificate-subtitle {
+  margin-bottom: 26px;
+  color: var(--certificate-colour);
+  font-size: 13px;
+  font-weight: 800;
 }
 
 .certificate-kicker {
@@ -10561,7 +10668,7 @@ pre { padding: 14px; overflow: auto; }
 
 .certificate-card h2 {
   margin-bottom: 30px;
-  color: var(--lavender3);
+  color: var(--certificate-colour);
   font-family: "Lora", serif;
   font-size: 24px;
   font-style: italic;

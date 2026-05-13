@@ -4,6 +4,20 @@ import { Copy, ExternalLink } from "lucide-react";
 import { useDocumentTitle } from "../lib/hooks";
 import { supabase } from "../lib/supabase";
 
+const certificateDisplay = {
+  "git-fundamentals": {
+    name: "Git Fundamentals",
+    colour: "#9b8fd4",
+    backPath: "/certification/git-fundamentals"
+  },
+  "git-for-teams": {
+    name: "Git for Teams",
+    subtitle: "Certificate of Proficiency",
+    colour: "#7aaa72",
+    backPath: "/certification/git-for-teams"
+  }
+};
+
 export default function CertificateView() {
   const { verificationCode } = useParams();
   useDocumentTitle("Certificate Verification");
@@ -41,9 +55,10 @@ export default function CertificateView() {
 
   const certUrl = typeof window !== "undefined" ? window.location.href : "";
   const issued = cert?.issued_at ? new Date(cert.issued_at) : new Date();
+  const display = certificateDisplay[cert?.cert_type] || certificateDisplay["git-fundamentals"];
   const linkedInShareUrl = useMemo(() => (
-    `https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME&name=Git+Fundamentals&organizationId=&issueYear=${issued.getFullYear()}&issueMonth=${issued.getMonth() + 1}&certUrl=${encodeURIComponent(certUrl)}&certId=${cert?.verification_code || ""}`
-  ), [cert?.verification_code, certUrl, issued]);
+    `https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME&name=${encodeURIComponent(display.name)}&organizationId=&issueYear=${issued.getFullYear()}&issueMonth=${issued.getMonth() + 1}&certUrl=${encodeURIComponent(certUrl)}&certId=${cert?.verification_code || ""}`
+  ), [cert?.verification_code, certUrl, display.name, issued]);
 
   async function copyLink() {
     await navigator.clipboard?.writeText(certUrl);
@@ -69,21 +84,23 @@ export default function CertificateView() {
 
   return (
     <div className="certificate-public-page">
-      <section className="certificate-card">
+      <section className="certificate-card" style={{ "--certificate-colour": display.colour }}>
         <i className="certificate-corner top-left" />
         <i className="certificate-corner top-right" />
         <i className="certificate-corner bottom-left" />
         <i className="certificate-corner bottom-right" />
         <p className="certificate-brand">ForAllCode</p>
+        {display.subtitle && <p className="certificate-subtitle">{display.subtitle}</p>}
         <p className="certificate-kicker">This certifies that</p>
         <h1>{profile?.display_name || profile?.username || "A ForAllCode learner"}</h1>
         <p className="certificate-kicker">has successfully completed</p>
-        <h2>Git Fundamentals</h2>
+        <h2>{display.name}</h2>
         <p className="certificate-date">Issued {issued.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</p>
         <p className="certificate-code">Verification code: {cert.verification_code}</p>
         <div className="certificate-actions">
           <button className="button soft" onClick={copyLink} type="button"><Copy size={15} />{copied ? "Copied" : "Copy certificate link"}</button>
           <a className="button primary" href={linkedInShareUrl} rel="noreferrer" target="_blank"><ExternalLink size={15} />Share on LinkedIn</a>
+          <Link className="button soft" to={display.backPath}>View certification</Link>
         </div>
       </section>
     </div>

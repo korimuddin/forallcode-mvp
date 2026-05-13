@@ -73,6 +73,9 @@ const CertificationResult = lazy(() => import("./pages/CertificationResult"));
 const CourseCreate = lazy(() => import("./pages/CourseCreate"));
 const CourseDetail = lazy(() => import("./pages/CourseDetail"));
 const Explore = lazy(() => import("./pages/Explore"));
+const GitTeamsAssessment = lazy(() => import("./pages/GitTeamsAssessment"));
+const GitTeamsCertInfo = lazy(() => import("./pages/GitTeamsCertInfo"));
+const GitTeamsResult = lazy(() => import("./pages/GitTeamsResult"));
 const DiscussionDetail = lazy(() => import("./pages/DiscussionDetail"));
 const DiscussionList = lazy(() => import("./pages/DiscussionList"));
 const DiscussionNew = lazy(() => import("./pages/DiscussionNew"));
@@ -218,6 +221,9 @@ function AppRoutes() {
               <Route path="/certification/git-fundamentals" element={<CertificationInfo />} />
               <Route path="/certification/git-fundamentals/assessment" element={<CertificationAssessment />} />
               <Route path="/certification/git-fundamentals/result" element={<CertificationResult />} />
+              <Route path="/certification/git-for-teams" element={<GitTeamsCertInfo />} />
+              <Route path="/certification/git-for-teams/assessment" element={<GitTeamsAssessment />} />
+              <Route path="/certification/git-for-teams/result" element={<GitTeamsResult />} />
               <Route path="/certificates/:verificationCode" element={<CertificateView />} />
               <Route path="/marketplace" element={<Marketplace />} />
               <Route path="/marketplace/create" element={<CourseCreate />} />
@@ -2566,10 +2572,13 @@ function LearnPage() {
       <section className="learn-cert-card">
         <div>
           <p className="eyebrow">Certification</p>
-          <h2>Git Fundamentals Certificate</h2>
-          <p>Take the 20-question assessment and earn a public certificate you can share with collaborators, employers, or your profile.</p>
+          <h2>ForAllCode Certificates</h2>
+          <p>Earn public certificates for Git Fundamentals and Git for Teams, then share them with collaborators, employers, or your profile.</p>
         </div>
-        <Button to="/certification/git-fundamentals" variant="soft">View certificate</Button>
+        <div className="learn-cert-actions">
+          <Button to="/certification/git-fundamentals" variant="soft">Git Fundamentals</Button>
+          <Button to="/certification/git-for-teams" variant="soft">Git for Teams</Button>
+        </div>
       </section>
       {isMobile && (
         <select className="learn-mobile-select" value={active} onChange={(event) => chooseLesson(event.target.value)} aria-label="Choose lesson">
@@ -2651,7 +2660,10 @@ function LearnComfortCheck({ selected, leaving, onSelect }) {
         ))}
       </div>
       <p className="learn-reassurance">You can always switch tracks or go back to basics — these are suggestions, not locks.</p>
-      <Link className="learn-cert-onboarding-link" to="/certification/git-fundamentals">Explore the Git Fundamentals Certificate</Link>
+      <div className="learn-onboarding-cert-links">
+        <Link className="learn-cert-onboarding-link" to="/certification/git-fundamentals">Explore the Git Fundamentals Certificate</Link>
+        <Link className="learn-cert-onboarding-link" to="/certification/git-for-teams">Explore the Git for Teams Certificate</Link>
+      </div>
     </section>
   );
 }

@@ -498,7 +498,9 @@
   }
 
   .cert-info-grid,
-  .cert-checklist {
+  .cert-checklist,
+  .cert-info-grid.cert-area-grid,
+  .cert-assessment-layout {
     grid-template-columns: 1fr;
   }
 
@@ -513,6 +515,15 @@
 
   .cert-timer {
     justify-content: center;
+  }
+
+  .cert-section-sidebar {
+    position: static;
+  }
+
+  .learn-cert-actions,
+  .learn-onboarding-cert-links {
+    flex-direction: column;
   }
 
   .certificate-public-page {
