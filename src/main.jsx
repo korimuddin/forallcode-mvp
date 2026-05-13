@@ -64,12 +64,16 @@ const AdminTraffic = lazy(() => import("./pages/admin/AdminTraffic"));
 const AdminUserDetail = lazy(() => import("./pages/admin/AdminUserDetail"));
 const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
 const Explore = lazy(() => import("./pages/Explore"));
+const GistDetail = lazy(() => import("./pages/GistDetail"));
+const GistList = lazy(() => import("./pages/GistList"));
+const GistNew = lazy(() => import("./pages/GistNew"));
 const IssueList = lazy(() => import("./pages/IssueList"));
 const LandingDesigner = lazy(() => import("./pages/LandingDesigner"));
 const Notifications = lazy(() => import("./pages/Notifications"));
 const PRList = lazy(() => import("./pages/PRList"));
 const ProjectBoard = lazy(() => import("./pages/ProjectBoard"));
 const ReadmeStudio = lazy(() => import("./pages/ReadmeStudio"));
+const RepoInsights = lazy(() => import("./pages/RepoInsights"));
 const RepoNew = lazy(() => import("./pages/RepoNew"));
 const SearchPage = lazy(() => import("./pages/Search"));
 const StarsPage = lazy(() => import("./pages/Stars"));
@@ -187,6 +191,9 @@ function AppRoutes() {
               <Route path="/repos/new" element={<RepoNew />} />
               <Route path="/search" element={<SearchPage />} />
               <Route path="/stars" element={<StarsPage />} />
+              <Route path="/gists" element={<GistList />} />
+              <Route path="/gists/new" element={<GistNew />} />
+              <Route path="/gists/:id" element={<GistDetail />} />
               <Route path="/explore" element={<Explore />} />
               <Route path="/notifications" element={<Notifications />} />
               <Route path="/upgrade" element={<Upgrade />} />
@@ -227,6 +234,7 @@ function AppRoutes() {
               <Route path="/:username/:repo/issues" element={<IssueList />} />
               <Route path="/:username/:repo/pulls" element={<PRList />} />
               <Route path="/:username/:repo/projects" element={<ProjectBoard />} />
+              <Route path="/:username/:repo/insights" element={<RepoInsights />} />
               <Route path="/:username/:repo/readme" element={<ReadmeStudio />} />
               <Route path="/:username/:repo/landing" element={<LandingDesigner />} />
               <Route path="/:username/:repo" element={<RepoPage />} />
@@ -1273,7 +1281,7 @@ function RepoPage() {
   const notebooks = getRepoNotebooks(repoDetails?.files || []);
   const selectedNotebook = notebooks.find((notebook) => notebook.slug === activeNotebook) || notebooks[0] || null;
   const selectedNote = selectedNotebook?.notes.find((note) => note.path === activeNotePath) || selectedNotebook?.notes[0] || null;
-  const { canPush, canManageRepo } = useRepoAccess(repoRecord?.id, repoRecord?.owner_id);
+  const { canPush, canManageRepo, canMerge } = useRepoAccess(repoRecord?.id, repoRecord?.owner_id);
 
   useEffect(() => {
     const normalizedHero = normalizeRepoHero(repoToHero(data), repo);
@@ -2043,10 +2051,12 @@ function RepoPage() {
       )}
 
       <div className="repo-tab-bar">
-        {["Code", "Issues", "Pull requests", "Projects", "Commits", "Branches", "Visual Map", "Notes", "Settings"].map((tab) => {
+        {["Code", "Issues", "Pull requests", "Projects", "Insights", "Commits", "Branches", "Visual Map", "Notes", "Settings"].map((tab) => {
           if (tab === "Issues") return <Link className="repo-tab-link" key={tab} to={`/${username}/${repo}/issues`}>Issues</Link>;
           if (tab === "Pull requests") return <Link className="repo-tab-link" key={tab} to={`/${username}/${repo}/pulls`}>Pull requests</Link>;
           if (tab === "Projects") return <Link className="repo-tab-link" key={tab} to={`/${username}/${repo}/projects`}>Projects</Link>;
+          if (tab === "Insights" && canMerge) return <Link className="repo-tab-link" key={tab} to={`/${username}/${repo}/insights`}>Insights</Link>;
+          if (tab === "Insights") return null;
           return <button className={activeTab === tab ? "active" : ""} key={tab} onClick={() => setActiveTab(tab)}>{tab}</button>;
         })}
       </div>

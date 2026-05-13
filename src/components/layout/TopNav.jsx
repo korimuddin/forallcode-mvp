@@ -323,6 +323,7 @@ export default function TopNav() {
           <NavDropdown label="Repos" icon={<Code2 size={16} />}>
             <Link to="/repos">Your repos</Link>
             <Link to="/repos?filter=starred">Starred</Link>
+            <Link to="/gists">Your gists</Link>
             <Link to="/repos/new">+ New repository</Link>
             <span className="dropdown-divider" />
             {navRepos.map((repo) => (

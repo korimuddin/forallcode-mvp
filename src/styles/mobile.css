@@ -138,6 +138,11 @@
   .repo-create-visibility,
   .repo-template-grid,
   .stars-grid,
+  .insights-loading-grid,
+  .insights-stat-grid,
+  .insights-main-grid,
+  .gist-file-row,
+  .gist-visibility-row,
   .about-difference-grid,
   .explore-featured-grid,
   .explore-repo-grid {

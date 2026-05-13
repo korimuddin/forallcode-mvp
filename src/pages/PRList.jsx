@@ -28,7 +28,7 @@ function PRFilterBar({ search, sort, status, onSearchChange, onSortChange, onSta
   );
 }
 
-function RepoPRHeader({ activeStatus, counts, canCreate, onStatusChange, repo, repoName, username }) {
+function RepoPRHeader({ activeStatus, counts, canCreate, onStatusChange, repo, repoName, showInsights, username }) {
   return (
     <>
       <section className="issue-repo-header">
@@ -48,6 +48,7 @@ function RepoPRHeader({ activeStatus, counts, canCreate, onStatusChange, repo, r
           {counts.open > 0 && <span className="repo-tab-count">{counts.open}</span>}
         </Link>
         <Link to={`/${username}/${repoName}/projects`}>Projects</Link>
+        {showInsights && <Link to={`/${username}/${repoName}/insights`}>Insights</Link>}
         <Link to={`/${username}/${repoName}`}>Commits</Link>
         <Link to={`/${username}/${repoName}`}>Branches</Link>
         <Link to={`/${username}/${repoName}`}>Settings</Link>
@@ -87,7 +88,7 @@ export default function PRList() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const { isContributor } = useRepoAccess(repo?.id, repo?.owner_id);
+  const { canMerge, isContributor } = useRepoAccess(repo?.id, repo?.owner_id);
 
   useEffect(() => {
     let alive = true;
@@ -180,6 +181,7 @@ export default function PRList() {
         onStatusChange={setStatus}
         repo={repo}
         repoName={repoName}
+        showInsights={canMerge}
         username={username}
       />
 

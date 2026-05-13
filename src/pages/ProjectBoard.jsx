@@ -15,7 +15,7 @@ const DEFAULT_COLUMNS = [
   { name: "Done", colour: "#c8d8c4" }
 ];
 
-function ProjectRepoHeader({ repo, repoName, username }) {
+function ProjectRepoHeader({ repo, repoName, showInsights, username }) {
   return (
     <>
       <section className="issue-repo-header">
@@ -32,6 +32,7 @@ function ProjectRepoHeader({ repo, repoName, username }) {
         <Link to={`/${username}/${repoName}/issues`}>Issues</Link>
         <Link to={`/${username}/${repoName}/pulls`}>Pull requests</Link>
         <Link className="active" to={`/${username}/${repoName}/projects`}>Projects</Link>
+        {showInsights && <Link to={`/${username}/${repoName}/insights`}>Insights</Link>}
         <Link to={`/${username}/${repoName}`}>Commits</Link>
         <Link to={`/${username}/${repoName}`}>Branches</Link>
         <Link to={`/${username}/${repoName}`}>Settings</Link>
@@ -53,7 +54,7 @@ export default function ProjectBoard() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const { isContributor, loading: accessLoading } = useRepoAccess(repo?.id, repo?.owner_id);
+  const { canMerge, isContributor, loading: accessLoading } = useRepoAccess(repo?.id, repo?.owner_id);
   const canEdit = isContributor;
 
   const cardsByColumn = useMemo(() => {
@@ -272,7 +273,7 @@ export default function ProjectBoard() {
 
   return (
     <div className="project-board-page">
-      <ProjectRepoHeader repo={repo} repoName={repoName} username={username} />
+      <ProjectRepoHeader repo={repo} repoName={repoName} showInsights={canMerge} username={username} />
 
       <section className="project-board-header">
         <div>

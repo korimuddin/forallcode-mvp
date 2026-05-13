@@ -6,10 +6,11 @@ import IssueFilters from "../components/issues/IssueFilters";
 import Skeleton from "../components/ui/Skeleton";
 import { useDocumentTitle } from "../lib/hooks";
 import { supabase } from "../lib/supabase";
+import { useRepoAccess } from "../lib/useRepoAccess";
 
 const issuesPerPage = 20;
 
-function RepoIssuesHeader({ repo, username, repoName, activeStatus, onStatusChange, openCount, closedCount, signedIn }) {
+function RepoIssuesHeader({ repo, username, repoName, activeStatus, onStatusChange, openCount, closedCount, signedIn, showInsights }) {
   return (
     <>
       <section className="issue-repo-header">
@@ -29,6 +30,7 @@ function RepoIssuesHeader({ repo, username, repoName, activeStatus, onStatusChan
         </Link>
         <Link to={`/${username}/${repoName}/pulls`}>Pull requests</Link>
         <Link to={`/${username}/${repoName}/projects`}>Projects</Link>
+        {showInsights && <Link to={`/${username}/${repoName}/insights`}>Insights</Link>}
         <Link to={`/${username}/${repoName}`}>Commits</Link>
         <Link to={`/${username}/${repoName}`}>Branches</Link>
         <Link to={`/${username}/${repoName}`}>Settings</Link>
@@ -68,6 +70,7 @@ export default function IssueList() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const { canMerge } = useRepoAccess(repo?.id, repo?.owner_id);
 
   useEffect(() => {
     let alive = true;
@@ -175,6 +178,7 @@ export default function IssueList() {
         openCount={openCount}
         repo={repo}
         repoName={repoName}
+        showInsights={canMerge}
         signedIn={signedIn}
         username={username}
       />
