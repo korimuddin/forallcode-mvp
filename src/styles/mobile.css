@@ -316,8 +316,10 @@
     min-height: auto;
   }
 
-  .repo-notes-panel,
-  .repo-notes-workspace {
+  .repo-notes-body,
+  .repo-notes-panel.notebooks-collapsed .repo-notes-body,
+  .repo-notes-panel.pages-collapsed .repo-notes-body,
+  .repo-notes-panel.notebooks-collapsed.pages-collapsed .repo-notes-body {
     grid-template-columns: 1fr;
   }
 

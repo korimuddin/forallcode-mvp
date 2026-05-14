@@ -6,6 +6,8 @@ import {
   BookOpen,
   Check,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Copy,
   Download,
   Eye,
@@ -156,6 +158,71 @@ const heroFontOptions = [
   { label: "Verdana", value: "Verdana, sans-serif" },
   { label: "Courier", value: '"Courier New", monospace' }
 ];
+
+const notebookColorThemes = [
+  {
+    name: "Forest",
+    colors: [
+      { id: "forest-moss", label: "Moss", start: "#c8d8c4", end: "#7aaa72" },
+      { id: "forest-pine", label: "Pine", start: "#a9c5a5", end: "#3f704d" },
+      { id: "forest-fern", label: "Fern", start: "#d8e5c8", end: "#84a95b" },
+      { id: "forest-bark", label: "Bark", start: "#c8b49a", end: "#74614f" },
+      { id: "forest-canopy", label: "Canopy", start: "#b7d7bf", end: "#2f6f5e" }
+    ]
+  },
+  {
+    name: "Beach",
+    colors: [
+      { id: "beach-sand", label: "Sand", start: "#f5e4c4", end: "#d2a85f" },
+      { id: "beach-coral", label: "Coral", start: "#f5d5d8", end: "#d98a8e" },
+      { id: "beach-tide", label: "Tide", start: "#cce0f0", end: "#6aa8c8" },
+      { id: "beach-shell", label: "Shell", start: "#fff1df", end: "#e3b78a" },
+      { id: "beach-seafoam", label: "Seafoam", start: "#d8eee6", end: "#7abda7" }
+    ]
+  },
+  {
+    name: "Urban",
+    colors: [
+      { id: "urban-stone", label: "Stone", start: "#ddd8d2", end: "#8d8580" },
+      { id: "urban-brick", label: "Brick", start: "#e8c3b4", end: "#9b5b4a" },
+      { id: "urban-graphite", label: "Graphite", start: "#b9b4ae", end: "#4d4742" },
+      { id: "urban-neon", label: "Neon", start: "#ddd5f0", end: "#9b8fd4" },
+      { id: "urban-concrete", label: "Concrete", start: "#e8e0d4", end: "#a99d93" }
+    ]
+  },
+  {
+    name: "Night",
+    colors: [
+      { id: "night-indigo", label: "Indigo", start: "#b9c2e6", end: "#465089" },
+      { id: "night-plum", label: "Plum", start: "#d4bfd8", end: "#744d7a" },
+      { id: "night-moon", label: "Moon", start: "#ddd5f0", end: "#8074bd" },
+      { id: "night-slate", label: "Slate", start: "#adb6c7", end: "#364157" },
+      { id: "night-ember", label: "Ember", start: "#e5b3a5", end: "#8a4637" }
+    ]
+  },
+  {
+    name: "Morning",
+    colors: [
+      { id: "morning-sunrise", label: "Sunrise", start: "#f5d5d8", end: "#d88c9a" },
+      { id: "morning-honey", label: "Honey", start: "#f5e4c4", end: "#c8a055" },
+      { id: "morning-lilac", label: "Lilac", start: "#ddd5f0", end: "#9b8fd4" },
+      { id: "morning-mint", label: "Mint", start: "#dcebd4", end: "#92b985" },
+      { id: "morning-peach", label: "Peach", start: "#ffe0cc", end: "#d99a71" }
+    ]
+  },
+  {
+    name: "Arctic",
+    colors: [
+      { id: "arctic-frost", label: "Frost", start: "#e7f0f7", end: "#a9cce3" },
+      { id: "arctic-glacier", label: "Glacier", start: "#cce0f0", end: "#5d93b8" },
+      { id: "arctic-ice", label: "Ice", start: "#eef7f6", end: "#9ccbc6" },
+      { id: "arctic-aurora", label: "Aurora", start: "#d6e8d8", end: "#7aaa72" },
+      { id: "arctic-violet", label: "Violet", start: "#e2dcf5", end: "#9b8fd4" }
+    ]
+  }
+];
+
+const defaultNotebookColor = notebookColorThemes[0].colors[0];
 
 const repos = [];
 
@@ -1552,7 +1619,24 @@ function RepoPage() {
   const [activeNotePath, setActiveNotePath] = useState("");
   const [noteContent, setNoteContent] = useState("");
   const [notebookName, setNotebookName] = useState("");
-  const [noteName, setNoteName] = useState("");
+  const [notebookTheme, setNotebookTheme] = useState("Forest");
+  const [selectedNotebookColorId, setSelectedNotebookColorId] = useState(defaultNotebookColor.id);
+  const [notebooksCollapsed, setNotebooksCollapsed] = useState(false);
+  const [pagesCollapsed, setPagesCollapsed] = useState(false);
+  const [notebookColors, setNotebookColors] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem(`forallcode:notebook-colors:${username}/${repo}`) || "{}");
+    } catch {
+      return {};
+    }
+  });
+  const [noteTitleOverrides, setNoteTitleOverrides] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem(`forallcode:note-titles:${username}/${repo}`) || "{}");
+    } catch {
+      return {};
+    }
+  });
   const [notesStatus, setNotesStatus] = useState("");
   const [notesSaving, setNotesSaving] = useState(false);
   const [asciiModalOpen, setAsciiModalOpen] = useState(false);
@@ -1567,10 +1651,30 @@ function RepoPage() {
   const noteTextareaRef = useRef(null);
   const uploadFileInputRef = useRef(null);
   const cloneUrl = `https://github.com/${username}/${repo}.git`;
+  const notebookColorStorageKey = `forallcode:notebook-colors:${username}/${repo}`;
+  const noteTitleStorageKey = `forallcode:note-titles:${username}/${repo}`;
   const notebooks = getRepoNotebooks(repoDetails?.files || []);
   const selectedNotebook = notebooks.find((notebook) => notebook.slug === activeNotebook) || notebooks[0] || null;
   const selectedNote = selectedNotebook?.notes.find((note) => note.path === activeNotePath) || selectedNotebook?.notes[0] || null;
+  const activeNotebookTheme = notebookColorThemes.find((theme) => theme.name === notebookTheme) || notebookColorThemes[0];
+  const selectedNotebookColor = notebookColorThemes.flatMap((theme) => theme.colors).find((color) => color.id === selectedNotebookColorId) || defaultNotebookColor;
   const { canPush, canManageRepo, canMerge } = useRepoAccess(repoRecord?.id, repoRecord?.owner_id);
+
+  useEffect(() => {
+    try {
+      setNotebookColors(JSON.parse(localStorage.getItem(notebookColorStorageKey) || "{}"));
+    } catch {
+      setNotebookColors({});
+    }
+  }, [notebookColorStorageKey]);
+
+  useEffect(() => {
+    try {
+      setNoteTitleOverrides(JSON.parse(localStorage.getItem(noteTitleStorageKey) || "{}"));
+    } catch {
+      setNoteTitleOverrides({});
+    }
+  }, [noteTitleStorageKey]);
 
   useEffect(() => {
     const normalizedHero = normalizeRepoHero(repoToHero(data), repo);
@@ -1962,6 +2066,7 @@ function RepoPage() {
       setActiveNotebook(slug);
       setActiveNotePath(path);
       setNoteContent(`# ${title}\n\nStart your notebook here.\n`);
+      saveNotebookColor(slug, selectedNotebookColor);
       setNotebookName("");
       setNotesStatus(`${title} notebook created in GitHub.`);
     } catch (error) {
@@ -1971,20 +2076,56 @@ function RepoPage() {
     }
   }
 
+  function saveNotebookColor(slug, color) {
+    if (!slug || !color) return;
+    setNotebookColors((current) => {
+      const next = { ...current, [slug]: color };
+      localStorage.setItem(notebookColorStorageKey, JSON.stringify(next));
+      return next;
+    });
+  }
+
+  function handleNotebookColorSelect(color) {
+    setSelectedNotebookColorId(color.id);
+    if (selectedNotebook?.slug) {
+      saveNotebookColor(selectedNotebook.slug, color);
+    }
+  }
+
+  function saveNoteTitleOverride(path, content) {
+    if (!path) return;
+    const title = getNoteTitleFromContent(content) || titleFromSlug(path.split("/").pop() || "");
+    setNoteTitleOverrides((current) => {
+      const next = { ...current, [path]: title };
+      localStorage.setItem(noteTitleStorageKey, JSON.stringify(next));
+      return next;
+    });
+  }
+
+  function getNoteDisplayName(note) {
+    if (!note) return "";
+    if (note.path === activeNotePath) {
+      return getNoteTitleFromContent(noteContent) || noteTitleOverrides[note.path] || note.name;
+    }
+    return noteTitleOverrides[note.path] || note.name;
+  }
+
   async function createNotePage() {
     const notebook = selectedNotebook?.slug || activeNotebook;
-    const slug = slugForPath(noteName);
     if (!notebook) {
       setNotesStatus("Create or select a notebook first.");
       return;
     }
-    if (!slug) {
-      setNotesStatus("Add a page name first.");
-      return;
-    }
 
+    const existingSlugs = new Set((selectedNotebook?.notes || []).map((note) => note.path.split("/").pop()?.replace(/\.md$/i, "")));
+    let pageNumber = (selectedNotebook?.notes.length || 0) + 1;
+    let slug = `page-${pageNumber}`;
+    while (existingSlugs.has(slug)) {
+      pageNumber += 1;
+      slug = `page-${pageNumber}`;
+    }
     const path = `notes/${notebook}/${slug}.md`;
-    const title = titleFromSlug(slug);
+    const title = "Untitled page";
     setNotesSaving(true);
     setNotesStatus("");
 
@@ -2008,7 +2149,7 @@ function RepoPage() {
       setActiveNotebook(notebook);
       setActiveNotePath(path);
       setNoteContent(content);
-      setNoteName("");
+      saveNoteTitleOverride(path, content);
       setNotesStatus(`${title} note created in GitHub.`);
     } catch (error) {
       setNotesStatus(error.message || "Could not create this note on GitHub.");
@@ -2032,6 +2173,7 @@ function RepoPage() {
       setActiveNotebook(note.notebookSlug);
       setActiveNotePath(note.path);
       setNoteContent(content?.content || "");
+      saveNoteTitleOverride(note.path, content?.content || "");
     } catch (error) {
       setNotesStatus(error.message || "Could not open this note from GitHub.");
     } finally {
@@ -2064,6 +2206,7 @@ function RepoPage() {
         message: `Update ${activeNotePath} via ForAllCode Notes`
       });
       await refreshRepoAfterFileChange(activeNotePath);
+      saveNoteTitleOverride(activeNotePath, noteContent);
       setNotesStatus("Note saved to GitHub.");
     } catch (error) {
       setNotesStatus(error.message || "Could not save this note to GitHub.");
@@ -2540,66 +2683,118 @@ function RepoPage() {
       )}
 
       {activeTab === "Notes" && (
-        <section className="repo-notes-panel">
-          <aside className="repo-notes-sidebar">
-            <div>
-              <p className="eyebrow">Repo notes</p>
-              <h3>Notebooks</h3>
-              <span>Choose a notebook, then pick or create a page. Everything saves to GitHub under <code>notes/</code>.</span>
-            </div>
-            <label>
-              New notebook
-              <div className="repo-notes-create-row">
-                <input value={notebookName} onChange={(event) => setNotebookName(event.target.value)} placeholder="Project notes" />
-                <button onClick={createNotebook} disabled={notesSaving} type="button"><Plus size={15} /></button>
+        <section className={`repo-notes-panel ${notebooksCollapsed ? "notebooks-collapsed" : ""} ${pagesCollapsed ? "pages-collapsed" : ""}`}>
+          <div className="repo-notes-topbar">
+            <strong>Repo Notes</strong>
+            <span>Choose a notebook, then pick or create a page. Everything saves to GitHub under <code>notes/</code>.</span>
+          </div>
+          <div className="repo-notes-body">
+            <aside className="repo-notes-sidebar">
+              <button className="repo-panel-fold" onClick={() => setNotebooksCollapsed((value) => !value)} aria-label={notebooksCollapsed ? "Expand notebooks" : "Collapse notebooks"} type="button">
+                {notebooksCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+              </button>
+              <span className="repo-panel-rail-label">Notebooks</span>
+              <div className="repo-panel-inner">
+                <div>
+                  <p className="eyebrow">Repo notes</p>
+                  <h3>Notebooks</h3>
+                </div>
+                <label>
+                  New notebook
+                  <div className="repo-notes-create-row">
+                    <input value={notebookName} onChange={(event) => setNotebookName(event.target.value)} placeholder="Project notes" />
+                    <button onClick={createNotebook} disabled={notesSaving} type="button">Create</button>
+                  </div>
+                </label>
+                <div className="repo-notebook-colour-picker">
+                  <span>Book colour</span>
+                  <div className="repo-notebook-theme-row" aria-label="Book colour themes">
+                    {notebookColorThemes.map((theme) => (
+                      <button
+                        className={theme.name === notebookTheme ? "active" : ""}
+                        key={theme.name}
+                        onClick={() => {
+                          setNotebookTheme(theme.name);
+                          handleNotebookColorSelect(theme.colors[0]);
+                        }}
+                        type="button"
+                      >
+                        {theme.name}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="repo-notebook-swatch-row" aria-label={`${activeNotebookTheme.name} book colours`}>
+                    {activeNotebookTheme.colors.map((color) => (
+                      <button
+                        aria-label={`${activeNotebookTheme.name} ${color.label}`}
+                        className={color.id === selectedNotebookColorId ? "active" : ""}
+                        key={color.id}
+                        onClick={() => handleNotebookColorSelect(color)}
+                        style={{ "--book-colour": color.end }}
+                        title={color.label}
+                        type="button"
+                      />
+                    ))}
+                  </div>
+                </div>
+                <nav className="repo-notebook-list" aria-label="Notebooks">
+                  {notebooks.map((notebook) => (
+                    <button
+                      className={notebook.slug === selectedNotebook?.slug ? "active" : ""}
+                      key={notebook.slug}
+                      onClick={() => {
+                        setActiveNotebook(notebook.slug);
+                        if (notebook.notes[0]) openNotePage(notebook.notes[0]);
+                        else {
+                          setActiveNotePath("");
+                          setNoteContent("");
+                        }
+                      }}
+                      type="button"
+                    >
+                      <span
+                        className="repo-notebook-book"
+                        style={{
+                          "--book-colour": (notebookColors[notebook.slug] || defaultNotebookColor).end
+                        }}
+                        aria-hidden="true"
+                      >
+                        <BookOpen size={18} />
+                      </span>
+                      <span>{notebook.name}</span>
+                    </button>
+                  ))}
+                  {notebooks.length === 0 && <p>Create your first notebook to start writing pages.</p>}
+                </nav>
               </div>
-            </label>
-            <nav className="repo-notebook-list" aria-label="Notebooks">
-              {notebooks.map((notebook) => (
-                <button
-                  className={notebook.slug === selectedNotebook?.slug ? "active" : ""}
-                  key={notebook.slug}
-                  onClick={() => {
-                    setActiveNotebook(notebook.slug);
-                    if (notebook.notes[0]) openNotePage(notebook.notes[0]);
-                    else {
-                      setActiveNotePath("");
-                      setNoteContent("");
-                    }
-                  }}
-                  type="button"
-                >
-                  <span className="repo-notebook-book" aria-hidden="true"><BookOpen size={18} /></span>
-                  <span>{notebook.name}</span>
-                </button>
-              ))}
-              {notebooks.length === 0 && <p>Create your first notebook to start writing pages.</p>}
-            </nav>
-          </aside>
-          <div className="repo-notes-workspace">
+            </aside>
             <div className="repo-notes-pages">
-              <div>
-                <strong>Pages</strong>
-                <span>{selectedNotebook?.notes.length || 0} page{selectedNotebook?.notes.length === 1 ? "" : "s"}</span>
-              </div>
-              <div className="repo-notes-create-row">
-                <input value={noteName} onChange={(event) => setNoteName(event.target.value)} placeholder="New page" disabled={!selectedNotebook} />
-                <button onClick={createNotePage} disabled={!selectedNotebook || notesSaving} type="button"><Plus size={15} /></button>
-              </div>
-              <div className="repo-note-page-list">
-                {selectedNotebook?.notes.map((note) => (
-                  <button className={note.path === activeNotePath ? "active" : ""} key={note.path} onClick={() => openNotePage(note)} type="button">
-                    <FileText size={15} />
-                    <span>{note.name}</span>
-                  </button>
-                ))}
+              <button className="repo-panel-fold" onClick={() => setPagesCollapsed((value) => !value)} aria-label={pagesCollapsed ? "Expand pages" : "Collapse pages"} type="button">
+                {pagesCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+              </button>
+              <span className="repo-panel-rail-label">Pages</span>
+              <div className="repo-panel-inner">
+                <div>
+                  <strong>Pages</strong>
+                  <span>{selectedNotebook?.notes.length || 0} page{selectedNotebook?.notes.length === 1 ? "" : "s"}</span>
+                </div>
+                <button className="repo-add-page-button" onClick={createNotePage} disabled={!selectedNotebook || notesSaving} type="button">Add new page</button>
+                <div className="repo-note-page-list">
+                  {selectedNotebook?.notes.map((note) => (
+                    <button className={note.path === activeNotePath ? "active" : ""} key={note.path} onClick={() => openNotePage(note)} type="button">
+                      <FileText size={15} />
+                      <span>{getNoteDisplayName(note)}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
             <div className="repo-note-editor">
               <div className="repo-note-editor-head">
                 <div>
                   <p className="eyebrow">Markdown note</p>
-                  <h3>{selectedNote?.name || activeNotePath || "Create a notebook to begin"}</h3>
+                  <h3>{getNoteDisplayName(selectedNote) || activeNotePath || "Create a notebook to begin"}</h3>
+                  <span className="repo-note-title-hint">The first line of this note becomes the page title.</span>
                 </div>
                 <div className="repo-note-editor-actions">
                   <button
@@ -3862,6 +4057,19 @@ function titleFromSlug(value) {
     .filter(Boolean)
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ") || "Untitled";
+}
+
+function getNoteTitleFromContent(content) {
+  const firstLine = String(content || "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .find(Boolean);
+
+  return firstLine
+    ?.replace(/^#{1,6}\s*/, "")
+    .replace(/^[>*\-\d.)\s]+/, "")
+    .trim()
+    .slice(0, 80) || "";
 }
 
 function getRepoNotebooks(files = []) {
