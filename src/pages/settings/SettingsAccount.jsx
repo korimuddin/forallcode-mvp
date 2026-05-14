@@ -220,12 +220,12 @@ export default function SettingsAccount() {
       <SettingsPageHeader title="Account" subtitle="Manage your account details and connected services." />
 
       <SettingsSection title="Display name">
-        <SettingsInput label="Display name" value={account.displayName} onChange={(value) => updateAccount("displayName", value)} />
+        <SettingsInput hideLabel label="Display name" value={account.displayName} onChange={(value) => updateAccount("displayName", value)} />
         <SettingsActions><SettingsSaveButton status={displayStatus} onClick={handleDisplaySave} /></SettingsActions>
       </SettingsSection>
 
       <SettingsSection title="Email address">
-        <SettingsInput label="Email" value={email} onChange={setEmail} readOnly={isGitHubUser} />
+        <SettingsInput hideLabel label="Email" value={email} onChange={setEmail} readOnly={isGitHubUser} />
         {isGitHubUser && (
           <p className="settings-info-note">Your email is managed by GitHub. To change it, update your GitHub account.</p>
         )}

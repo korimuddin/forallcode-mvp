@@ -1,6 +1,6 @@
 import React, { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { Link, Navigate, Route, Routes, useLocation, useNavigate, useParams } from "react-router-dom";
+import { Link, Navigate, Route, Routes, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { BrowserRouter } from "react-router-dom";
 import {
   BookOpen,
@@ -12,6 +12,7 @@ import {
   FileCode2,
   FileText,
   Folder,
+  Grid3X3,
   Github,
   GitFork,
   Home,
@@ -27,8 +28,10 @@ import {
 } from "lucide-react";
 import CommandPalette from "./components/layout/CommandPalette";
 import TopNav from "./components/layout/TopNav";
+import LockInOverlay from "./components/lockin/LockInOverlay";
 import { AdminGuard } from "./components/admin/AdminGuard";
 import FeedEvent from "./components/feed/FeedEvent";
+import AsciiArtGenerator from "./components/repo/ascii_art_generator";
 import TopicEditor from "./components/repo/TopicEditor";
 import TopicPills from "./components/repo/TopicPills";
 import ErrorBoundary from "./components/ui/ErrorBoundary";
@@ -38,6 +41,7 @@ import { LimitBanner } from "./components/ui/LimitBanner";
 import Skeleton from "./components/ui/Skeleton";
 import DeskIllustration from "./components/workspace/DeskIllustration";
 import { learnLessons, learnTracks } from "./data/learnLessons";
+import { applyAppearance, readAppearance } from "./lib/appearance";
 import { useAuthSession, useDocumentTitle, useIsMobile, useSignedInUserData } from "./lib/hooks";
 import { createFeedEvent } from "./lib/createFeedEvent";
 import { renderMarkdown } from "./lib/markdownRenderer";
@@ -46,6 +50,7 @@ import { isAtLimit } from "./lib/plans";
 import { getUserPreference, setUserPreference } from "./lib/preferences";
 import { createGitHubRepository, fetchGitHubFileContent, fetchGitHubRepoArchive, fetchGitHubRepoOverview, forkGitHubRepository, getCurrentSession, isSupabaseConfigured, saveGitHubRepositoryFile, saveRepoHeroToSupabase, signInWithGitHub, signInWithPassword, supabase, uploadProfileVisualImage, uploadRepoHeroImage } from "./lib/supabase";
 import { trackUsage } from "./lib/trackUsage";
+import { LockInProvider, useLockIn } from "./lib/useLockIn";
 import { useRepoAccess } from "./lib/useRepoAccess";
 import { SubscriptionProvider, useSubscription } from "./lib/useSubscription";
 import "./styles.css";
@@ -171,12 +176,31 @@ function App() {
   return (
     <ErrorBoundary>
       <SubscriptionProvider>
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
+        <LockInProvider>
+          <BrowserRouter>
+            <AppearanceRuntime />
+            <AppRoutes />
+          </BrowserRouter>
+        </LockInProvider>
       </SubscriptionProvider>
     </ErrorBoundary>
   );
+}
+
+function AppearanceRuntime() {
+  useEffect(() => {
+    const applyStored = () => applyAppearance(readAppearance());
+    applyStored();
+    const media = window.matchMedia?.("(prefers-color-scheme: dark)");
+    media?.addEventListener?.("change", applyStored);
+    window.addEventListener("storage", applyStored);
+    return () => {
+      media?.removeEventListener?.("change", applyStored);
+      window.removeEventListener("storage", applyStored);
+    };
+  }, []);
+
+  return null;
 }
 
 function AppRoutes() {
@@ -185,6 +209,7 @@ function AppRoutes() {
   const isPortfolioPage = /^\/[^/]+\/portfolio\/?$/.test(location.pathname);
   const isCertificatePage = /^\/certificates\/[^/]+\/?$/.test(location.pathname);
   const { session, checked } = useAuthSession();
+  const { completionMessage, isActive } = useLockIn();
 
   useEffect(() => {
     if (!checked || isEntryPage) return;
@@ -197,6 +222,8 @@ function AppRoutes() {
 
   return (
     <>
+      {isActive && <LockInOverlay />}
+      {completionMessage && <div className="lockin-toast" role="status">{completionMessage}</div>}
       {!isEntryPage && !isPortfolioPage && !isCertificatePage && <CommandPalette />}
       <div className={isEntryPage ? "app-shell entry-shell" : isPortfolioPage ? "app-shell portfolio-shell" : isCertificatePage ? "app-shell certificate-shell" : "app-shell"}>
         {!isEntryPage && !isPortfolioPage && !isCertificatePage && <TopNav />}
@@ -210,6 +237,7 @@ function AppRoutes() {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/learn" element={<LearnPage />} />
+              <Route path="/learn/:lessonSlug" element={<LearnPage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/workspace" element={<WorkspacePage />} />
               <Route path="/profile" element={<MyProfilePage />} />
@@ -517,9 +545,55 @@ function DashboardPage() {
   const [feedEvents, setFeedEvents] = useState([]);
   const [feedLoading, setFeedLoading] = useState(true);
   const [feedError, setFeedError] = useState("");
+  const [heroIndex, setHeroIndex] = useState(0);
   const displayName = profile?.displayName || "there";
   const firstName = displayName.split(" ")[0] || displayName;
   const visibleRepos = userRepos.slice(0, 2);
+  const dashboardHeroSlides = [
+    {
+      eyebrow: "ForAllCode",
+      title: `Welcome back, ${firstName}`,
+      text: "Your workspace is ready. Pick up where you left off, follow the work, and keep the useful ideas in sight.",
+      theme: "welcome",
+      cta: "Open dashboard"
+    },
+    {
+      eyebrow: "Featured profiles",
+      title: "Monthly rising contributors",
+      text: "Discover developers who are building, explaining, and sharing work that helps the community move further.",
+      theme: "profiles",
+      cta: "Explore profiles"
+    },
+    {
+      eyebrow: "Featured workspaces",
+      title: visibleRepos[0]?.name || "Build in public, beautifully",
+      text: visibleRepos[0]?.description || "Turn active repositories into friendly workspaces with notes, visual maps, and project context.",
+      theme: "workspaces",
+      cta: "View workspaces"
+    },
+    {
+      eyebrow: "Featured courses",
+      title: "Have you tried the DevOps course?",
+      text: "Go deeper on CI/CD, environments, deployment strategy, observability, and the habits that make shipping feel calmer.",
+      theme: "courses",
+      cta: "Browse courses"
+    },
+    {
+      eyebrow: "ForAllCode features",
+      title: "Have you tried creating notes?",
+      text: "Create notebooks inside your repository and keep project thinking beside the code where future contributors can find it.",
+      theme: "notes",
+      cta: "Try notes"
+    },
+    {
+      eyebrow: "Keep going",
+      title: "Small commits still count.",
+      text: "Great software is rarely one heroic leap. It is careful progress, shared clearly, one useful change at a time.",
+      theme: "quote",
+      cta: "Start gently"
+    }
+  ];
+  const activeHeroSlide = dashboardHeroSlides[heroIndex] || dashboardHeroSlides[0];
 
   useEffect(() => {
     let alive = true;
@@ -575,19 +649,34 @@ function DashboardPage() {
     };
   }, [session?.user?.id]);
 
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setHeroIndex((index) => (index + 1) % dashboardHeroSlides.length);
+    }, 6200);
+    return () => window.clearInterval(timer);
+  }, [dashboardHeroSlides.length]);
+
   return (
     <PageFrame title="" eyebrow="">
-      <section className="phase-dashboard-hero">
-        <div>
-          <p className="eyebrow">FORALLCODE</p>
-          <h1>Welcome back, {firstName}</h1>
-          <p>Your workspace is ready. Pick up where you left off, follow the work, and keep the useful ideas in sight.</p>
+      <section className={`phase-dashboard-hero dashboard-hero-${activeHeroSlide.theme}`}>
+        <div className="dashboard-hero-copy">
+          <p className="eyebrow">{activeHeroSlide.eyebrow}</p>
+          <h1>{activeHeroSlide.title}</h1>
+          <p>{activeHeroSlide.text}</p>
+          <span>{activeHeroSlide.cta}</span>
         </div>
-        <svg viewBox="0 0 420 180" aria-hidden="true">
-          <path d="M16 150c78-86 142-86 220 0s128 54 168-2" />
-          <path d="M80 170c58-52 110-52 160 0s96 26 132-8" />
-        </svg>
-        <div className="carousel-dots phase-dots">{Array.from({ length: 5 }).map((_, index) => <span key={index} className={index === 0 ? "active" : ""} />)}</div>
+        <DashboardHeroVisual theme={activeHeroSlide.theme} repos={visibleRepos} />
+        <div className="carousel-dots phase-dots" aria-label="Dashboard hero slides">
+          {dashboardHeroSlides.map((slide, index) => (
+            <button
+              aria-label={`Show dashboard card ${index + 1}`}
+              className={index === heroIndex ? "active" : ""}
+              key={slide.theme}
+              onClick={() => setHeroIndex(index)}
+              type="button"
+            />
+          ))}
+        </div>
       </section>
 
       <div className="phase-dashboard-grid">
@@ -644,6 +733,73 @@ function DashboardPage() {
         </aside>
       </div>
     </PageFrame>
+  );
+}
+
+function DashboardHeroVisual({ repos = [], theme }) {
+  if (theme === "profiles") {
+    return (
+      <div className="dashboard-hero-visual profiles" aria-hidden="true">
+        {["KP", "AM", "JS"].map((initials, index) => (
+          <span key={initials} style={{ "--lift": `${index * 18}px` }}>
+            <b>{initials}</b>
+            <i />
+          </span>
+        ))}
+      </div>
+    );
+  }
+
+  if (theme === "workspaces") {
+    return (
+      <div className="dashboard-hero-visual workspaces" aria-hidden="true">
+        {(repos.length ? repos : [{ name: "orbit-readme" }, { name: "first-pr-path" }]).slice(0, 2).map((repo, index) => (
+          <article key={repo.name || index}>
+            <strong>{repo.name || "workspace"}</strong>
+            <span />
+            <span />
+          </article>
+        ))}
+      </div>
+    );
+  }
+
+  if (theme === "courses") {
+    return (
+      <div className="dashboard-hero-visual courses" aria-hidden="true">
+        <span>DevOps</span>
+        <div><i /><i /><i /></div>
+        <b>CI</b>
+      </div>
+    );
+  }
+
+  if (theme === "notes") {
+    return (
+      <div className="dashboard-hero-visual notes" aria-hidden="true">
+        <article>Notebook</article>
+        <span>Deploy notes</span>
+        <span>README ideas</span>
+      </div>
+    );
+  }
+
+  if (theme === "quote") {
+    return (
+      <div className="dashboard-hero-visual quote" aria-hidden="true">
+        <span>“</span>
+        <i />
+      </div>
+    );
+  }
+
+  return (
+    <div className="dashboard-hero-visual welcome" aria-hidden="true">
+      <svg viewBox="0 0 420 180">
+        <path d="M16 150c78-86 142-86 220 0s128 54 168-2" />
+        <path d="M80 170c58-52 110-52 160 0s96 26 132-8" />
+      </svg>
+    </div>
   );
 }
 
@@ -1399,6 +1555,7 @@ function RepoPage() {
   const [noteName, setNoteName] = useState("");
   const [notesStatus, setNotesStatus] = useState("");
   const [notesSaving, setNotesSaving] = useState(false);
+  const [asciiModalOpen, setAsciiModalOpen] = useState(false);
   const [heroEditorOpen, setHeroEditorOpen] = useState(false);
   const [repoHero, setRepoHero] = useState({ title: "", image: "", positionX: 50, positionY: 50, fontFamily: heroFontOptions[0].value });
   const [heroDraft, setHeroDraft] = useState({ title: "", image: "", positionX: 50, positionY: 50, fontFamily: heroFontOptions[0].value });
@@ -1407,6 +1564,7 @@ function RepoPage() {
   const heroPositionerRef = useRef(null);
   const addFileMenuRef = useRef(null);
   const cloneMenuRef = useRef(null);
+  const noteTextareaRef = useRef(null);
   const uploadFileInputRef = useRef(null);
   const cloneUrl = `https://github.com/${username}/${repo}.git`;
   const notebooks = getRepoNotebooks(repoDetails?.files || []);
@@ -1912,6 +2070,24 @@ function RepoPage() {
     } finally {
       setNotesSaving(false);
     }
+  }
+
+  function insertIntoNoteAtCursor(markdown) {
+    const textarea = noteTextareaRef.current;
+    if (!textarea) {
+      setNoteContent((current) => `${current}${markdown}`);
+      return;
+    }
+
+    const selectionStart = textarea.selectionStart ?? noteContent.length;
+    const selectionEnd = textarea.selectionEnd ?? noteContent.length;
+    const nextContent = `${noteContent.slice(0, selectionStart)}${markdown}${noteContent.slice(selectionEnd)}`;
+    const cursorPosition = selectionStart + markdown.length;
+    setNoteContent(nextContent);
+    window.requestAnimationFrame(() => {
+      textarea.focus();
+      textarea.setSelectionRange(cursorPosition, cursorPosition);
+    });
   }
 
   async function handleHeroImageUpload(event) {
@@ -2425,9 +2601,21 @@ function RepoPage() {
                   <p className="eyebrow">Markdown note</p>
                   <h3>{selectedNote?.name || activeNotePath || "Create a notebook to begin"}</h3>
                 </div>
-                <Button onClick={saveActiveNote} disabled={!activeNotePath || notesSaving}>{notesSaving ? "Saving..." : "Save note"}</Button>
+                <div className="repo-note-editor-actions">
+                  <button
+                    className="repo-note-toolbar-button"
+                    disabled={!activeNotePath || notesSaving}
+                    onClick={() => setAsciiModalOpen(true)}
+                    type="button"
+                  >
+                    <Grid3X3 size={14} />
+                    ASCII
+                  </button>
+                  <Button onClick={saveActiveNote} disabled={!activeNotePath || notesSaving}>{notesSaving ? "Saving..." : "Save note"}</Button>
+                </div>
               </div>
               <textarea
+                ref={noteTextareaRef}
                 value={noteContent}
                 onChange={(event) => setNoteContent(event.target.value)}
                 placeholder="# Your note"
@@ -2436,6 +2624,11 @@ function RepoPage() {
               {notesStatus && <p className="repo-notes-status">{notesStatus}</p>}
             </div>
           </div>
+          <AsciiArtGenerator
+            open={asciiModalOpen}
+            onClose={() => setAsciiModalOpen(false)}
+            onInsert={insertIntoNoteAtCursor}
+          />
         </section>
       )}
     </div>
@@ -2446,16 +2639,22 @@ function LearnPage() {
   useDocumentTitle("Learn");
   const isMobile = useIsMobile();
   const { session, checked } = useAuthSession();
+  const { lessonSlug } = useParams();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const viewedLessonsRef = useRef(new Set());
   const [activeTrack, setActiveTrack] = useState("beginner");
   const [expandedTracks, setExpandedTracks] = useState(() => new Set(["beginner"]));
   const [active, setActive] = useState(lessons[0].slug);
+  const [catalogQuery, setCatalogQuery] = useState("");
+  const [catalogTag, setCatalogTag] = useState("all");
   const [completedLessons, setCompletedLessons] = useState(() => new Set());
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingLeaving, setOnboardingLeaving] = useState(false);
   const [selectedComfort, setSelectedComfort] = useState("");
   const lesson = lessons.find((item) => item.slug === active) || lessons[0];
   const isFreeUser = true;
+  const showCatalog = searchParams.get("view") === "catalog" && !lessonSlug;
 
   useEffect(() => {
     let alive = true;
@@ -2488,6 +2687,19 @@ function LearnPage() {
       alive = false;
     };
   }, [checked, session]);
+
+  useEffect(() => {
+    if (!lessonSlug) return;
+    const selectedLesson = lessons.find((item) => item.slug === lessonSlug);
+    if (!selectedLesson) return;
+    const track = learnTracks.find((item) => item.track === selectedLesson.track);
+    if (track) {
+      setActiveTrack(track.id);
+      setExpandedTracks((current) => new Set([...current, track.id]));
+    }
+    setActive(selectedLesson.slug);
+    setShowOnboarding(false);
+  }, [lessonSlug]);
 
   useEffect(() => {
     if (!checked || showOnboarding || !session?.user?.id || !lesson?.slug) return;
@@ -2540,9 +2752,17 @@ function LearnPage() {
     const nextLesson = lessons.find((item) => item.slug === slug);
     if (nextLesson) {
       const track = learnTracks.find((item) => item.track === nextLesson.track);
-      if (track) setActiveTrack(track.id);
+      if (track) {
+        setActiveTrack(track.id);
+        setExpandedTracks((current) => new Set([...current, track.id]));
+      }
     }
     setActive(slug);
+  }
+
+  function openCatalogLesson(slug) {
+    chooseLesson(slug);
+    navigate(`/learn/${slug}`);
   }
 
   async function markLessonComplete() {
@@ -2574,8 +2794,24 @@ function LearnPage() {
     }
   }
 
-  if (showOnboarding) {
+  if (showOnboarding && !showCatalog) {
     return <LearnComfortCheck selected={selectedComfort} leaving={onboardingLeaving} onSelect={chooseComfort} />;
+  }
+
+  if (showCatalog) {
+    return (
+      <PageFrame title="Lesson catalog" eyebrow="Learn">
+        <CarouselHero slides={learnHeroSlides} type="learn" />
+        <LearnCatalog
+          completedLessons={completedLessons}
+          onOpenLesson={openCatalogLesson}
+          query={catalogQuery}
+          selectedTag={catalogTag}
+          setQuery={setCatalogQuery}
+          setSelectedTag={setCatalogTag}
+        />
+      </PageFrame>
+    );
   }
 
   return (
@@ -2679,6 +2915,103 @@ function LearnComfortCheck({ selected, leaving, onSelect }) {
         <Link className="learn-cert-onboarding-link" to="/certification/git-for-teams">Explore the Git for Teams Certificate</Link>
         <Link className="learn-cert-onboarding-link" to="/certification/command-line-essentials">Explore the Command Line Essentials Certificate</Link>
         <Link className="learn-cert-onboarding-link" to="/certification/open-source-contributor">Explore the Open Source Contributor Certificate</Link>
+      </div>
+    </section>
+  );
+}
+
+function LearnCatalog({ completedLessons, onOpenLesson, query, selectedTag, setQuery, setSelectedTag }) {
+  const allTags = Array.from(new Set(lessons.map((item) => item.tag))).sort();
+  const normalisedQuery = query.trim().toLowerCase();
+
+  function lessonMatches(lesson, track) {
+    const searchableText = [
+      lesson.title,
+      lesson.description,
+      lesson.tag,
+      lesson.slug,
+      track.title,
+      track.subtitle,
+      ...lesson.steps.flatMap((step) => [step.title, step.body])
+    ].join(" ").toLowerCase();
+
+    const matchesSearch = !normalisedQuery || searchableText.includes(normalisedQuery);
+    const matchesTag = selectedTag === "all" || lesson.tag === selectedTag;
+    return matchesSearch && matchesTag;
+  }
+
+  const groupedLessons = learnTracks.map((track) => ({
+    ...track,
+    lessons: lessons.filter((lesson) => lesson.track === track.track && lessonMatches(lesson, track))
+  }));
+  const resultCount = groupedLessons.reduce((total, track) => total + track.lessons.length, 0);
+
+  return (
+    <section className="learn-catalog">
+      <div className="learn-catalog-header">
+        <div>
+          <p className="eyebrow">Course catalog</p>
+          <h2>Browse every lesson</h2>
+          <p>Search by subject, skill, workflow, or tag, then jump straight into the right course.</p>
+        </div>
+        <span>{resultCount} lessons</span>
+      </div>
+
+      <div className="learn-catalog-toolbar">
+        <label className="learn-catalog-search">
+          <span>Search lessons</span>
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search branching, DevOps, conflicts..."
+          />
+        </label>
+        <div className="learn-catalog-tags" aria-label="Filter lessons by tag">
+          <button className={selectedTag === "all" ? "active" : ""} onClick={() => setSelectedTag("all")}>All</button>
+          {allTags.map((tag) => (
+            <button className={selectedTag === tag ? "active" : ""} key={tag} onClick={() => setSelectedTag(tag)}>
+              {tag}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="learn-catalog-tracks">
+        {groupedLessons.map((track) => (
+          <div className="learn-catalog-track" key={track.id}>
+            <div className="learn-catalog-track-title">
+              <span style={{ backgroundColor: track.color }} />
+              <div>
+                <h3>{track.title}</h3>
+                <p>{track.subtitle}</p>
+              </div>
+            </div>
+            {track.lessons.length > 0 ? (
+              <div className="learn-catalog-grid">
+                {track.lessons.map((lesson) => {
+                  const complete = completedLessons.has(lesson.slug);
+                  return (
+                    <article className="learn-catalog-card" key={lesson.slug}>
+                      <div className="learn-catalog-card-top">
+                        <LessonTag tag={lesson.tag} compact />
+                        {complete && <span className="learn-catalog-complete"><Check size={13} /> Complete</span>}
+                      </div>
+                      <h4>{lesson.title}</h4>
+                      <p>{lesson.description}</p>
+                      <div className="learn-catalog-meta">
+                        <span>{lesson.steps.length} steps</span>
+                        <span>{track.subtitle}</span>
+                      </div>
+                      <Button onClick={() => onOpenLesson(lesson.slug)} variant="soft">Open lesson</Button>
+                    </article>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="learn-catalog-empty">No {track.title.toLowerCase()} lessons match this search yet.</p>
+            )}
+          </div>
+        ))}
       </div>
     </section>
   );
@@ -3980,4 +4313,5 @@ function Footer() {
   );
 }
 
+applyAppearance(readAppearance());
 createRoot(document.getElementById("root")).render(<App />);

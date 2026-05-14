@@ -2,40 +2,26 @@ import { useEffect, useState } from "react";
 import { Moon, SunMedium } from "lucide-react";
 import SettingsSection from "../../components/settings/SettingsSection";
 import { SettingsActions, SettingsPageHeader, SettingsRadioCards, SettingsSaveButton, SettingsSwatches, SettingsToggle } from "../../components/settings/SettingsControls";
-
-const accentOptions = [
-  { label: "Lavender", value: "lavender", colour: "#9b8fd4", light: "#ddd5f0" },
-  { label: "Sage", value: "sage", colour: "#7aaa72", light: "#c8d8c4" },
-  { label: "Rose", value: "rose", colour: "#d4848c", light: "#f5d5d8" },
-  { label: "Sky", value: "sky", colour: "#6aa8d4", light: "#cce0f0" },
-  { label: "Amber", value: "amber", colour: "#c8a055", light: "#f5e4c4" }
-];
-
-const defaultAppearance = {
-  theme: "system",
-  accent: "lavender",
-  fontSize: "default",
-  reduceMotion: false,
-  density: "comfortable"
-};
+import { accentOptions, applyAppearance, persistAndApplyAppearance, readAppearance } from "../../lib/appearance";
 
 export default function SettingsAppearance() {
-  const [appearance, setAppearance] = useState(defaultAppearance);
+  const [appearance, setAppearance] = useState(() => readAppearance());
   const [status, setStatus] = useState("default");
   const [notice, setNotice] = useState("");
 
   useEffect(() => {
-    const stored = localStorage.getItem("forallcode-appearance");
-    if (stored) setAppearance({ ...defaultAppearance, ...JSON.parse(stored) });
+    const stored = readAppearance();
+    setAppearance(stored);
+    applyAppearance(stored);
   }, []);
 
   useEffect(() => {
-    const accent = accentOptions.find((option) => option.value === appearance.accent) || accentOptions[0];
-    document.documentElement.style.setProperty("--accent", accent.colour);
-    document.documentElement.style.setProperty("--accent-light", accent.light);
-    document.body.classList.toggle("font-large", appearance.fontSize === "large");
-    document.body.classList.toggle("reduce-motion", appearance.reduceMotion);
-    document.body.classList.toggle("density-compact", appearance.density === "compact");
+    if (appearance.theme !== "system") return undefined;
+    const media = window.matchMedia?.("(prefers-color-scheme: dark)");
+    if (!media) return undefined;
+    const handleChange = () => applyAppearance(appearance);
+    media.addEventListener?.("change", handleChange);
+    return () => media.removeEventListener?.("change", handleChange);
   }, [appearance]);
 
   useEffect(() => {
@@ -45,18 +31,17 @@ export default function SettingsAppearance() {
   }, [notice]);
 
   function updateAppearance(key, value) {
-    if (key === "theme" && value === "dark") {
-      setNotice("Dark mode is coming soon.");
-      setAppearance((current) => ({ ...current, theme: "system" }));
-      return;
-    }
     setNotice("");
-    setAppearance((current) => ({ ...current, [key]: value }));
+    const next = { ...appearance, [key]: value };
+    setAppearance(next);
+    persistAndApplyAppearance(next);
+    setStatus("saved");
+    window.setTimeout(() => setStatus("default"), 1000);
   }
 
   function handleSave() {
     setStatus("saving");
-    localStorage.setItem("forallcode-appearance", JSON.stringify(appearance));
+    persistAndApplyAppearance(appearance);
     setStatus("saved");
     setTimeout(() => setStatus("default"), 1800);
   }

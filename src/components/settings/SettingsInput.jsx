@@ -8,13 +8,15 @@ export default function SettingsInput({
   maxLength,
   readOnly = false,
   multiline = false,
-  rows = 4
+  rows = 4,
+  hideLabel = false
 }) {
   return (
     <label className="settings-input">
-      <span>{label}</span>
+      {!hideLabel && <span>{label}</span>}
       {multiline ? (
         <textarea
+          aria-label={hideLabel ? label : undefined}
           value={value}
           onChange={(event) => onChange?.(event.target.value)}
           placeholder={placeholder}
@@ -24,6 +26,7 @@ export default function SettingsInput({
         />
       ) : (
         <input
+          aria-label={hideLabel ? label : undefined}
           type={type}
           value={value}
           onChange={(event) => onChange?.(event.target.value)}

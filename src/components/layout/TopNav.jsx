@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { Bell, BookOpen, ChevronDown, Code2, Menu, Search, X } from "lucide-react";
 import IllustratedAvatar from "../ui/IllustratedAvatar";
 import { UpgradeButton } from "../ui/UpgradeButton";
+import { LockInToggle } from "../lockin/LockInToggle";
 import { getUserPreference } from "../../lib/preferences";
 import { syncGitHubReposToSupabase, supabase } from "../../lib/supabase";
 import { useSubscription } from "../../lib/useSubscription";
@@ -18,6 +19,7 @@ const mockUser = {
 
 export default function TopNav() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(mockUser);
@@ -39,6 +41,7 @@ export default function TopNav() {
 
   const loggedIn = Boolean(session);
   const showAppNav = loggedIn;
+  const showLockInToggle = shouldShowLockInToggle(location.pathname);
   const displayName = profile.displayName || session?.user?.email || "Account";
   const firstName = displayName.split(" ")[0] || "Account";
   const initials = displayName
@@ -320,7 +323,7 @@ export default function TopNav() {
             )}
           </div>
           <span className="nav-divider" />
-          <NavDropdown label="Repos" icon={<Code2 size={16} />}>
+          <NavDropdown label="Repos" icon={<Code2 size={16} />} to="/repos">
             <Link to="/repos">Your repos</Link>
             <Link to="/repos?filter=starred">Starred</Link>
             <Link to="/gists">Your gists</Link>
@@ -334,14 +337,14 @@ export default function TopNav() {
             ))}
             {navRepos.length === 0 && <p className="dropdown-empty">No GitHub repos synced yet.</p>}
           </NavDropdown>
-          <NavDropdown label="Learn" icon={<BookOpen size={16} />}>
+          <NavDropdown label="Learn" icon={<BookOpen size={16} />} to="/learn">
             <Link to="/learn/pull-requests">Continue: Pull Requests</Link>
             <div className="learn-progress">
               <span>Progress: Git foundations</span>
               <small><b style={{ width: "40%" }} /></small>
             </div>
             <span className="dropdown-divider" />
-            <Link to="/learn">Browse all lessons</Link>
+            <Link to="/learn?view=catalog">Browse all lessons</Link>
             <Link to="/certification/git-fundamentals">Git Fundamentals Certificate</Link>
             <Link to="/certification/git-for-teams">Git for Teams Certificate</Link>
             <Link to="/certification/command-line-essentials">Command Line Essentials Certificate</Link>
@@ -370,6 +373,7 @@ export default function TopNav() {
                 </div>
               )}
             </div>
+            {showLockInToggle && <LockInToggle />}
             <div className="dropdown click-dropdown" ref={avatarRef}>
               <button className="avatar-trigger" onClick={() => setAvatarOpen(!avatarOpen)} aria-label="Account menu">
                 <span className="avatar-face">
@@ -409,6 +413,38 @@ export default function TopNav() {
   );
 }
 
+function shouldShowLockInToggle(pathname) {
+  if (pathname === "/workspace") return true;
+  if (pathname === "/learn" || pathname.startsWith("/learn/")) return true;
+
+  const [firstSegment, secondSegment] = pathname.split("/").filter(Boolean);
+  if (!firstSegment || !secondSegment) return false;
+
+  const reservedTopLevelRoutes = new Set([
+    "admin",
+    "auth",
+    "certificates",
+    "certification",
+    "dashboard",
+    "explore",
+    "gists",
+    "home",
+    "learn",
+    "login",
+    "marketplace",
+    "notifications",
+    "profile",
+    "repos",
+    "search",
+    "settings",
+    "stars",
+    "upgrade",
+    "workspace"
+  ]);
+
+  return !reservedTopLevelRoutes.has(firstSegment);
+}
+
 function NotificationDropdownItem({ item }) {
   const actor = item.actor || {};
   return (
@@ -422,14 +458,22 @@ function NotificationDropdownItem({ item }) {
   );
 }
 
-function NavDropdown({ label, icon, children }) {
+function NavDropdown({ label, icon, children, to }) {
   return (
     <div className="dropdown">
-      <button className="nav-trigger">
-        {icon}
-        {label}
-        <ChevronDown size={14} />
-      </button>
+      {to ? (
+        <Link className="nav-trigger" to={to}>
+          {icon}
+          {label}
+          <ChevronDown size={14} />
+        </Link>
+      ) : (
+        <button className="nav-trigger" type="button">
+          {icon}
+          {label}
+          <ChevronDown size={14} />
+        </button>
+      )}
       <div className="dropdown-menu">{children}</div>
     </div>
   );

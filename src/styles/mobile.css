@@ -47,6 +47,15 @@
     min-height: auto;
   }
 
+  .learn-catalog-toolbar,
+  .learn-catalog-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .learn-catalog-tags {
+    justify-content: flex-start;
+  }
+
   .animated-computer {
     justify-self: center;
     width: min(280px, 70vw);
@@ -478,6 +487,60 @@
   .settings-plan-card {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .lockin-toggle span:not(.lockin-scheduled-badge),
+  .lockin-cancel-scheduled {
+    display: none;
+  }
+
+  .lockin-toggle {
+    padding: 7px 9px;
+  }
+
+  .lockin-dropdown {
+    position: fixed;
+    top: 74px;
+    right: 12px;
+    left: 12px;
+    width: auto;
+  }
+
+  .lockin-panel {
+    max-width: min(360px, 100%);
+    padding: 28px 22px;
+  }
+
+  .lockin-overlay-layer {
+    align-items: flex-start;
+    padding-top: 142px;
+  }
+
+  .lockin-spotlight-backdrop {
+    --lockin-focus-top: 112px;
+    --lockin-focus-width: calc(100vw - 28px);
+  }
+
+  .lockin-hud {
+    top: 12px;
+    grid-template-columns: 40px minmax(190px, 1fr) 40px;
+    width: calc(100% - 24px);
+    gap: 7px;
+  }
+
+  .lockin-hud-button {
+    width: 40px;
+    height: 40px;
+    border-radius: 13px;
+  }
+
+  .lockin-digital-clock {
+    min-width: 0;
+    padding: 8px 12px 9px;
+  }
+
+  .lockin-digital-clock strong {
+    font-size: 2rem;
   }
 
   .desk-theme-grid {
