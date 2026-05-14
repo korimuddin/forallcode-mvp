@@ -11,6 +11,7 @@ import { useDocumentTitle } from "../lib/hooks";
 import { getCurrentSession, supabase } from "../lib/supabase";
 
 const PAGE_SIZE = 12;
+const USE_LIVE_GITHUB_EXPLORE = true;
 
 const languageStyles = {
   TypeScript: ["#ddd5f0", "#534AB7"],
@@ -87,6 +88,14 @@ export default function Explore() {
   }, [topicFilter]);
 
   async function loadFeatured() {
+    if (USE_LIVE_GITHUB_EXPLORE) {
+      const githubFeatured = await fetchGitHubExploreRepos({ limit: 2, minStars: 20000 }).catch(() => []);
+      if (githubFeatured.length) {
+        setFeatured(githubFeatured);
+        return;
+      }
+    }
+
     if (!supabase) {
       setFeatured([]);
       return;
@@ -149,6 +158,23 @@ export default function Explore() {
     const start = nextPage * PAGE_SIZE;
     const end = start + PAGE_SIZE - 1;
 
+    if (USE_LIVE_GITHUB_EXPLORE) {
+      const githubRepos = await fetchGitHubExploreRepos({
+        page: nextPage + 1,
+        limit: PAGE_SIZE,
+        minStars: search.trim() || topicFilter ? 0 : 250,
+        searchTerm: search,
+        topic: topicFilter
+      }).catch(() => []);
+
+      if (githubRepos.length || !supabase) {
+        setRepos((current) => replace ? githubRepos : [...current, ...githubRepos]);
+        setHasMore(githubRepos.length === PAGE_SIZE);
+        setLoading(false);
+        return;
+      }
+    }
+
     if (!supabase) {
       setRepos([]);
       setHasMore(false);
@@ -179,6 +205,14 @@ export default function Explore() {
   }
 
   async function loadWorkspaces() {
+    if (USE_LIVE_GITHUB_EXPLORE) {
+      const githubWorkspaces = await fetchGitHubWorkspaceUsers().catch(() => []);
+      if (githubWorkspaces.length) {
+        setWorkspaces(githubWorkspaces);
+        return;
+      }
+    }
+
     if (!supabase) {
       setWorkspaces([]);
       return;
@@ -200,6 +234,25 @@ export default function Explore() {
   }
 
   async function loadTopTopics() {
+    if (USE_LIVE_GITHUB_EXPLORE) {
+      const githubRepos = await fetchGitHubExploreRepos({ limit: 30, minStars: 5000 }).catch(() => []);
+      const counts = githubRepos.flatMap((repo) => repo.repo_topics || []).reduce((map, item) => {
+        if (!item.topic) return map;
+        map[item.topic] = (map[item.topic] || 0) + 1;
+        return map;
+      }, {});
+
+      const githubTopics = Object.entries(counts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 20)
+        .map(([topic, count]) => ({ topic, count }));
+
+      if (githubTopics.length || !supabase) {
+        setTopTopics(githubTopics);
+        return;
+      }
+    }
+
     if (!supabase) {
       setTopTopics([]);
       return;
@@ -237,12 +290,38 @@ export default function Explore() {
 
   async function fetchGitHubJson(url) {
     const headers = {
-      Accept: "application/vnd.github+json"
+      Accept: "application/vnd.github+json",
+      "X-GitHub-Api-Version": "2022-11-28"
     };
     if (session?.provider_token) headers.Authorization = `Bearer ${session.provider_token}`;
     const response = await fetch(url, { headers });
     if (!response.ok) throw new Error("GitHub discovery request failed.");
     return response.json();
+  }
+
+  async function fetchGitHubExploreRepos({ page: githubPage = 1, limit = PAGE_SIZE, minStars = 250, searchTerm = search, topic = topicFilter } = {}) {
+    const parts = [];
+    const trimmedSearch = searchTerm.trim();
+
+    if (trimmedSearch) parts.push(`${trimmedSearch} in:name,description,readme`);
+    if (topic) parts.push(`topic:${topic}`);
+    if (language !== "All languages") parts.push(`language:${language}`);
+    if (minStars > 0) parts.push(`stars:>${minStars}`);
+    if (!parts.length) parts.push("stars:>500");
+
+    const sortParam = sort === "recent" ? "updated" : "stars";
+    const payload = await fetchGitHubJson(`https://api.github.com/search/repositories?q=${encodeURIComponent(parts.join(" "))}&sort=${sortParam}&order=desc&page=${githubPage}&per_page=${limit}`);
+    return (payload.items || []).map(mapGitHubRepoToExploreRepo);
+  }
+
+  async function fetchGitHubWorkspaceUsers() {
+    const query = search.trim()
+      ? `${search.trim()} type:user`
+      : "type:user followers:>250 repos:>10";
+    const payload = await fetchGitHubJson(`https://api.github.com/search/users?q=${encodeURIComponent(query)}&sort=followers&order=desc&per_page=8`);
+    const users = payload.items || [];
+    const details = await Promise.all(users.map((user) => fetchGitHubJson(user.url).catch(() => user)));
+    return details.map(mapGitHubUserToWorkspace);
   }
 
   async function fetchGitHubTrendingRepos() {
@@ -288,12 +367,14 @@ export default function Explore() {
 
     return details.map((user) => ({
       id: `github-${user.login}`,
+      externalUrl: user.html_url || `https://github.com/${user.login}`,
       count: user.followers || user.score || 0,
       metricLabel: `${(user.followers || 0).toLocaleString()} GitHub followers`,
       profile: {
         username: user.login,
         display_name: user.name || user.login,
         avatar_url: user.avatar_url,
+        html_url: user.html_url || `https://github.com/${user.login}`,
         professional_title: user.bio || `${user.public_repos || 0} public repos on GitHub`,
         bio: user.bio || "",
         avatar_style: "sky"
@@ -430,7 +511,7 @@ export default function Explore() {
 
       {sessionChecked && supabase && !session && (
         <div className="explore-auth-note">
-          Explore is an authenticated view. You are seeing demo discovery data until you sign in.
+          Explore is currently powered by live GitHub discovery while the ForAllCode community grows.
           <Link to="/login"> Sign in</Link>
         </div>
       )}
@@ -492,7 +573,7 @@ export default function Explore() {
           <section className="explore-featured-section">
             <div className="explore-section-heading">
               <p className="eyebrow">Featured</p>
-              <span>Handpicked by ForAllCode</span>
+              <span>Live from GitHub while ForAllCode grows</span>
             </div>
             <div className="explore-featured-grid">
               {featured.slice(0, 2).map((repo, index) => <FeaturedCard index={index} key={repo.id || repo.name} repo={repo} />)}
@@ -516,7 +597,7 @@ export default function Explore() {
         <div>
           <div className="explore-section-heading">
             <p className="eyebrow">Repositories</p>
-            <span>{topicFilter ? `Filtered by #${topicFilter}` : "Public repos ordered by stars"}</span>
+            <span>{topicFilter ? `Live GitHub repos tagged #${topicFilter}` : "Live GitHub repositories ordered by stars"}</span>
           </div>
           {topicFilter && (
             <Link className="explore-clear-topic" to="/explore">Clear topic filter</Link>
@@ -551,7 +632,7 @@ export default function Explore() {
           </div>
           <div className="explore-section-heading">
             <p className="eyebrow">Public workspaces</p>
-            <span>Developers who've shared their desk</span>
+            <span>Live GitHub developers</span>
           </div>
           {visibleWorkspaces.map((profile) => <WorkspaceCard key={profile.id || profile.username} profile={profile} />)}
           {visibleWorkspaces.length === 0 && <p className="explore-empty">No shared workspaces match those filters.</p>}
@@ -599,28 +680,69 @@ function mergeByUsername(primary, secondary) {
   });
 }
 
+function mapGitHubRepoToExploreRepo(repo) {
+  return {
+    id: `github-${repo.id}`,
+    name: repo.name,
+    description: repo.description || "Live GitHub repository",
+    language: repo.language || "Code",
+    stars_count: repo.stargazers_count || 0,
+    forks_count: repo.forks_count || 0,
+    updated_at: repo.updated_at,
+    created_at: repo.created_at,
+    externalUrl: repo.html_url,
+    repo_topics: (repo.topics || []).slice(0, 8).map((topic) => ({ topic })),
+    profiles: {
+      username: repo.owner?.login || "github",
+      display_name: repo.owner?.login || "GitHub",
+      avatar_style: "sky",
+      avatar_url: repo.owner?.avatar_url,
+      html_url: repo.owner?.html_url || `https://github.com/${repo.owner?.login || ""}`
+    }
+  };
+}
+
+function mapGitHubUserToWorkspace(user) {
+  return {
+    id: `github-${user.login}`,
+    username: user.login,
+    display_name: user.name || user.login,
+    avatar_style: "sky",
+    avatar_url: user.avatar_url,
+    bio: user.bio || "",
+    repos_count: user.public_repos || 0,
+    followers_count: user.followers || 0,
+    externalUrl: user.html_url || `https://github.com/${user.login}`
+  };
+}
+
 function FeaturedCard({ repo, index }) {
   const owner = repo.profiles || {};
+  const href = repo.externalUrl || `/${owner.username || "unknown"}/${repo.name}`;
+  const isExternal = Boolean(repo.externalUrl);
   return (
-    <Link className={`explore-featured-card card-${index + 1}`} to={`/${owner.username || "unknown"}/${repo.name}`}>
+    <LinkOrAnchor className={`explore-featured-card card-${index + 1}`} external={isExternal} href={href}>
       <span>{owner.display_name || owner.username || "ForAllCode"}</span>
       <h2>{repo.name}</h2>
       <p>{repo.description}</p>
       <div><strong>{repo.stars_count || 0} stars</strong><strong>{repo.language || "Code"}</strong></div>
-    </Link>
+    </LinkOrAnchor>
   );
 }
 
 function ExploreRepoCard({ repo }) {
   const owner = repo.profiles || {};
   const username = owner.username || "unknown";
+  const repoHref = repo.externalUrl || `/${username}/${repo.name}`;
+  const ownerHref = owner.html_url || (repo.externalUrl ? `https://github.com/${username}` : `/${username}`);
+  const isExternal = Boolean(repo.externalUrl);
   return (
     <article className="explore-repo-card">
-      <Link className="explore-owner-row" to={`/${username}`}>
-        <IllustratedAvatar size={34} variant={owner.avatar_style || "sage"} />
+      <LinkOrAnchor className="explore-owner-row" external={Boolean(owner.html_url || repo.externalUrl)} href={ownerHref}>
+        <IllustratedAvatar size={34} variant={owner.avatar_style || "sage"} photoUrl={owner.avatar_url} />
         <span>{owner.display_name || username}<small>@{username}</small></span>
-      </Link>
-      <h3><Link to={`/${username}/${repo.name}`}>{username} / {repo.name}</Link></h3>
+      </LinkOrAnchor>
+      <h3><LinkOrAnchor external={isExternal} href={repoHref}>{username} / {repo.name}</LinkOrAnchor></h3>
       <p>{repo.description}</p>
       <div className="explore-repo-meta">
         <LanguagePill language={repo.language} />
@@ -639,17 +761,25 @@ function ExploreRepoCard({ repo }) {
 
 function WorkspaceCard({ profile }) {
   const username = profile.username || "developer";
+  const href = profile.externalUrl || `/${username}`;
   return (
-    <Link className="explore-workspace-card" to={`/${username}`}>
-      <IllustratedAvatar size={40} variant={profile.avatar_style || "sage"} />
+    <LinkOrAnchor className="explore-workspace-card" external={Boolean(profile.externalUrl)} href={href}>
+      <IllustratedAvatar size={40} variant={profile.avatar_style || "sage"} photoUrl={profile.avatar_url} />
       <span>
         <strong>{profile.display_name || username}</strong>
         <small>@{username}</small>
         <em>{profile.repos_count || 0} repos · {profile.followers_count || 0} followers</em>
-        <b>View workspace →</b>
+        <b>{profile.externalUrl ? "View on GitHub →" : "View workspace →"}</b>
       </span>
-    </Link>
+    </LinkOrAnchor>
   );
+}
+
+function LinkOrAnchor({ children, className, external, href }) {
+  if (external) {
+    return <a className={className} href={href} target="_blank" rel="noreferrer">{children}</a>;
+  }
+  return <Link className={className} to={href}>{children}</Link>;
 }
 
 function LanguagePill({ language }) {
