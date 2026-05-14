@@ -102,7 +102,12 @@
   }
 
   .top-nav-center.open {
-    display: none;
+    display: grid;
+    left: 10px;
+    right: 10px;
+    top: 62px;
+    max-height: calc(100vh - 76px);
+    overflow-y: auto;
   }
 
   .page-frame,
@@ -111,9 +116,30 @@
   .explore-page,
   .notifications-page,
   .about-page {
-    width: min(100%, calc(100vw - 28px));
+    width: min(100%, calc(100vw - 24px));
     padding-left: 0;
     padding-right: 0;
+  }
+
+  .top-nav-right {
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .nav-icon-button {
+    padding-inline: 8px;
+  }
+
+  .avatar-trigger {
+    padding-inline: 6px;
+  }
+
+  .search-scope-toggle {
+    width: 100%;
+  }
+
+  .search-scope-toggle button {
+    flex: 1;
   }
 
   .hero {
@@ -566,17 +592,52 @@
   .cert-checklist,
   .cert-info-grid.cert-area-grid,
   .cert-assessment-layout,
-  .cert-social-proof {
+  .cert-social-proof,
+  .cert-taster-topic-grid,
+  .cert-taster-metrics {
     grid-template-columns: 1fr;
   }
 
   .cert-assessment-header,
   .cert-assessment-actions,
   .cert-hero-actions,
+  .cert-taster-header,
+  .cert-taster-landing-footer,
   .certificate-actions,
   .learn-cert-card {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .cert-taster {
+    margin-top: 22px;
+  }
+
+  .cert-taster-start {
+    width: 100%;
+  }
+
+  .cert-taster-results-head,
+  .cert-taster-upsell {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .cert-taster-score {
+    text-align: left;
+  }
+
+  .cert-taster-breakdown-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .cert-taster-breakdown-row strong {
+    text-align: left;
+  }
+
+  .cert-taster-upsell > div:last-child {
+    align-items: stretch;
   }
 
   .cert-timer {

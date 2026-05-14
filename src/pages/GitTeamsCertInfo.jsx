@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Award, CheckCircle2, Clock, ExternalLink, GitBranch } from "lucide-react";
+import CertTaster from "../components/certifications/taster/CertTaster";
+import { GIT_TEAMS_TASTER } from "../data/tasterQuestions/gitTeamsTaster";
 import { useDocumentTitle } from "../lib/hooks";
 import { supabase } from "../lib/supabase";
 
@@ -103,6 +105,7 @@ export default function GitTeamsCertInfo() {
         <p className="eyebrow">Certificate of Proficiency</p>
         <h1>Git for Teams</h1>
         <p>Most developers learn Git alone. Working in a team is a different skill entirely — branching strategies, protected branches, code review workflows, merge conflicts, release management, and keeping a shared history clean. This certificate proves you can do all of it.</p>
+        <CertTaster config={GIT_TEAMS_TASTER} />
         <div className="cert-hero-actions">
           {loading ? (
             <button className="button primary" disabled>Checking certificate...</button>

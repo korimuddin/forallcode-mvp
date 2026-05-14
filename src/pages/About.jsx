@@ -32,7 +32,7 @@ export default function About() {
     <main className="about-page">
       <section className="about-hero">
         <DecorativeHills />
-        <span className="about-rocket" aria-hidden="true">🚀</span>
+        <img className="about-logo" src="/forallcode-logo.png" alt="ForAllCode logo" />
         <h1>ForAllCode</h1>
         <p className="about-tagline">Built for all who code.</p>
         <p className="about-hero-copy">
@@ -41,20 +41,10 @@ export default function About() {
       </section>
 
       <section className="about-section">
-        <h2>The name</h2>
-        <p>
-          ForAllCode is inspired by For All Mankind, the Apple TV+ alternate history series where the Soviet Union lands on the moon first, and the space race never ends. It's a story about what happens when humanity refuses to stop reaching.
-        </p>
-        <p>
-          In that world, space isn't won by one nation. It becomes a destination for all of humanity. That's the spirit behind ForAllCode.
-        </p>
-        <blockquote>It's not about being first. It's about going further.</blockquote>
-        <p>
-          Code platforms today are built for people who already know how to code. Documentation assumes you know what a merge conflict is. Interfaces are dense and unforgiving. Beginners bounce off, and never come back.
-        </p>
-        <p>
-          ForAllCode is the version of this platform where the door stays open. For all of us. For all who code.
-        </p>
+        <h2>Who we are</h2>
+        <blockquote>
+          A visual, beginner-friendly development platform that helps people learn Git, build with confidence, and showcase their projects beautifully.
+        </blockquote>
       </section>
 
       <section className="about-section">

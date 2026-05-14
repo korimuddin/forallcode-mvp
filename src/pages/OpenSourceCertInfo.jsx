@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Award, CheckCircle2, Clock, ExternalLink, Sprout } from "lucide-react";
+import CertTaster from "../components/certifications/taster/CertTaster";
+import { OPEN_SOURCE_TASTER } from "../data/tasterQuestions/openSourceTaster";
 import { useDocumentTitle } from "../lib/hooks";
 import { supabase } from "../lib/supabase";
 
@@ -103,6 +105,7 @@ export default function OpenSourceCertInfo() {
         <p className="eyebrow">Certificate of Proficiency</p>
         <h1>Open Source Contributor</h1>
         <p>Contributing to open source is one of the most visible things a developer can do. It proves you can read unfamiliar code, communicate clearly with maintainers, follow project standards, and deliver work that real people depend on. This certificate demonstrates that you understand the full contribution lifecycle — from finding the right project to getting your first PR merged.</p>
+        <CertTaster config={OPEN_SOURCE_TASTER} />
         <div className="cert-hero-actions">
           {loading ? (
             <button className="button primary" disabled>Checking certificate...</button>

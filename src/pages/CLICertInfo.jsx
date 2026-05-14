@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Award, CheckCircle2, Clock, ExternalLink, Terminal } from "lucide-react";
+import CertTaster from "../components/certifications/taster/CertTaster";
+import { CLI_TASTER } from "../data/tasterQuestions/cliTaster";
 import { useDocumentTitle } from "../lib/hooks";
 import { supabase } from "../lib/supabase";
 
@@ -103,6 +105,7 @@ export default function CLICertInfo() {
         <p className="eyebrow">Certificate of Proficiency</p>
         <h1>Command Line Essentials</h1>
         <p>The terminal is the foundation of everything a developer does — Git, deployment, scripting, package management, and debugging. This certificate proves you can navigate confidently, work with files and directories, understand environment variables, write basic scripts, and solve real problems without reaching for a GUI.</p>
+        <CertTaster config={CLI_TASTER} />
         <div className="cert-hero-actions">
           {loading ? (
             <button className="button primary" disabled>Checking certificate...</button>

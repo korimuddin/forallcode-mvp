@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Award, BookOpen, CheckCircle2, Clock, ExternalLink, Github } from "lucide-react";
+import CertTaster from "../components/certifications/taster/CertTaster";
+import { GIT_FUNDAMENTALS_TASTER } from "../data/tasterQuestions/gitFundamentalsTaster";
 import { useDocumentTitle } from "../lib/hooks";
 import { supabase } from "../lib/supabase";
 
@@ -93,6 +95,7 @@ export default function CertificationInfo() {
         <p className="eyebrow">ForAllCode certification</p>
         <h1>Git Fundamentals Certificate</h1>
         <p>Show that you understand branches, commits, collaboration, pull requests, and the everyday Git workflows real teams use.</p>
+        <CertTaster config={GIT_FUNDAMENTALS_TASTER} />
         <div className="cert-hero-actions">
           {loading ? (
             <button className="button primary" disabled>Checking certificate...</button>
