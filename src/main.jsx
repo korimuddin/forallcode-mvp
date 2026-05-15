@@ -33,6 +33,8 @@ import TopNav from "./components/layout/TopNav";
 import LockInOverlay from "./components/lockin/LockInOverlay";
 import { AdminGuard } from "./components/admin/AdminGuard";
 import FeedEvent from "./components/feed/FeedEvent";
+import GitHubPanelProvider from "./components/GitHubPanel/GitHubPanel";
+import SignInGlobe from "./components/Globe/SignInGlobe";
 import OnboardingFlow from "./components/onboarding/OnboardingFlow";
 import AsciiArtGenerator from "./components/repo/ascii_art_generator";
 import TopicEditor from "./components/repo/TopicEditor";
@@ -245,8 +247,10 @@ function App() {
       <SubscriptionProvider>
         <LockInProvider>
           <BrowserRouter>
-            <AppearanceRuntime />
-            <AppRoutes />
+            <GitHubPanelProvider>
+              <AppearanceRuntime />
+              <AppRoutes />
+            </GitHubPanelProvider>
           </BrowserRouter>
         </LockInProvider>
       </SubscriptionProvider>
@@ -476,6 +480,7 @@ function LandingPage() {
         </div>
         <DeskPreview compact />
       </section>
+      {!loggedIn && <SignInGlobe />}
       {loggedIn && (
         <>
           <section className="feature-grid">
@@ -568,16 +573,7 @@ function LoginPage() {
           <Button variant="soft" full onClick={passwordSignIn}>Continue with email</Button>
           <Link to="/login">Forgot password?</Link>
         </Card>
-        <Card large>
-          <h2>Sign up flow</h2>
-          <ol className="flow-list">
-            <li>GitHub OAuth</li>
-            <li>Pick username</li>
-            <li>Choose illustrated avatar</li>
-            <li>Redirect to dashboard</li>
-          </ol>
-          <AvatarPicker />
-        </Card>
+        <SignInGlobe />
       </section>
     </PageFrame>
   );

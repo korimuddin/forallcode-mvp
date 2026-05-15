@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getUserPreference } from "./preferences";
+import { reportGlobeSignIn } from "./reportGlobeSignIn";
 import { getSessionIdentity, mapStoredRepository, syncGitHubActivity, syncGitHubReposToSupabase, supabase, upsertProfileFromSession } from "./supabase";
 
 export function useAuthSession() {
@@ -15,11 +16,15 @@ export function useAuthSession() {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       setChecked(true);
+      reportGlobeSignIn(data.session);
     });
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, nextSession) => {
       setSession(nextSession);
       setChecked(true);
+      if (event === "SIGNED_IN") {
+        reportGlobeSignIn(nextSession);
+      }
     });
 
     return () => listener.subscription.unsubscribe();

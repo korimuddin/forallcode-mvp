@@ -60,6 +60,18 @@
     justify-self: center;
     width: min(280px, 70vw);
   }
+
+  .signin-globe-card {
+    min-height: 440px;
+  }
+
+  .signin-globe-copy {
+    padding: 22px 22px 0;
+  }
+
+  .signin-globe-shell {
+    inset: 120px 0 42px;
+  }
 }
 
 @media (max-width: 640px) {
@@ -108,6 +120,21 @@
     top: 62px;
     max-height: calc(100vh - 76px);
     overflow-y: auto;
+  }
+
+  .signin-globe-card {
+    min-height: 380px;
+    border-radius: 18px;
+  }
+
+  .signin-globe-copy h2 {
+    font-size: 2rem;
+  }
+
+  .signin-globe-badge {
+    right: 14px;
+    top: auto;
+    bottom: 48px;
   }
 
   .page-frame,
