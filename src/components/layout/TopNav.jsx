@@ -325,7 +325,7 @@ export default function TopNav() {
           <span className="nav-divider" />
           <NavDropdown label="Repos" icon={<Code2 size={16} />} to="/repos">
             <Link to="/repos">Your repos</Link>
-            <Link to="/repos?filter=starred">Starred</Link>
+            <Link to="/stars">Starred</Link>
             <Link to="/gists">Your gists</Link>
             <Link to="/repos/new">+ New repository</Link>
             <span className="dropdown-divider" />

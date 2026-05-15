@@ -90,32 +90,38 @@ export default function SignInGlobe() {
 
     async function initGlobe() {
       try {
-        const [{ default: Globe }, THREE] = await Promise.all([
+        const [{ default: Globe }, THREE, topojson, world] = await Promise.all([
           import("globe.gl"),
-          import("three")
+          import("three"),
+          import("topojson-client"),
+          import("world-atlas/countries-110m.json")
         ]);
         if (cancelled || !containerRef.current) return;
 
         const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
         const globe = Globe()(containerRef.current);
+        const landFeatures = topojson.feature(world.default || world, (world.default || world).objects.land).features;
         globe
           .backgroundColor("rgba(0,0,0,0)")
-          .atmosphereColor("#c4b8e8")
-          .atmosphereAltitude(0.18)
-          .globeMaterial(new THREE.MeshPhongMaterial({
-            color: "#19172f",
-            emissive: "#0d0d1a",
-            shininess: 12,
+          .atmosphereColor("#2c1d10")
+          .atmosphereAltitude(0.015)
+          .globeMaterial(new THREE.MeshBasicMaterial({
+            color: "#120b08",
             transparent: true,
-            opacity: 0.96
+            opacity: 1
           }))
-          .arcColor(() => "#a8c4a2")
+          .polygonsData(landFeatures)
+          .polygonCapColor(() => "rgba(246, 197, 107, 0.96)")
+          .polygonSideColor(() => "rgba(200, 160, 85, 0.28)")
+          .polygonStrokeColor(() => "rgba(255, 241, 191, 0.42)")
+          .polygonAltitude(0.012)
+          .arcColor(() => "#ffe39a")
           .arcAltitude(0.28)
           .arcStroke(0.55)
           .arcDashLength(0.42)
           .arcDashGap(0.18)
           .arcDashAnimateTime(reduceMotion ? 0 : 1800)
-          .pointColor(() => "#f5e4c4")
+          .pointColor(() => "#fff1bf")
           .pointAltitude(0.012)
           .pointRadius((point) => point.size || 0.55)
           .pointsMerge(false)
@@ -187,6 +193,9 @@ export default function SignInGlobe() {
       </div>
       <div className="signin-globe-shell">
         <div ref={containerRef} className="signin-globe-canvas" aria-hidden="true" />
+        <div className="signin-globe-moon-orbit" aria-hidden="true">
+          <span className="signin-globe-moon" />
+        </div>
         {loadError && (
           <div className="signin-globe-fallback" aria-hidden="true">
             Live globe preview

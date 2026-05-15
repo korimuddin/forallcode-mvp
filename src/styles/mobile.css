@@ -72,6 +72,10 @@
   .signin-globe-shell {
     inset: 120px 0 42px;
   }
+
+  .signin-globe-moon-orbit {
+    width: clamp(360px, 135%, 560px);
+  }
 }
 
 @media (max-width: 640px) {
@@ -135,6 +139,12 @@
     right: 14px;
     top: auto;
     bottom: 48px;
+  }
+
+  .signin-globe-moon {
+    width: 16px;
+    height: 16px;
+    top: -8px;
   }
 
   .page-frame,
