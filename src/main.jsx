@@ -33,11 +33,11 @@ import TopNav from "./components/layout/TopNav";
 import LockInOverlay from "./components/lockin/LockInOverlay";
 import { AdminGuard } from "./components/admin/AdminGuard";
 import FeedEvent from "./components/feed/FeedEvent";
+import OnboardingFlow from "./components/onboarding/OnboardingFlow";
 import AsciiArtGenerator from "./components/repo/ascii_art_generator";
 import TopicEditor from "./components/repo/TopicEditor";
 import TopicPills from "./components/repo/TopicPills";
 import ErrorBoundary from "./components/ui/ErrorBoundary";
-import FeedbackForm from "./components/ui/FeedbackForm";
 import IllustratedAvatar, { avatarVariants } from "./components/ui/IllustratedAvatar";
 import { LimitBanner } from "./components/ui/LimitBanner";
 import Skeleton from "./components/ui/Skeleton";
@@ -613,6 +613,7 @@ function DashboardPage() {
   const [feedLoading, setFeedLoading] = useState(true);
   const [feedError, setFeedError] = useState("");
   const [heroIndex, setHeroIndex] = useState(0);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const displayName = profile?.displayName || "there";
   const firstName = displayName.split(" ")[0] || displayName;
   const visibleRepos = userRepos.slice(0, 2);
@@ -723,8 +724,22 @@ function DashboardPage() {
     return () => window.clearInterval(timer);
   }, [dashboardHeroSlides.length]);
 
+  useEffect(() => {
+    if (profile?.onboardingCompleted === false) {
+      setShowOnboarding(true);
+    }
+  }, [profile?.onboardingCompleted]);
+
   return (
     <PageFrame title="" eyebrow="">
+      {showOnboarding && session?.user && (
+        <OnboardingFlow
+          user={session.user}
+          profile={profile}
+          repos={userRepos}
+          onComplete={() => setShowOnboarding(false)}
+        />
+      )}
       <section className={`phase-dashboard-hero dashboard-hero-${activeHeroSlide.theme}`}>
         <div className="dashboard-hero-copy">
           <p className="eyebrow">{activeHeroSlide.eyebrow}</p>
@@ -748,7 +763,6 @@ function DashboardPage() {
 
       <div className="phase-dashboard-grid">
         <section>
-          <FeedbackForm />
           <div className="phase-section-head">
             <div><p className="eyebrow">FOLLOWED</p><h2>Users and projects</h2></div>
             <Link to="/following">Manage</Link>
@@ -2834,6 +2848,7 @@ function LearnPage() {
   useDocumentTitle("Learn");
   const isMobile = useIsMobile();
   const { session, checked } = useAuthSession();
+  const { profile: signedInProfile, repos: signedInRepos } = useSignedInUserData();
   const { lessonSlug } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -2845,6 +2860,7 @@ function LearnPage() {
   const [catalogTag, setCatalogTag] = useState("all");
   const [completedLessons, setCompletedLessons] = useState(() => new Set());
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showFullOnboarding, setShowFullOnboarding] = useState(false);
   const [onboardingLeaving, setOnboardingLeaving] = useState(false);
   const [selectedComfort, setSelectedComfort] = useState("");
   const lesson = lessons.find((item) => item.slug === active) || lessons[0];
@@ -2996,7 +3012,24 @@ function LearnPage() {
   if (showCatalog) {
     return (
       <PageFrame title="Lesson catalog" eyebrow="Learn">
+        {showFullOnboarding && session?.user && (
+          <OnboardingFlow
+            user={session.user}
+            profile={signedInProfile}
+            repos={signedInRepos}
+            onComplete={() => setShowFullOnboarding(false)}
+          />
+        )}
         <CarouselHero slides={learnHeroSlides} type="learn" />
+        <section className="learn-replay-tour">
+          <div>
+            <p className="eyebrow">Need a refresher?</p>
+            <h2>Replay the ForAllCode tour whenever you like.</h2>
+          </div>
+          <button className="button soft" disabled={!session?.user} onClick={() => setShowFullOnboarding(true)} type="button">
+            Replay onboarding
+          </button>
+        </section>
         <LearnCatalog
           completedLessons={completedLessons}
           onOpenLesson={openCatalogLesson}
@@ -3011,7 +3044,24 @@ function LearnPage() {
 
   return (
     <PageFrame title="Learn Git visually" eyebrow="Learn">
+      {showFullOnboarding && session?.user && (
+        <OnboardingFlow
+          user={session.user}
+          profile={signedInProfile}
+          repos={signedInRepos}
+          onComplete={() => setShowFullOnboarding(false)}
+        />
+      )}
       <CarouselHero slides={learnHeroSlides} type="learn" />
+      <section className="learn-replay-tour">
+        <div>
+          <p className="eyebrow">Need a refresher?</p>
+          <h2>Replay the ForAllCode tour whenever you like.</h2>
+        </div>
+        <button className="button soft" disabled={!session?.user} onClick={() => setShowFullOnboarding(true)} type="button">
+          Replay onboarding
+        </button>
+      </section>
       <section className="learn-cert-card">
         <div>
           <p className="eyebrow">Certification</p>

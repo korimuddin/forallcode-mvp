@@ -88,6 +88,9 @@ export function useSignedInUserData() {
               coverPositionY: impersonatedProfile.cover_position_y ?? 50,
               professionalTitle: impersonatedProfile.professional_title || "",
               skills: impersonatedProfile.skills || [],
+              onboardingCompleted: impersonatedProfile.onboarding_completed,
+              onboardingGoal: impersonatedProfile.onboarding_goal || "",
+              gitComfortLevel: impersonatedProfile.git_comfort_level || "",
               impersonating: true
             });
             setRepos((impersonatedRepos || []).map((repo) => mapStoredRepository(repo, impersonatedProfile.username)));
@@ -126,7 +129,10 @@ export function useSignedInUserData() {
             coverPositionX: storedProfile.cover_position_x ?? current?.coverPositionX ?? 50,
             coverPositionY: storedProfile.cover_position_y ?? current?.coverPositionY ?? 50,
             professionalTitle: storedProfile.professional_title || current?.professionalTitle || "",
-            skills: storedProfile.skills || current?.skills || []
+            skills: storedProfile.skills || current?.skills || [],
+            onboardingCompleted: storedProfile.onboarding_completed,
+            onboardingGoal: storedProfile.onboarding_goal || current?.onboardingGoal || "",
+            gitComfortLevel: storedProfile.git_comfort_level || current?.gitComfortLevel || ""
           }));
         }
 

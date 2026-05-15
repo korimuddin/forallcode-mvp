@@ -40,8 +40,6 @@ export default function Explore() {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [activeFilter, setActiveFilter] = useState("All");
-  const [language, setLanguage] = useState("All languages");
-  const [sort, setSort] = useState("stars");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState(topicFilter ? "Topics" : "Featured");
@@ -77,7 +75,7 @@ export default function Explore() {
     loadSpotlights();
     loadWorkspaces();
     loadTopTopics();
-  }, [language, sort, search, topicFilter]);
+  }, [search, topicFilter]);
 
   useEffect(() => {
     loadDiscoverySections();
@@ -188,14 +186,11 @@ export default function Explore() {
       .eq("is_private", false);
 
     if (topicFilter) query = query.filter("repo_topics.topic", "eq", topicFilter);
-    if (language !== "All languages") query = query.eq("language", language);
     if (search.trim()) {
       const term = `%${search.trim()}%`;
       query = query.or(`name.ilike.${term},description.ilike.${term}`);
     }
-    if (sort === "recent") query = query.order("updated_at", { ascending: false });
-    if (sort === "stars") query = query.order("stars_count", { ascending: false });
-    if (sort === "newest") query = query.order("created_at", { ascending: false });
+    query = query.order("stars_count", { ascending: false });
 
     const { data } = await query.range(start, end);
     const nextRepos = data || [];
@@ -305,12 +300,10 @@ export default function Explore() {
 
     if (trimmedSearch) parts.push(`${trimmedSearch} in:name,description,readme`);
     if (topic) parts.push(`topic:${topic}`);
-    if (language !== "All languages") parts.push(`language:${language}`);
     if (minStars > 0) parts.push(`stars:>${minStars}`);
     if (!parts.length) parts.push("stars:>500");
 
-    const sortParam = sort === "recent" ? "updated" : "stars";
-    const payload = await fetchGitHubJson(`https://api.github.com/search/repositories?q=${encodeURIComponent(parts.join(" "))}&sort=${sortParam}&order=desc&page=${githubPage}&per_page=${limit}`);
+    const payload = await fetchGitHubJson(`https://api.github.com/search/repositories?q=${encodeURIComponent(parts.join(" "))}&sort=stars&order=desc&page=${githubPage}&per_page=${limit}`);
     return (payload.items || []).map(mapGitHubRepoToExploreRepo);
   }
 
@@ -479,25 +472,11 @@ export default function Explore() {
     }));
   }
 
-  function filterRepos(items) {
-    const term = search.trim().toLowerCase();
-    return items.filter((repo) => {
-      const owner = repo.profiles || {};
-      const matchesLanguage = language === "All languages" || repo.language === language;
-      const haystack = `${repo.name} ${repo.description || ""} ${owner.username || ""} ${owner.display_name || ""}`.toLowerCase();
-      return matchesLanguage && (!term || haystack.includes(term));
-    });
-  }
-
   function handleLoadMore() {
     const nextPage = page + 1;
     setPage(nextPage);
     loadRepos(nextPage);
   }
-
-  const languages = useMemo(() => {
-    return ["All languages", ...Array.from(new Set(repos.map((repo) => repo.language).filter(Boolean))).sort()];
-  }, [repos]);
 
   const visibleRepos = activeFilter === "Workspaces" || activeFilter === "Developers" ? [] : repos;
   const visibleWorkspaces = activeFilter === "Repos" ? [] : workspaces;
@@ -505,8 +484,25 @@ export default function Explore() {
   return (
     <main className="explore-page">
       <header className="explore-header">
-        <h1>Explore</h1>
-        <p>{topicFilter ? `Discover repos tagged ${topicFilter}.` : "Discover repos, workspaces, and developers."}</p>
+        <div>
+          <h1>Explore</h1>
+          <p>{topicFilter ? `Discover repos tagged ${topicFilter}.` : "Discover repos, workspaces, and developers."}</p>
+        </div>
+        <section className="explore-discovery-tabs" aria-label="Explore discovery sections">
+          <div className="explore-tab-row">
+            {exploreTabs.map((tab) => (
+              <button className={activeTab === tab ? "active" : ""} key={tab} onClick={() => setActiveTab(tab)} type="button">
+                {tab}
+              </button>
+            ))}
+          </div>
+          {["Trending", "Rising", "Topics", "Developers"].includes(activeTab) && (
+            <div className="explore-range-toggle" aria-label="Discovery time range">
+              <button className={timeRange === "week" ? "active" : ""} onClick={() => setTimeRange("week")} type="button">This week</button>
+              <button className={timeRange === "month" ? "active" : ""} onClick={() => setTimeRange("month")} type="button">This month</button>
+            </div>
+          )}
+        </section>
       </header>
 
       {sessionChecked && supabase && !session && (
@@ -517,6 +513,10 @@ export default function Explore() {
       )}
 
       <section className="explore-filter-bar" aria-label="Explore filters">
+        <label className="explore-search">
+          <Search size={16} />
+          <input placeholder="Search public repos and users..." value={search} onChange={(event) => setSearch(event.target.value)} />
+        </label>
         <div className="explore-filter-pills">
           {filters.map((filter) => (
             <button className={activeFilter === filter ? "active" : ""} key={filter} onClick={() => setActiveFilter(filter)} type="button">
@@ -524,34 +524,6 @@ export default function Explore() {
             </button>
           ))}
         </div>
-        <select value={language} onChange={(event) => setLanguage(event.target.value)}>
-          {languages.map((item) => <option key={item}>{item}</option>)}
-        </select>
-        <select value={sort} onChange={(event) => setSort(event.target.value)}>
-          <option value="recent">Recently active</option>
-          <option value="stars">Most stars</option>
-          <option value="newest">Newest</option>
-        </select>
-        <label className="explore-search">
-          <Search size={16} />
-          <input placeholder="Search public repos and users..." value={search} onChange={(event) => setSearch(event.target.value)} />
-        </label>
-      </section>
-
-      <section className="explore-discovery-tabs" aria-label="Explore discovery sections">
-        <div className="explore-tab-row">
-          {exploreTabs.map((tab) => (
-            <button className={activeTab === tab ? "active" : ""} key={tab} onClick={() => setActiveTab(tab)} type="button">
-              {tab}
-            </button>
-          ))}
-        </div>
-        {["Trending", "Rising", "Topics", "Developers"].includes(activeTab) && (
-          <div className="explore-range-toggle" aria-label="Discovery time range">
-            <button className={timeRange === "week" ? "active" : ""} onClick={() => setTimeRange("week")} type="button">This week</button>
-            <button className={timeRange === "month" ? "active" : ""} onClick={() => setTimeRange("month")} type="button">This month</button>
-          </div>
-        )}
       </section>
 
       {activeTab === "Featured" && (
@@ -660,14 +632,6 @@ function ExploreGridSkeleton() {
       </div>
     </article>
   ));
-}
-
-function sortRepos(items, sort) {
-  return [...items].sort((a, b) => {
-    if (sort === "recent") return new Date(b.updated_at || 0) - new Date(a.updated_at || 0);
-    if (sort === "newest") return new Date(b.created_at || 0) - new Date(a.created_at || 0);
-    return (b.stars_count || 0) - (a.stars_count || 0);
-  });
 }
 
 function mergeByUsername(primary, secondary) {

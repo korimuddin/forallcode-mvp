@@ -588,6 +588,18 @@
     padding: 24px;
   }
 
+  .cert-hero-icon {
+    top: 24px;
+    right: 24px;
+    width: 48px;
+    height: 48px;
+    border-radius: 18px;
+  }
+
+  .cert-hero h1 {
+    max-width: calc(100% - 62px);
+  }
+
   .cert-info-grid,
   .cert-checklist,
   .cert-info-grid.cert-area-grid,

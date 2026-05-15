@@ -15,6 +15,9 @@ CREATE TABLE profiles (
   cover_position_y NUMERIC DEFAULT 50,
   github_username TEXT,
   learn_comfort_level TEXT,
+  onboarding_completed BOOLEAN DEFAULT false,
+  onboarding_goal TEXT,
+  git_comfort_level TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
