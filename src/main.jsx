@@ -42,6 +42,7 @@ import TopicPills from "./components/repo/TopicPills";
 import ErrorBoundary from "./components/ui/ErrorBoundary";
 import IllustratedAvatar, { avatarVariants } from "./components/ui/IllustratedAvatar";
 import { LimitBanner } from "./components/ui/LimitBanner";
+import ParticleBackground from "./components/ui/ParticleBackground";
 import Skeleton from "./components/ui/Skeleton";
 import DeskIllustration from "./components/workspace/DeskIllustration";
 import { learnLessons, learnTracks } from "./data/learnLessons";
@@ -293,6 +294,7 @@ function AppRoutes() {
 
   return (
     <>
+      <ParticleBackground />
       {isActive && <LockInOverlay />}
       {completionMessage && <div className="lockin-toast" role="status">{completionMessage}</div>}
       {!isEntryPage && !isPortfolioPage && !isCertificatePage && <CommandPalette />}
