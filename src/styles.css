@@ -16580,3 +16580,503 @@ strong {
   .todo-paper { left: 18px; bottom: 18px; width: calc(100% - 36px); }
   .desk, .desk svg { min-height: 480px; }
 }
+
+/* Cosy B/W Haven theme */
+:root {
+  --cream: #f8f8f8;
+  --cream2: #ececec;
+  --cream3: #cfcfcf;
+  --sage: #d8d8d8;
+  --sage2: #bfbfbf;
+  --sage3: #787878;
+  --lavender: #e7e7e7;
+  --lavender2: #c9c9c9;
+  --lavender3: #181818;
+  --lavender4: #111111;
+  --rose: #eeeeee;
+  --rose2: #d4d4d4;
+  --rose3: #767676;
+  --sky: #e2e2e2;
+  --sky2: #bdbdbd;
+  --amber: #f1f1f1;
+  --amber2: #d7d7d7;
+  --amber3: #626262;
+  --ink: #151515;
+  --ink2: #3f3f3f;
+  --ink3: #767676;
+  --white: #fff;
+}
+
+html {
+  background: #222;
+}
+
+body {
+  background:
+    radial-gradient(circle at 16% 12%, rgba(255, 255, 255, .86), transparent 24%),
+    linear-gradient(180deg, #f8f8f8 0%, #cecece 48%, #222 100%);
+  color: var(--ink);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: .12;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(255, 255, 255, .75) 0 1px, transparent 1.6px),
+    radial-gradient(circle at 70% 60%, rgba(0, 0, 0, .34) 0 1px, transparent 1.7px);
+  background-size: 28px 28px, 34px 34px;
+  mix-blend-mode: overlay;
+}
+
+.particle-background {
+  opacity: .16;
+  filter: grayscale(1) contrast(1.22);
+  mix-blend-mode: multiply;
+}
+
+.app-shell {
+  isolation: isolate;
+}
+
+.entry-page {
+  background: #111;
+}
+
+.top-nav {
+  min-height: 72px;
+  border-bottom: 1px solid rgba(0, 0, 0, .2);
+  background: rgba(248, 248, 248, .82);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, .08);
+  backdrop-filter: blur(18px) saturate(.7);
+}
+
+.brand {
+  color: var(--ink);
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: .9rem;
+  font-weight: 900;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+
+.brand-mark,
+.feature-icon,
+.phase-initials,
+.avatar-picker button {
+  border-radius: 0;
+  border-color: rgba(0, 0, 0, .24);
+  background: rgba(255, 255, 255, .66);
+  color: var(--ink);
+}
+
+.top-nav-center > a,
+.nav-trigger,
+.nav-static-link,
+.nav-icon-button,
+.avatar-trigger,
+.nav-ghost-button,
+.nav-primary-button,
+.search-box,
+.dropdown-menu,
+.global-search-menu {
+  border-radius: 0;
+  border-color: rgba(0, 0, 0, .22);
+  background: rgba(255, 255, 255, .62);
+  box-shadow: none;
+}
+
+.top-nav-center > a,
+.nav-trigger,
+.nav-static-link,
+.nav-icon-button,
+.avatar-trigger,
+.nav-ghost-button,
+.nav-primary-button,
+.integrated-local-search,
+.search-scope-toggle button {
+  font-size: .72rem;
+  font-weight: 850;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.top-nav-center > a:hover,
+.nav-trigger:hover,
+.nav-static-link:hover,
+.nav-icon-button:hover,
+.avatar-trigger:hover,
+.nav-ghost-button:hover,
+.search-box:hover,
+.card:hover,
+.button:hover,
+input:hover,
+textarea:hover,
+select:hover {
+  border-color: #111;
+  background-color: rgba(255, 255, 255, .82);
+}
+
+.page-frame {
+  width: min(1180px, calc(100vw - 44px));
+  padding-top: 30px;
+}
+
+.eyebrow,
+.page-heading .eyebrow {
+  color: var(--ink2);
+  font-size: .72rem;
+  font-weight: 900;
+  letter-spacing: .22em;
+}
+
+h1,
+h2,
+h3 {
+  color: var(--ink);
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-weight: 900;
+  letter-spacing: -.055em;
+}
+
+h1 {
+  line-height: .92;
+}
+
+h2,
+h3 {
+  letter-spacing: -.035em;
+}
+
+p {
+  color: var(--ink2);
+}
+
+.hero,
+.band,
+.phase-dashboard-hero,
+.phase-filter-bar,
+.profile-header,
+.learn-layout,
+.settings-section,
+.settings-radio-cards button,
+.settings-toggle-row,
+.settings-connected-card,
+.settings-integration-card,
+.settings-plan-card,
+.feedback-card,
+.feedback-confirmation,
+.education-callout,
+.feed-repo-preview,
+.feed-event-preview,
+.repo-empty-state,
+.learn-catalog-header,
+.learn-catalog-card,
+.learn-catalog-empty,
+.auth-panel > .card,
+.landing-designer-panel,
+.phase-repo-header,
+.phase-code-tab,
+.github-panel {
+  border-radius: 0;
+  border-color: rgba(0, 0, 0, .22);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, .72), rgba(210, 210, 210, .54));
+  box-shadow: 0 34px 76px rgba(0, 0, 0, .18);
+}
+
+.landing-hero {
+  position: relative;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, .88fr);
+  min-height: min(610px, calc(100vh - 120px));
+  margin-top: 34px;
+  padding: 0;
+  border-color: rgba(0, 0, 0, .24);
+  background: linear-gradient(135deg, rgba(255, 255, 255, .76), rgba(210, 210, 210, .62));
+  box-shadow: 0 40px 80px rgba(0, 0, 0, .28);
+}
+
+.landing-hero .hero-copy {
+  min-height: 100%;
+  padding: clamp(34px, 5vw, 58px);
+  border-right: 1px solid rgba(0, 0, 0, .16);
+}
+
+.landing-hero h1 {
+  max-width: 640px;
+  margin: clamp(34px, 7vw, 76px) 0 22px;
+  font-size: clamp(3rem, 5.4vw, 4.45rem);
+  letter-spacing: -.06em;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.landing-hero .hero-copy p:not(.eyebrow) {
+  max-width: 560px;
+  color: #3e3e3e;
+  line-height: 1.75;
+}
+
+.landing-hero .desk-preview {
+  height: calc(100% - clamp(34px, 5vw, 58px) * 2);
+  min-height: 300px;
+  margin-right: clamp(34px, 5vw, 58px);
+  border-color: rgba(255, 255, 255, .58);
+  background:
+    repeating-radial-gradient(circle at 20% 10%, rgba(255, 255, 255, .55) 0 2px, transparent 2px 18px),
+    linear-gradient(135deg, rgba(255, 255, 255, .4), rgba(0, 0, 0, .08));
+  filter: grayscale(1) contrast(1.08);
+}
+
+.landing-hero .desk-preview svg {
+  height: 100%;
+  object-fit: contain;
+}
+
+.button,
+.settings-save-button,
+.settings-delete-button,
+.onboarding-primary,
+.onboarding-secondary,
+.onboarding-ghost,
+.github-panel-actions button,
+.github-panel-actions a,
+.phase-repo-actions a,
+.phase-repo-actions button {
+  min-height: 44px;
+  border-radius: 0;
+  border: 1px solid #111;
+  background: #111;
+  color: #fff;
+  font-size: .76rem;
+  font-weight: 900;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.button.soft,
+.settings-ghost,
+.phase-repo-actions a,
+.phase-repo-actions button {
+  background: rgba(255, 255, 255, .68);
+  color: var(--ink);
+}
+
+.button:hover,
+.settings-save-button:hover,
+.settings-delete-button:hover,
+.onboarding-primary:hover,
+.github-panel-actions button:hover,
+.github-panel-actions a:hover {
+  background: #2a2a2a;
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.button.soft:hover,
+.settings-ghost:hover,
+.phase-repo-actions a:hover,
+.phase-repo-actions button:hover {
+  background: #111;
+  color: #fff;
+}
+
+.card,
+.stat,
+.featured-project-card,
+.repo-card,
+.phase-repo-card,
+.portfolio-card,
+.workspace-card,
+.learn-card,
+.lesson-card,
+.learn-cert-card,
+.marketplace-card,
+.course-card,
+.cert-card,
+.upgrade-card,
+.project-card,
+.issue-card,
+.pr-card,
+.discussion-card,
+.gist-card {
+  border-radius: 0;
+  border-color: rgba(0, 0, 0, .24);
+  background: rgba(255, 255, 255, .68);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, .1);
+}
+
+.large-card {
+  border-radius: 0;
+}
+
+.card:hover,
+.stat:hover,
+.featured-project-card:hover,
+.repo-card:hover,
+.phase-repo-card:hover {
+  box-shadow: 0 28px 64px rgba(0, 0, 0, .16);
+}
+
+input,
+textarea,
+select,
+.settings-input,
+.new-repo-field textarea,
+.new-repo-field select,
+.repo-create-field textarea,
+.repo-create-field select,
+.phase-filter-bar input,
+.phase-filter-bar select {
+  border-radius: 0;
+  border-color: rgba(0, 0, 0, .3);
+  background: rgba(255, 255, 255, .65);
+  color: #151515;
+}
+
+label,
+.settings-input small,
+.empty-helper {
+  color: var(--ink2);
+}
+
+.badge,
+.live-pill,
+.language-pill,
+.repo-visibility-pill,
+.settings-pill,
+.domain-status,
+.search-scope-toggle button,
+.carousel-dots span,
+.phase-dots button,
+.phase-dots span {
+  border-radius: 0;
+}
+
+.badge,
+.language-pill,
+.repo-visibility-pill,
+.settings-pill,
+.domain-status {
+  border: 1px solid rgba(0, 0, 0, .22);
+  background: rgba(255, 255, 255, .64);
+  color: var(--ink);
+  font-weight: 900;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.phase-dashboard-hero {
+  background: linear-gradient(135deg, rgba(255, 255, 255, .76), rgba(198, 198, 198, .62));
+}
+
+.phase-dashboard-hero::before {
+  background:
+    repeating-radial-gradient(circle at 22% 12%, rgba(255, 255, 255, .38) 0 2px, transparent 2px 18px),
+    linear-gradient(90deg, rgba(255, 255, 255, .36), transparent 62%);
+}
+
+.dashboard-hero-copy > span,
+.phase-section-head a {
+  border-radius: 0;
+  color: var(--ink);
+  font-weight: 900;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.phase-dots .active,
+.phase-dots button.active,
+.carousel-dots .active,
+.carousel-dots button.active {
+  border-color: #111;
+  background: #111;
+}
+
+.dashboard-hero-visual,
+.workspace,
+.desk,
+.cover,
+.landing-preview,
+.theme-preview,
+.explore-featured-card {
+  filter: grayscale(1) contrast(1.06);
+}
+
+.signin-globe-card {
+  width: min(1180px, calc(100vw - 36px));
+  margin: 0 auto 34px;
+  border-radius: 0;
+  border-color: rgba(255, 255, 255, .18);
+  background:
+    radial-gradient(circle at 18% 18%, rgba(255, 255, 255, .08), transparent 34%),
+    linear-gradient(145deg, #080808 0%, #151515 58%, #252525 100%);
+  box-shadow: 0 36px 78px rgba(0, 0, 0, .3);
+}
+
+.signin-globe-copy h2 {
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-weight: 900;
+  letter-spacing: -.055em;
+}
+
+.signin-globe-card .eyebrow {
+  color: rgba(255, 255, 255, .46);
+}
+
+.signin-globe-badge,
+.signin-globe-badge strong,
+.globe-tooltip {
+  border-radius: 0;
+}
+
+.signin-globe-badge {
+  border-color: rgba(255, 255, 255, .28);
+  background: rgba(255, 255, 255, .12);
+}
+
+.signin-globe-badge strong {
+  background: #f1f1f1;
+  color: #111;
+}
+
+.signin-globe-moon-orbit {
+  border-color: rgba(255, 255, 255, .14);
+}
+
+.signin-globe-moon {
+  border-radius: 0;
+  background: linear-gradient(135deg, #fff, #9d9d9d);
+  box-shadow: 0 0 18px rgba(255, 255, 255, .42);
+}
+
+footer {
+  border-top-color: rgba(255, 255, 255, .18);
+  background: rgba(20, 20, 20, .72);
+  color: #dedede;
+}
+
+footer a,
+.copyright {
+  color: #f0f0f0;
+}
+
+@media (max-width: 860px) {
+  .landing-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-hero .hero-copy {
+    border-right: 0;
+    border-bottom: 1px solid rgba(0, 0, 0, .16);
+  }
+
+  .landing-hero .desk-preview {
+    height: 280px;
+    margin: 0 clamp(24px, 6vw, 34px) clamp(24px, 6vw, 34px);
+  }
+}

@@ -103,25 +103,25 @@ export default function SignInGlobe() {
         const landFeatures = topojson.feature(world.default || world, (world.default || world).objects.land).features;
         globe
           .backgroundColor("rgba(0,0,0,0)")
-          .atmosphereColor("#2c1d10")
+          .atmosphereColor("#f1f1f1")
           .atmosphereAltitude(0.015)
           .globeMaterial(new THREE.MeshBasicMaterial({
-            color: "#120b08",
+            color: "#090909",
             transparent: true,
             opacity: 1
           }))
           .polygonsData(landFeatures)
-          .polygonCapColor(() => "rgba(246, 197, 107, 0.96)")
-          .polygonSideColor(() => "rgba(200, 160, 85, 0.28)")
-          .polygonStrokeColor(() => "rgba(255, 241, 191, 0.42)")
+          .polygonCapColor(() => "rgba(245, 245, 245, 0.92)")
+          .polygonSideColor(() => "rgba(170, 170, 170, 0.28)")
+          .polygonStrokeColor(() => "rgba(255, 255, 255, 0.38)")
           .polygonAltitude(0.012)
-          .arcColor(() => "#ffe39a")
+          .arcColor(() => "#ffffff")
           .arcAltitude(0.28)
           .arcStroke(0.55)
           .arcDashLength(0.42)
           .arcDashGap(0.18)
           .arcDashAnimateTime(reduceMotion ? 0 : 1800)
-          .pointColor(() => "#fff1bf")
+          .pointColor(() => "#ffffff")
           .pointAltitude(0.012)
           .pointRadius((point) => point.size || 0.55)
           .pointsMerge(false)
