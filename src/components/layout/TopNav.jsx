@@ -116,6 +116,15 @@ export default function TopNav() {
   }, [toastMessage]);
 
   useEffect(() => {
+    function handleAppToast(event) {
+      if (event.detail) setToastMessage(String(event.detail));
+    }
+
+    window.addEventListener("forallcode-toast", handleAppToast);
+    return () => window.removeEventListener("forallcode-toast", handleAppToast);
+  }, []);
+
+  useEffect(() => {
     async function loadProfile() {
       if (!supabase || !session?.user?.id) {
         setProfile(mockUser);

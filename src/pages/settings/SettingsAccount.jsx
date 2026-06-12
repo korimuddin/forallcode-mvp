@@ -176,7 +176,7 @@ export default function SettingsAccount() {
       const { error } = await supabase
         .from("profiles")
         .upsert({ id: session.user.id, display_name: account.displayName }, { onConflict: "id" });
-      if (error) console.warn("Could not sync account display name to Supabase.", error);
+      void error;
     });
   }
 

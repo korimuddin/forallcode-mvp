@@ -2,6 +2,11 @@ import path from "node:path";
 import maxmind from "maxmind";
 import { COUNTRY_TO_REGION, createRegionEvent } from "../shared/regions.js";
 
+/*
+ * Globe privacy contract:
+ * IPs are read transiently for region lookup and never stored, logged, or forwarded.
+ * Only coarse region events leave this module: { region, label, lat, lng, timestamp }.
+ */
 const databasePath = path.resolve(process.cwd(), "server", "data", "GeoLite2-Country.mmdb");
 let lookupPromise;
 

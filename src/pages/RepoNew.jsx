@@ -2,9 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { FolderGit2 } from "lucide-react";
 import RepoCreateForm from "../components/repo/RepoCreateForm";
+import Hint from "../components/ui/Hint";
 import { LimitBanner } from "../components/ui/LimitBanner";
 import { useAuthSession, useDocumentTitle, useSignedInUserData } from "../lib/hooks";
 import { createFeedEvent } from "../lib/createFeedEvent";
+import { celebrate } from "../lib/celebrate";
 import { isAtLimit } from "../lib/plans";
 import { checkGitHubRepositoryAvailability, createGitHubRepository, supabase } from "../lib/supabase";
 import { trackUsage } from "../lib/trackUsage";
@@ -167,7 +169,10 @@ export default function RepoNew() {
         }).catch(() => {});
       }
 
-      navigate(`/${createdRepo.owner || form.owner}/${createdRepo.name}`);
+      celebrate();
+      window.dispatchEvent(new CustomEvent("forallcode-toast", { detail: "Your first repo is live! 🎉 That's a real milestone." }));
+      setStatus("Your first repo is live! 🎉 That's a real milestone.");
+      window.setTimeout(() => navigate(`/${createdRepo.owner || form.owner}/${createdRepo.name}`), 650);
     } catch (error) {
       setStatus(error.message || "Could not create this repository.");
     } finally {
@@ -183,8 +188,8 @@ export default function RepoNew() {
     <div className="repo-create-page page-frame">
       <header className="repo-create-header">
         <span className="eyebrow">New repo</span>
-        <h1>Create a new repository</h1>
-        <p>Start a real GitHub repository with the ForAllCode comfort layer already wrapped around it.</p>
+        <h1>Create a new <Hint term="repository">repository</Hint></h1>
+        <p>Start a real GitHub <Hint term="repository">repository</Hint> with the ForAllCode comfort layer already wrapped around it.</p>
       </header>
 
       <section className="repo-create-shell">

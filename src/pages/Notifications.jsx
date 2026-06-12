@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
+import { Bell } from "lucide-react";
+import EmptyState from "../components/ui/EmptyState";
 import IllustratedAvatar from "../components/ui/IllustratedAvatar";
 import { useDocumentTitle } from "../lib/hooks";
 import { getCurrentSession, supabase } from "../lib/supabase";
@@ -73,7 +75,13 @@ export default function Notifications() {
 
       <section className="notifications-list">
         {visibleItems.map((notification) => <NotificationCard key={notification.id} notification={notification} />)}
-        {visibleItems.length === 0 && <p className="notifications-empty">Nothing here yet.</p>}
+        {visibleItems.length === 0 && (
+          <EmptyState
+            icon={<Bell size={34} />}
+            title="All caught up ✨"
+            body="When someone stars your work or replies to you, you'll hear about it here."
+          />
+        )}
       </section>
     </main>
   );

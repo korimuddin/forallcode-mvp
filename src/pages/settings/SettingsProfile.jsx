@@ -130,7 +130,7 @@ export default function SettingsProfile() {
           professional_title: profile.professionalTitle,
           skills: profile.skills.split(",").map((skill) => skill.trim()).filter(Boolean)
         }, { onConflict: "id" });
-      if (error) console.warn("Could not sync profile settings to Supabase.", error);
+      void error;
     }
     setStatus("saved");
     setTimeout(() => setStatus("default"), 1800);

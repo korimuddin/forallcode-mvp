@@ -22,6 +22,7 @@ import {
 import BlockInserter from "../components/readme/BlockInserter";
 import { allReadmeTemplateOptions, readmeTemplates } from "../data/readmeTemplates";
 import { useDocumentTitle } from "../lib/hooks";
+import { celebrate } from "../lib/celebrate";
 import { renderMarkdown } from "../lib/markdownRenderer";
 import { getCurrentSession, supabase } from "../lib/supabase";
 import { trackUsage } from "../lib/trackUsage";
@@ -334,7 +335,9 @@ export default function ReadmeStudio() {
 
       setIsDirty(false);
       setSaveState("saved");
-      setStatus("README saved to GitHub");
+      celebrate();
+      window.dispatchEvent(new CustomEvent("forallcode-toast", { detail: "README saved! 🎉 Your project has a clearer front door now." }));
+      setStatus("README saved! 🎉 Your project has a clearer front door now.");
       trackUsage(session?.user?.id, "readme_saved", { repo_name: repo }).catch(() => {});
       window.setTimeout(() => setSaveState("idle"), 2000);
     } catch (error) {

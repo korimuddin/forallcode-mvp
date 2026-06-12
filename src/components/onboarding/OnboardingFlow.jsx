@@ -11,6 +11,7 @@ import ReadyStep from "./steps/ReadyStep";
 import ReposStep from "./steps/ReposStep";
 import WelcomeStep from "./steps/WelcomeStep";
 import WorkspaceStep from "./steps/WorkspaceStep";
+import { celebrate } from "../../lib/celebrate";
 
 const TOTAL_STEPS = 9;
 
@@ -75,6 +76,8 @@ export default function OnboardingFlow({ user, profile, repos = [], onComplete }
           .update({ onboarding_completed: true })
           .eq("id", user.id);
       }
+      celebrate();
+      window.dispatchEvent(new CustomEvent("forallcode-toast", { detail: "Onboarding complete! 🎉 ForAllCode is yours now." }));
       onComplete?.();
     } finally {
       setSaving(false);

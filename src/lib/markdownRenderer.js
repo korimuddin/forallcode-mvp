@@ -47,7 +47,7 @@ renderer.code = function code({ text, lang }) {
   return `
     <div style="position: relative; margin: 16px 0;">
       <div style="display: flex; align-items: center; justify-content: space-between;
-                  padding: 8px 14px; background: #3d3530; border-radius: 10px 10px 0 0;">
+                  padding: 8px 14px; background: #3d3530; border-radius: 0;">
         <span style="font-family: DM Mono, monospace; font-size: 11px; color: #9c918c;">
           ${language || "code"}
         </span>
@@ -59,7 +59,7 @@ renderer.code = function code({ text, lang }) {
         </button>
       </div>
       <pre style="margin: 0; padding: 16px; background: #2c2824;
-                  border-radius: 0 0 10px 10px; overflow-x: auto;">
+                  border-radius: 0; overflow-x: auto;">
         <code class="hljs" style="font-family: DM Mono, monospace; font-size: 12px;
                                    line-height: 1.7;">${highlighted}</code>
       </pre>
@@ -68,7 +68,7 @@ renderer.code = function code({ text, lang }) {
 
 renderer.codespan = function codespan({ text }) {
   return `<code style="font-family: DM Mono, monospace; font-size: 12px; background: #f4efe6;
-                padding: 2px 6px; border-radius: 4px; color: #9b8fd4;">${text}</code>`;
+                padding: 2px 6px; border-radius: 0; color: #9b8fd4;">${text}</code>`;
 };
 
 renderer.link = function link({ href, title, tokens }) {
@@ -81,7 +81,7 @@ renderer.link = function link({ href, title, tokens }) {
 
 renderer.blockquote = function blockquote({ tokens }) {
   return `<blockquote style="border-left: 3px solid #9b8fd4; margin: 16px 0;
-                       padding: 8px 16px; background: #f4efe6; border-radius: 0 8px 8px 0;">
+                       padding: 8px 16px; background: #f4efe6; border-radius: 0;">
     <div style="margin: 0; color: #6b5f58; font-style: italic;">${renderBlock(this, tokens)}</div>
   </blockquote>`;
 };
@@ -93,7 +93,7 @@ renderer.hr = function hr() {
 renderer.image = function image({ href, title, text }) {
   const titleAttr = title ? ` title="${escapeAttribute(title)}"` : "";
   return `<img src="${escapeAttribute(href)}" alt="${escapeAttribute(text)}"${titleAttr}
-        style="max-width: 100%; border-radius: 10px; margin: 12px 0;
+        style="max-width: 100%; border-radius: 0; margin: 12px 0;
                border: 1px solid #e8e0d4;"/>`;
 };
 
@@ -143,6 +143,7 @@ const markdownParser = new Marked({
 export function renderMarkdown(markdown) {
   if (!markdown) return "";
   const rawHtml = markdownParser.parse(markdown);
+  // SECURITY: all markdown output MUST pass through DOMPurify. Do not bypass.
   return DOMPurify.sanitize(rawHtml, {
     ADD_ATTR: ["onclick", "data-code", "onmouseover", "onmouseout"]
   });

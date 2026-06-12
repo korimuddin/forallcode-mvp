@@ -10,7 +10,7 @@ export function ProGate({ children, feature, description }) {
     <div style={{
       background: "linear-gradient(135deg, #f4efe6, #ddd5f0)",
       border: "1px solid #c4b8e8",
-      borderRadius: 16,
+      borderRadius: 0,
       padding: "24px 28px",
       textAlign: "center"
     }}>

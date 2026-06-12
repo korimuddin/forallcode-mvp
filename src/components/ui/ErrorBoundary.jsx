@@ -12,7 +12,6 @@ export default class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, info) {
-    console.error("ForAllCode caught an error", error, info);
     logFrontendError(error, info);
   }
 
@@ -41,7 +40,7 @@ async function logFrontendError(error, info) {
       error_stack: `${error?.stack || ""}\n${info?.componentStack || ""}`.slice(0, 2000),
       page_path: window.location.pathname
     });
-  } catch (logError) {
-    console.error("Could not log ForAllCode error", logError);
+  } catch {
+    // Error logging should never create another user-visible failure.
   }
 }

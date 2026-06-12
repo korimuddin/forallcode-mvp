@@ -11,7 +11,8 @@ export const defaultAppearance = {
   accent: "lavender",
   fontSize: "default",
   reduceMotion: false,
-  density: "comfortable"
+  density: "comfortable",
+  plainLanguageHints: true
 };
 
 const storageKey = "forallcode-appearance";
@@ -23,6 +24,12 @@ const lightTokens = {
   ink: "#3d3530",
   ink2: "#6b5f58",
   ink3: "#9c918c",
+  ink3Text: "#796d67",
+  lavenderText: "#6a5cb8",
+  sageText: "#4e7a47",
+  roseText: "#af505b",
+  amberText: "#8a6a2a",
+  skyText: "#3d6e96",
   white: "#fffdf9"
 };
 
@@ -33,6 +40,12 @@ const darkTokens = {
   ink: "#fffdf9",
   ink2: "#e8e0d4",
   ink3: "#b8aca2",
+  ink3Text: "#b3a89f",
+  lavenderText: "#c4b8f0",
+  sageText: "#a8d4a0",
+  roseText: "#f0a8b0",
+  amberText: "#e8c888",
+  skyText: "#a0c8e8",
   white: "#332e29"
 };
 
@@ -68,7 +81,8 @@ export function applyAppearance(appearance = readAppearance()) {
   const root = document.documentElement;
 
   Object.entries(tokens).forEach(([key, value]) => {
-    root.style.setProperty(`--${key}`, value);
+    const cssKey = key.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
+    root.style.setProperty(`--${cssKey}`, value);
   });
 
   root.style.setProperty("--accent", accent.colour);
@@ -88,6 +102,8 @@ export function applyAppearance(appearance = readAppearance()) {
   document.body.classList.toggle("reduce-motion", Boolean(appearance.reduceMotion));
   document.body.classList.toggle("density-compact", appearance.density === "compact");
   document.body.classList.toggle("density-comfortable", appearance.density !== "compact");
+  document.body.classList.toggle("plain-language-hints-off", appearance.plainLanguageHints === false);
+  window.dispatchEvent(new CustomEvent("forallcode-appearance-change", { detail: { ...defaultAppearance, ...appearance } }));
 }
 
 export function persistAndApplyAppearance(appearance) {

@@ -419,10 +419,7 @@ export async function upsertProfileFromSession(session) {
     .select("*")
     .maybeSingle();
 
-  if (error) {
-    console.warn("Could not persist profile in Supabase.", error);
-    return null;
-  }
+  if (error) return null;
   return data;
 }
 
@@ -530,7 +527,7 @@ export async function syncGitHubReposToSupabase(session) {
         created_at: repo.createdAt
       })), { onConflict: "github_repo_id" });
 
-    if (error) console.warn("Could not persist repositories in Supabase.", error);
+    void error;
   }
 
   const storedRepos = await fetchStoredRepositoryHeroFields(session);
@@ -545,10 +542,7 @@ export async function fetchStoredRepositoryHeroFields(session) {
     .select("github_repo_id, name, hero_image_url, hero_position_x, hero_position_y, hero_title, hero_font")
     .eq("owner_id", session.user.id);
 
-  if (error) {
-    console.warn("Could not load repository hero settings from Supabase.", error);
-    return [];
-  }
+  if (error) return [];
 
   return data || [];
 }

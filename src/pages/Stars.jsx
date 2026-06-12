@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { Search, Star } from "lucide-react";
+import EmptyState from "../components/ui/EmptyState";
 import IllustratedAvatar from "../components/ui/IllustratedAvatar";
 import Skeleton from "../components/ui/Skeleton";
 import { useAuthSession, useDocumentTitle } from "../lib/hooks";
@@ -128,12 +129,13 @@ export default function StarsPage() {
       )}
       {!loading && error && <p className="auth-error">{error}</p>}
       {!loading && !error && visibleRepos.length === 0 && (
-        <section className="stars-empty">
-          <Star size={72} />
-          <h2>No starred repositories yet</h2>
-          <p>Star repositories you want to keep an eye on.</p>
-          <Link className="button primary" to="/explore">Explore repositories →</Link>
-        </section>
+        <EmptyState
+          icon={<Star size={34} />}
+          title="Save inspiring projects here."
+          body="Star repositories you want to revisit, learn from, or keep close while you build your own style."
+          actionLabel="Explore repositories"
+          to="/explore"
+        />
       )}
       {!loading && !error && visibleRepos.length > 0 && (
         <div className="stars-grid">

@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { GitPullRequest, Plus } from "lucide-react";
 import PRCard, { getPRCommentCount } from "../components/pr/PRCard";
+import EmptyState from "../components/ui/EmptyState";
+import Hint from "../components/ui/Hint";
 import Skeleton from "../components/ui/Skeleton";
 import { useDocumentTitle } from "../lib/hooks";
 import { supabase } from "../lib/supabase";
@@ -44,14 +46,14 @@ function RepoPRHeader({ activeStatus, counts, canCreate, onStatusChange, repo, r
         <Link to={`/${username}/${repoName}`}>Code</Link>
         <Link to={`/${username}/${repoName}/issues`}>Issues</Link>
         <Link className="active" to={`/${username}/${repoName}/pulls`}>
-          Pull requests
+          <Hint term="pull-request">Pull requests</Hint>
           {counts.open > 0 && <span className="repo-tab-count">{counts.open}</span>}
         </Link>
         <Link to={`/${username}/${repoName}/discussions`}>Discussions</Link>
         <Link to={`/${username}/${repoName}/projects`}>Projects</Link>
         {showInsights && <Link to={`/${username}/${repoName}/insights`}>Insights</Link>}
-        <Link to={`/${username}/${repoName}`}>Commits</Link>
-        <Link to={`/${username}/${repoName}`}>Branches</Link>
+        <Link to={`/${username}/${repoName}`}><Hint term="commit">Commits</Hint></Link>
+        <Link to={`/${username}/${repoName}`}><Hint term="branch">Branches</Hint></Link>
         <Link to={`/${username}/${repoName}`}>Settings</Link>
       </nav>
       <div className="issues-header-row">
@@ -69,7 +71,7 @@ function RepoPRHeader({ activeStatus, counts, canCreate, onStatusChange, repo, r
         </div>
         {canCreate && (
           <Link className="new-issue-button" to={`/${username}/${repoName}/pulls/new`}>
-            <Plus size={16} />New pull request
+            <Plus size={16} />New <Hint term="pull-request">pull request</Hint>
           </Link>
         )}
       </div>
@@ -202,10 +204,13 @@ export default function PRList() {
       )}
       {!loading && error && <p className="auth-error">{error}</p>}
       {!loading && !error && visiblePRs.length === 0 && (
-        <div className="issue-empty-state">
-          <h2>No {status} pull requests yet</h2>
-          <p>{status === "open" ? "When branches are ready to review, pull requests will appear here." : "Merged and closed pull requests will collect here over time."}</p>
-        </div>
+        <EmptyState
+          icon={<GitPullRequest size={34} />}
+          title={status === "open" ? "Suggested changes will appear here." : "Reviewed changes will collect here."}
+          body={status === "open" ? "A pull request is a way to suggest changes to a project. When someone is ready for review, you will see it here." : "Merged and closed pull requests help everyone understand how the project has grown over time."}
+          actionLabel={isContributor ? "Open a pull request" : undefined}
+          to={isContributor ? `/${username}/${repoName}/pulls/new` : undefined}
+        />
       )}
       {!loading && !error && visiblePRs.length > 0 && (
         <div className="issue-list pr-list">

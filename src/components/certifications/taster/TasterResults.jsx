@@ -1,4 +1,6 @@
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { celebrate } from "../../../lib/celebrate";
 
 export default function TasterResults({ config, answers, onRetake }) {
   const navigate = useNavigate();
@@ -25,6 +27,12 @@ export default function TasterResults({ config, answers, onRetake }) {
   const strong = bySection.filter((section) => section.percentage >= 67);
   const weak = bySection.filter((section) => section.percentage < 67);
   const grade = getGrade(scorePercentage);
+
+  useEffect(() => {
+    if (scorePercentage < 70) return;
+    celebrate();
+    window.dispatchEvent(new CustomEvent("forallcode-toast", { detail: "Quiz passed! 🎉 You just proved you know more than you thought." }));
+  }, [scorePercentage]);
 
   return (
     <div className="cert-taster-results">

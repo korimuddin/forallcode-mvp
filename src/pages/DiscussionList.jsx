@@ -2,6 +2,8 @@ import { formatDistanceToNow } from "date-fns";
 import { MessageCircle, Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import EmptyState from "../components/ui/EmptyState";
+import Hint from "../components/ui/Hint";
 import Skeleton from "../components/ui/Skeleton";
 import { CATEGORY_STYLES, getDiscussionCommentCount } from "../lib/discussions";
 import { useDocumentTitle } from "../lib/hooks";
@@ -112,11 +114,13 @@ export default function DiscussionList() {
       )}
       {!loading && error && <p className="auth-error">{error}</p>}
       {!loading && !error && visibleDiscussions.length === 0 && (
-        <div className="issue-empty-state">
-          <MessageCircle size={38} />
-          <h2>No discussions yet</h2>
-          <p>Questions, ideas, announcements, and show-and-tell threads will appear here.</p>
-        </div>
+        <EmptyState
+          icon={<MessageCircle size={34} />}
+          title="This is where project conversations can begin."
+          body="Ask a question, share an idea, or start a small show-and-tell thread when there is something worth talking through."
+          actionLabel={signedIn ? "Start a discussion" : undefined}
+          to={signedIn ? `/${username}/${repoName}/discussions/new` : undefined}
+        />
       )}
       {!loading && !error && visibleDiscussions.length > 0 && (
         <div className="discussion-list">
@@ -148,12 +152,12 @@ export function DiscussionRepoHeader({ active, canCreate = false, repo, repoName
       <nav className="repo-tab-bar issue-page-tabs" aria-label="Repository navigation">
         <Link to={`/${username}/${repoName}`}>Code</Link>
         <Link to={`/${username}/${repoName}/issues`}>Issues</Link>
-        <Link to={`/${username}/${repoName}/pulls`}>Pull requests</Link>
+        <Link to={`/${username}/${repoName}/pulls`}><Hint term="pull-request">Pull requests</Hint></Link>
         <Link className={active === "discussions" ? "active" : ""} to={`/${username}/${repoName}/discussions`}>Discussions</Link>
         <Link to={`/${username}/${repoName}/projects`}>Projects</Link>
         {showInsights && <Link to={`/${username}/${repoName}/insights`}>Insights</Link>}
-        <Link to={`/${username}/${repoName}`}>Commits</Link>
-        <Link to={`/${username}/${repoName}`}>Branches</Link>
+        <Link to={`/${username}/${repoName}`}><Hint term="commit">Commits</Hint></Link>
+        <Link to={`/${username}/${repoName}`}><Hint term="branch">Branches</Hint></Link>
         <Link to={`/${username}/${repoName}`}>Settings</Link>
       </nav>
       <div className="issues-header-row">

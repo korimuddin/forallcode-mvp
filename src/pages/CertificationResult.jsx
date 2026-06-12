@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Award, RotateCcw } from "lucide-react";
 import { useDocumentTitle } from "../lib/hooks";
+import { celebrate } from "../lib/celebrate";
 import { supabase } from "../lib/supabase";
 
 export default function CertificationResult({
@@ -15,6 +16,12 @@ export default function CertificationResult({
   const score = Number(searchParams.get("score") || 0);
   const passed = searchParams.get("passed") === "true";
   const [certificateUrl, setCertificateUrl] = useState("");
+
+  useEffect(() => {
+    if (!passed) return;
+    celebrate();
+    window.dispatchEvent(new CustomEvent("forallcode-toast", { detail: "Certificate earned! 🎉 That is a real milestone." }));
+  }, [passed]);
 
   useEffect(() => {
     async function loadCertificate() {
@@ -31,7 +38,7 @@ export default function CertificationResult({
     }
 
     loadCertificate();
-  }, [passed]);
+  }, [certType, passed]);
 
   return (
     <div className="cert-page">
