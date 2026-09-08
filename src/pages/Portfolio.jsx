@@ -129,7 +129,7 @@ export default function Portfolio() {
   }, [displayEntries, profile?.skills]);
 
   async function sharePortfolio() {
-    const shareUrl = `https://forallcode.netlify.app/${username}/portfolio`;
+    const shareUrl = `${window.location.origin}/${encodeURIComponent(username)}/portfolio`;
     try {
       await navigator.clipboard.writeText(shareUrl);
       setShareStatus("Portfolio link copied.");

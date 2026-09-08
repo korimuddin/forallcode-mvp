@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 
 const PUBLIC_STATS_CACHE_KEY = "forallcode_public_stats";
 const PUBLIC_STATS_CACHE_TTL = 60 * 60 * 1000;
-const fallbackStatements = ["Learn by doing", "Built for beginners", "Loved by career-switchers"];
+const fallbackStatements = ["Learn Git visually", "Practice on real projects", "Explain what you built"];
 
 export default function LandingPage() {
   useDocumentTitle("Home · ForAllCode");
@@ -27,9 +27,9 @@ export default function LandingPage() {
     <>
       <section className="hero landing-hero">
         <div className="hero-copy">
-          <p className="eyebrow">Made for people who are new to this</p>
-          <h1>Your first home for code.</h1>
-          <p>ForAllCode is a friendly place to keep your projects, learn Git with pictures instead of jargon, and build a portfolio you're proud to share. No experience needed — that's the point.</p>
+          <p className="eyebrow">For beginners and career-switchers</p>
+          <h1>ForAllCode</h1>
+          <p>Learn Git by building a real project, then turn that work into a portfolio you can explain with confidence.</p>
           <div className="button-row">
             {loggedIn ? (
               <>
@@ -39,11 +39,11 @@ export default function LandingPage() {
             ) : (
               <>
                 <Button onClick={handleGitHubSignIn}><Github size={18} />Start free with GitHub</Button>
-                <Button to="/certification/git-fundamentals" variant="ghost">Just exploring? Take a 2-minute quiz</Button>
+                <Button to="/learn/commits" variant="ghost">Try a lesson first</Button>
               </>
             )}
           </div>
-          {!loggedIn && <p className="hero-reassure">Free forever for learning · No credit card · Your work stays yours</p>}
+          {!loggedIn && <p className="hero-reassure">All visual lessons are free. No credit card. Your repositories stay on GitHub.</p>}
           {!loggedIn && message && <p className="auth-error landing-auth-error">{message}</p>}
         </div>
         <LandingDeskPreview />
@@ -53,22 +53,22 @@ export default function LandingPage() {
 
       <section className="feature-grid">
         {[
-          ["Workspace", "A cosy desk for your projects — pin what you're working on like sticky notes.", <Home />],
-          ["Learn", "Git, explained with pictures. See what actually happens when you commit.", <BookOpen />],
-          ["README Studio", "Make your project's front page beautiful, no design skills needed.", <FileCode2 />],
-          ["Landing Designer", "Publish a little website for your project in minutes.", <Palette />]
+          ["Learn the next concept", "Understand commits and branches, then apply them to one small change.", <BookOpen />],
+          ["Practice on a project", "Improve a README and check your pull request against GitHub.", <Home />],
+          ["Explain your decisions", "Use the free project case-study template to describe your contribution and what you learned.", <FileCode2 />],
+          ["Share your work", "Bring your projects, screenshots, and project stories together in a portfolio.", <Palette />]
         ].map(([title, text, icon]) => <FeatureCard key={title} title={title} text={text} icon={icon} />)}
       </section>
 
-      {loggedIn && (
+      {(
         <section className="band">
           <h2>How it works</h2>
           <div className="steps">
-            {["Connect GitHub", "Set up workspace", "Start learning"].map((step, index) => (
+            {["Learn one concept", "Make a real change", "Explain the result"].map((step, index) => (
               <Card key={step}>
                 <span className="step-number">{index + 1}</span>
                 <h3>{step}</h3>
-                <p>{["Sync repositories securely with OAuth.", "Pin the work that matters today.", "Continue lessons beside real projects."][index]}</p>
+                <p>{["Start with a free visual lesson before connecting GitHub.", "Create a branch, improve a README, and open a pull request.", "Describe your decisions and share the project in your portfolio."][index]}</p>
               </Card>
             ))}
           </div>

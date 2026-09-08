@@ -44,7 +44,8 @@ test("desktop navigation opens with keyboard, switches menus and follows routes"
   await expect(nav.getByRole("link", { name: "Git Fundamentals Certificate", exact: true })).toBeVisible();
   await nav.getByRole("link", { name: "Git Fundamentals Certificate", exact: true }).click();
   await expect(page).toHaveURL(/\/certification\/git-fundamentals$/);
-  await expect(nav.getByRole("button", { name: "Learn", exact: true })).toHaveAttribute("aria-expanded", "false");
+  await expect(page.getByRole("complementary", { name: "Platform navigation" })).toBeVisible();
+  await expect(page.locator('[data-slot="navigation-menu-content"][data-state="open"]')).toHaveCount(0);
 });
 
 for (const theme of ["light", "dark"]) {
@@ -66,7 +67,7 @@ for (const theme of ["light", "dark"]) {
       expect(bounds.x + bounds.width).toBeLessThanOrEqual(width);
       await expect(content).toHaveCSS("border-radius", "0px");
       await expect(content).toHaveCSS("opacity", "1");
-      await expect(content).toHaveCSS("background-color", theme === "dark" ? "rgb(51, 46, 41)" : "rgb(255, 253, 249)");
+      await expect(content).toHaveCSS("background-color", theme === "dark" ? "rgb(23, 28, 31)" : "rgb(255, 255, 255)");
       await expect.poll(() => content.evaluate(element => {
         const bounds = element.getBoundingClientRect();
         return element.contains(document.elementFromPoint(bounds.x + bounds.width / 2, bounds.y + 20));

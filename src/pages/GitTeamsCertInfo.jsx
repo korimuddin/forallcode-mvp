@@ -1,3 +1,4 @@
+import AssessmentDisclosure from "../components/learn/AssessmentDisclosure";
 import { functionFetch } from "../lib/functionFetch";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -106,6 +107,7 @@ export default function GitTeamsCertInfo() {
         <p className="eyebrow">Certificate of Proficiency</p>
         <h1>Git for Teams</h1>
         <p>Most developers learn Git alone. Working in a team is a different skill entirely — branching strategies, protected branches, code review workflows, merge conflicts, release management, and keeping a shared history clean. This certificate proves you can do all of it.</p>
+        <AssessmentDisclosure />
         <CertTaster config={GIT_TEAMS_TASTER} />
         <div className="cert-hero-actions">
           {loading ? (

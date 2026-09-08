@@ -1,4 +1,34 @@
 export const readmeTemplates = {
+  caseStudy: `# Project Name
+
+## The problem
+
+Who is this project for, and what problem does it solve?
+
+## My contribution
+
+Describe what you built yourself. Credit collaborators, tutorials, and tools that helped.
+
+## Decisions and trade-offs
+
+Explain one important choice, the alternatives you considered, and why you chose this approach.
+
+## How to run it
+
+List the actual setup requirements and commands for this project.
+
+## Evidence of the work
+
+Link to your pull request, relevant commits, screenshots, and a live demo if available. Do not include secrets or private project information.
+
+## How I checked the result
+
+Describe the tests or checks you ran, their results, and any known limitations.
+
+## What I learned
+
+What can you explain now that you could not explain before? What would you improve next?
+`,
   blank: `# Project Name
 
 > Short description of your project
@@ -573,4 +603,7 @@ MIT`
   }
 ];
 
-export const allReadmeTemplateOptions = [...readmeTemplateOptions, ...proTemplates];
+export const allReadmeTemplateOptions = [
+  { key: "caseStudy", label: "Project case study", description: "Problem, contribution, decisions, evidence, and lessons learned", isPro: false },
+  ...readmeTemplateOptions, ...proTemplates
+];

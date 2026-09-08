@@ -17,12 +17,13 @@ export default function PortfolioCard({ entry }) {
       )}
       <div className="portfolio-card-body">
         <h3>{repo.name || "Untitled project"}</h3>
-        <p>{repo.description || "A ForAllCode project ready to be shown beautifully."}</p>
+        <p>{repo.description || "Project details are available in the repository."}</p>
         <div className="portfolio-tech-row">
           {techStack.map((tech) => <span key={tech}>{tech}</span>)}
         </div>
         <div className="portfolio-card-links">
           {owner && repo.name && <Link to={`/${owner}/${repo.name}`}>View repo →</Link>}
+          {owner && repo.name && <a href={`https://github.com/${encodeURIComponent(owner)}/${encodeURIComponent(repo.name)}#readme`} target="_blank" rel="noreferrer">Read project README <ExternalLink size={13} /></a>}
           {entry.live_url && (
             <a href={entry.live_url} target="_blank" rel="noreferrer">
               Live site <ExternalLink size={13} />

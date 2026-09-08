@@ -1,0 +1,51 @@
+.project-journey { display: grid; gap: 32px; min-width: 0; }
+.project-journey h2, .project-practice h2, .journey-onboarding h2 { font-size: 24px !important; line-height: 1.25; letter-spacing: 0 !important; color: var(--ink); }
+.project-journey h3 { margin: 0; font-size: 18px !important; letter-spacing: 0 !important; }
+.project-journey p, .project-practice p, .journey-onboarding p { line-height: 1.6; max-width: 70ch; color: var(--ink2); }
+.project-journey a:not(.button), .project-practice a { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; overflow-wrap: anywhere; }
+.journey-next { padding: 24px 0; border-top: 2px solid var(--ink); border-bottom: 1px solid var(--cream3); }
+.journey-next h2 { font-size: 30px !important; margin: 12px 0; }
+.journey-next .button { margin-top: 12px; }
+.project-journey .button, .project-practice .button { display: inline-flex; gap: 10px; align-items: center; justify-content: center; white-space: normal; max-width: 100%; border-radius: 0 !important; background: var(--ink); color: var(--white); text-transform: none; letter-spacing: 0; }
+.journey-project-picker { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 16px; align-items: center; }
+.journey-project-picker select, .project-practice input { width: 100%; min-width: 0; padding: 12px; border: 1px solid var(--ink3-text); border-radius: 0; background: var(--white); color: var(--ink); }
+.journey-project-picker a, .journey-secondary a { display: inline-flex; gap: 6px; align-items: center; }
+.journey-steps { padding: 0; margin: 20px 0 0; list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 28px; }
+.journey-steps li { display: flex; gap: 16px; padding: 24px 0; min-width: 0; border-top: 1px solid var(--cream3); }
+.journey-steps li > svg { flex-shrink: 0; color: var(--sky-text); }
+.journey-steps li:nth-child(even) > svg { color: var(--sage-text); }
+.journey-steps li > div { min-width: 0; }
+.journey-steps a { display: block; width: fit-content; margin-top: 12px; }
+.journey-trust { border-top: 1px solid var(--cream3); padding-top: 24px; }
+.journey-trust h2 { font-size: 18px !important; }
+.journey-secondary { display: flex; flex-wrap: wrap; gap: 16px 24px; padding: 16px 0; }
+.journey-onboarding fieldset { border: 0; padding: 0; display: grid; gap: 12px; min-width: 0; }
+.journey-goal { display: flex; align-items: flex-start; gap: 12px; padding: 16px 0; border-bottom: 1px solid var(--cream3); cursor: pointer; }
+.journey-goal input { margin-top: 5px; flex: 0 0 18px; width: 18px; height: 18px; accent-color: var(--ink); }
+.journey-goal strong, .journey-goal small { display: block; color: var(--ink); }
+.journey-goal small { margin-top: 6px; color: var(--ink2); line-height: 1.5; }
+.journey-onboarding .onboarding-actions { flex-wrap: wrap; }
+.journey-onboarding .onboarding-actions button { border-radius: 0 !important; white-space: normal; display: inline-flex; align-items: center; gap: 8px; }
+.project-practice { margin-top: 32px; border-top: 2px solid var(--ink); padding: 24px 0; min-width: 0; scroll-margin-top: 100px; }
+.project-practice ol { padding-left: 24px; color: var(--ink); line-height: 1.7; }
+.project-practice li + li { margin-top: 8px; }
+.project-practice form { display: grid; gap: 12px; max-width: 640px; }
+.project-practice form .button { justify-self: start; }
+.practice-result { display: flex; align-items: flex-start; gap: 12px; padding: 20px 0; border-bottom: 1px solid var(--cream3); color: var(--ink); }
+.practice-result > svg { flex-shrink: 0; color: var(--sage-text); }
+.journey-disclosure { font-size: 14px; }
+.learn-secondary { margin-top: 32px; padding: 20px 0; border-top: 1px solid var(--cream3); display: flex; flex-wrap: wrap; gap: 16px 24px; }
+.learn-secondary a { text-decoration: underline; }
+.portfolio-project-story { border-top: 1px solid var(--cream3); margin-top: 16px; padding-top: 16px; overflow-wrap: anywhere; }
+.portfolio-project-story summary { cursor: pointer; color: var(--ink); font-weight: 600; }
+.portfolio-project-story pre { overflow-x: auto; max-width: 100%; }
+.portfolio-project-story img { max-width: 100%; height: auto; }
+.portfolio-project-story h2 { font-size: 20px !important; letter-spacing: 0 !important; }
+.readme-save-disclosure { margin: 0; padding: 12px 20px; font-size: 14px; color: var(--ink2); background: var(--white); border-bottom: 1px solid var(--cream3); }
+.project-journey :focus-visible, .project-practice :focus-visible, .journey-onboarding :focus-visible { outline: 2px solid var(--sky-text); outline-offset: 3px; }
+@media (max-width: 680px) {
+  .journey-steps { grid-template-columns: minmax(0, 1fr); }
+  .journey-project-picker { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .journey-next h2 { font-size: 26px !important; }
+  .journey-onboarding h2 { font-size: 22px !important; }
+}

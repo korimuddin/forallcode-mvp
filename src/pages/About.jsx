@@ -9,18 +9,18 @@ const differences = [
     icon: BookOpen
   },
   {
-    title: "Your workspace, not just your repos",
-    text: "An illustrated desk that keeps active projects visible.",
+    title: "Practice on real projects",
+    text: "Make a README change on a branch and check your own pull request against GitHub.",
     icon: Home
   },
   {
-    title: "Beautiful project pages",
-    text: "README Studio and Landing Designer. Your repos deserve to look good.",
+    title: "Project stories, not just screenshots",
+    text: "Explain the problem, your decisions, and what you learned with a free case-study template.",
     icon: Palette
   },
   {
-    title: "Warm by design",
-    text: "No cold greys, no intimidating density. A platform that feels like it was made by someone who loves craft and code.",
+    title: "A companion to GitHub",
+    text: "Your repositories stay on GitHub. ForAllCode adds learning, project guidance, and a portfolio for your work.",
     icon: Sparkles
   }
 ];
@@ -34,7 +34,7 @@ export default function About() {
         <DecorativeHills />
         <img className="about-logo" src="/forallcode-logo.png" alt="ForAllCode logo" />
         <h1>ForAllCode</h1>
-        <p className="about-tagline">Built for all who code.</p>
+        <p className="about-tagline">Your first project, understood.</p>
         <p className="about-hero-copy">
           Code shouldn't belong to the few. The tools, the knowledge, the platform, they should be for all of us.
         </p>
@@ -43,7 +43,7 @@ export default function About() {
       <section className="about-section">
         <h2>Who we are</h2>
         <blockquote>
-          A visual, beginner-friendly development platform that helps people learn Git, build with confidence, and showcase their projects beautifully.
+          ForAllCode helps self-taught beginners and career-switchers learn Git through real project work, then explain that work with confidence.
         </blockquote>
       </section>
 

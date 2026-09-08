@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { Check, ChevronDown, Lock } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 import OnboardingFlow from "../components/onboarding/OnboardingFlow";
+import ProjectPractice from "../components/learn/ProjectPractice";
 import { learnLessons, learnTracks } from "../data/learnLessons";
 import { useAuthSession, useDocumentTitle, useIsMobile, useSignedInUserData } from "../lib/hooks";
 import { createFeedEvent } from "../lib/createFeedEvent";
@@ -10,175 +11,6 @@ import { trackUsage } from "../lib/trackUsage";
 import { PageFrame, Button, Card } from "./PageShared";
 
 const lessons = learnLessons;
-
-const learnHeroSlides = [
-  {
-    eyebrow: "Did you know?",
-    title: ".gitignore has been part of Git since the beginning.",
-    text: "Git began on April 7, 2005, and ignore rules were designed early to help teams keep untracked local files out of shared history.",
-    tone: "lavender",
-    visual: "gitignore"
-  },
-  {
-    eyebrow: "Live learning",
-    title: "4k users are learning right now.",
-    text: "Tiny daily Git lessons add up. Pick a topic, complete a visual step, and keep your project moving.",
-    tone: "sage",
-    visual: "stats"
-  },
-  {
-    eyebrow: "More info",
-    title: "Git becomes clearer when you can see the shape of the work.",
-    text: "Branches, merges, conflicts, releases, and remotes all become easier once the history is visible.",
-    tone: "amber",
-    visual: "branches"
-  },
-  {
-    eyebrow: "Course nudge",
-    title: "Have you considered DevOps?",
-    text: "Take a look at the DevOps track to understand CI/CD, environments, deployment strategies, and observability.",
-    tone: "sky",
-    visual: "devops"
-  },
-  {
-    eyebrow: "Next step",
-    title: "Start where you are. Move when ready.",
-    text: "Beginner, Intermediate, Advanced, and DevOps tracks are suggestions, not locks.",
-    tone: "rose",
-    visual: "tracks"
-  }
-];
-
-function CarouselHero({ slides, type }) {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const activeSlide = slides[activeIndex] || slides[0];
-
-  useEffect(() => {
-    if (slides.length <= 1) return undefined;
-    const timer = window.setInterval(() => {
-      setActiveIndex((index) => (index + 1) % slides.length);
-    }, 5200);
-    return () => window.clearInterval(timer);
-  }, [slides.length]);
-
-  useEffect(() => {
-    setActiveIndex(0);
-  }, [type, slides.length]);
-
-  if (!activeSlide) return null;
-
-  return (
-    <section
-      className={`carousel-hero ${type || ""} tone-${activeSlide.tone || "lavender"} ${activeSlide.image ? "has-image" : ""}`}
-      style={activeSlide.image ? {
-        backgroundImage: `linear-gradient(90deg, rgba(20, 16, 14, .78), rgba(20, 16, 14, .24)), url("${activeSlide.image}")`,
-        backgroundPosition: activeSlide.imagePosition || "50% 50%"
-      } : undefined}
-    >
-      <div className="carousel-hero-copy">
-        <p className="eyebrow">{activeSlide.eyebrow}</p>
-        <h1>{activeSlide.title}</h1>
-        <p>{activeSlide.text}</p>
-        {activeSlide.meta && <span>{activeSlide.meta}</span>}
-      </div>
-      {type === "learn" && activeSlide.visual && <LearnHeroVisual kind={activeSlide.visual} />}
-      {activeSlide.visual === "computer" && <AnimatedComputer />}
-      <div className="carousel-dots" aria-label="Hero slides">
-        {slides.map((slide, index) => (
-          <button
-            aria-label={`Show slide ${index + 1}`}
-            className={index === activeIndex ? "active" : ""}
-            key={`${slide.title}-${index}`}
-            onClick={() => setActiveIndex(index)}
-            type="button"
-          />
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function LearnHeroVisual({ kind }) {
-  if (kind === "stats") {
-    return (
-      <div className="learn-hero-visual visual-stats" aria-hidden="true">
-        <div className="visual-card">
-          <strong>4k</strong>
-          <span>learning now</span>
-        </div>
-        <i className="pulse one" />
-        <i className="pulse two" />
-        <i className="pulse three" />
-      </div>
-    );
-  }
-
-  if (kind === "branches") {
-    return (
-      <div className="learn-hero-visual visual-branches" aria-hidden="true">
-        <svg viewBox="0 0 260 200" role="img">
-          <path d="M48 158 C84 122 90 78 130 78 C170 78 174 124 214 46" />
-          <path d="M48 158 C94 158 112 146 148 132 C178 120 192 132 220 156" />
-          <circle cx="48" cy="158" r="13" />
-          <circle cx="130" cy="78" r="13" />
-          <circle cx="214" cy="46" r="13" />
-          <circle cx="220" cy="156" r="13" />
-        </svg>
-      </div>
-    );
-  }
-
-  if (kind === "devops") {
-    return (
-      <div className="learn-hero-visual visual-devops" aria-hidden="true">
-        <div className="deploy-ring">
-          <span>CI</span>
-          <span>Test</span>
-          <span>Ship</span>
-        </div>
-        <div className="rocket-trail" />
-      </div>
-    );
-  }
-
-  if (kind === "tracks") {
-    return (
-      <div className="learn-hero-visual visual-tracks" aria-hidden="true">
-        <div className="track beginner">Beginner</div>
-        <div className="track intermediate">Intermediate</div>
-        <div className="track advanced">Advanced</div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="learn-hero-visual visual-gitignore" aria-hidden="true">
-      <div className="file-card">
-        <strong>.gitignore</strong>
-        <span>node_modules/</span>
-        <span>.env.local</span>
-        <span>dist/</span>
-      </div>
-      <i className="floating-dot one" />
-      <i className="floating-dot two" />
-    </div>
-  );
-}
-
-function AnimatedComputer() {
-  return (
-    <div className="animated-computer" aria-hidden="true">
-      <div className="computer-screen">
-        <i />
-        <i />
-        <i />
-      </div>
-      <div className="computer-base" />
-      <div className="computer-spark one" />
-      <div className="computer-spark two" />
-    </div>
-  );
-}
 
 function LearnPage() {
   useDocumentTitle("Learn");
@@ -200,7 +32,8 @@ function LearnPage() {
   const [onboardingLeaving, setOnboardingLeaving] = useState(false);
   const [selectedComfort, setSelectedComfort] = useState("");
   const lesson = lessons.find((item) => item.slug === active) || lessons[0];
-  const isFreeUser = true;
+  const [savingProgress, setSavingProgress] = useState(false);
+  const [progressError, setProgressError] = useState("");
   const showCatalog = searchParams.get("view") === "catalog" && !lessonSlug;
 
   useEffect(() => {
@@ -212,8 +45,8 @@ function LearnPage() {
 
       if (!session?.user?.id || !supabase) {
         if (!alive) return;
-        if (fallback) openRecommendedTrack(fallback);
-        setShowOnboarding(!fallback);
+        if (fallback && !lessonSlug) openRecommendedTrack(fallback);
+        setShowOnboarding(!fallback && !lessonSlug);
         return;
       }
 
@@ -224,8 +57,8 @@ function LearnPage() {
 
       if (!alive) return;
       const comfort = profile?.learn_comfort_level || fallback;
-      if (comfort) openRecommendedTrack(comfort);
-      setShowOnboarding(!comfort);
+      if (comfort && !lessonSlug) openRecommendedTrack(comfort);
+      setShowOnboarding(!comfort && !lessonSlug);
       setCompletedLessons(new Set((progress || []).filter((item) => item.completed).map((item) => item.lesson_slug)));
     }
 
@@ -233,7 +66,7 @@ function LearnPage() {
     return () => {
       alive = false;
     };
-  }, [checked, session]);
+  }, [checked, session?.user?.id, lessonSlug]);
 
   useEffect(() => {
     if (!lessonSlug) return;
@@ -313,31 +146,27 @@ function LearnPage() {
   }
 
   async function markLessonComplete() {
-    const wasComplete = completedLessons.has(lesson.slug);
-    const next = new Set(completedLessons);
-    next.add(lesson.slug);
-    setCompletedLessons(next);
-
-    if (session?.user?.id && supabase) {
-      await supabase.from("learn_progress").upsert({
-        user_id: session.user.id,
-        lesson_slug: lesson.slug,
-        completed: true,
-        completed_at: new Date().toISOString()
-      }, { onConflict: "user_id,lesson_slug" });
-      if (!wasComplete) {
+    if (savingProgress || completedLessons.has(lesson.slug)) return;
+    setSavingProgress(true);
+    setProgressError("");
+    try {
+      if (session?.user?.id && supabase) {
+        const { error } = await supabase.from("learn_progress").upsert({
+          user_id: session.user.id, lesson_slug: lesson.slug, completed: true,
+          completed_at: new Date().toISOString()
+        }, { onConflict: "user_id,lesson_slug" });
+        if (error) throw error;
         trackUsage(session.user.id, "lesson_completed", { lesson_slug: lesson.slug }).catch(() => {});
         createFeedEvent(supabase, {
-          actorId: session.user.id,
-          eventType: "lesson_completed",
-          metadata: {
-            lesson_slug: lesson.slug,
-            lesson_title: lesson.title,
-            track: lesson.track,
-            track_name: learnTracks.find((track) => track.track === lesson.track)?.label || lesson.track
-          }
+          actorId: session.user.id, eventType: "lesson_completed",
+          metadata: { lesson_slug: lesson.slug, lesson_title: lesson.title, track: lesson.track }
         }).catch(() => {});
       }
+      setCompletedLessons(current => new Set([...current, lesson.slug]));
+    } catch {
+      setProgressError("Your progress was not saved. Please try again.");
+    } finally {
+      setSavingProgress(false);
     }
   }
 
@@ -356,16 +185,6 @@ function LearnPage() {
             onComplete={() => setShowFullOnboarding(false)}
           />
         )}
-        <CarouselHero slides={learnHeroSlides} type="learn" />
-        <section className="learn-replay-tour">
-          <div>
-            <p className="eyebrow">Need a refresher?</p>
-            <h2>Replay the ForAllCode tour whenever you like.</h2>
-          </div>
-          <button className="button soft" disabled={!session?.user} onClick={() => setShowFullOnboarding(true)} type="button">
-            Replay onboarding
-          </button>
-        </section>
         <LearnCatalog
           completedLessons={completedLessons}
           onOpenLesson={openCatalogLesson}
@@ -388,29 +207,6 @@ function LearnPage() {
           onComplete={() => setShowFullOnboarding(false)}
         />
       )}
-      <CarouselHero slides={learnHeroSlides} type="learn" />
-      <section className="learn-replay-tour">
-        <div>
-          <p className="eyebrow">Need a refresher?</p>
-          <h2>Replay the ForAllCode tour whenever you like.</h2>
-        </div>
-        <button className="button soft" disabled={!session?.user} onClick={() => setShowFullOnboarding(true)} type="button">
-          Replay onboarding
-        </button>
-      </section>
-      <section className="learn-cert-card">
-        <div>
-          <p className="eyebrow">Certification</p>
-          <h2>ForAllCode Certificates</h2>
-          <p>Earn public certificates for Git Fundamentals, Git for Teams, Command Line Essentials, and Open Source contribution, then share them with collaborators, employers, or your profile.</p>
-        </div>
-        <div className="learn-cert-actions">
-          <Button to="/certification/git-fundamentals" variant="soft">Git Fundamentals</Button>
-          <Button to="/certification/git-for-teams" variant="soft">Git for Teams</Button>
-          <Button to="/certification/command-line-essentials" variant="soft">Command Line</Button>
-          <Button to="/certification/open-source-contributor" variant="soft">Open Source</Button>
-        </div>
-      </section>
       {isMobile && (
         <select className="learn-mobile-select" value={active} onChange={(event) => chooseLesson(event.target.value)} aria-label="Choose lesson">
           {lessons.map((item) => (
@@ -436,16 +232,16 @@ function LearnPage() {
                     {track.id === "advanced" && (
                       <>
                         {trackLessons.filter((item) => item.tag !== "devops").map((item) => (
-                          <LessonSidebarButton active={active === item.slug} completed={completedLessons.has(item.slug)} freeLocked={isFreeUser && item.track > 1} key={item.slug} lesson={item} onClick={() => chooseLesson(item.slug)} />
+                          <LessonSidebarButton active={active === item.slug} completed={completedLessons.has(item.slug)} key={item.slug} lesson={item} onClick={() => chooseLesson(item.slug)} />
                         ))}
                         <div className="devops-separator"><span>DevOps Track</span></div>
                         {trackLessons.filter((item) => item.tag === "devops").map((item) => (
-                          <LessonSidebarButton active={active === item.slug} completed={completedLessons.has(item.slug)} freeLocked={isFreeUser} key={item.slug} lesson={item} onClick={() => chooseLesson(item.slug)} />
+                          <LessonSidebarButton active={active === item.slug} completed={completedLessons.has(item.slug)} key={item.slug} lesson={item} onClick={() => chooseLesson(item.slug)} />
                         ))}
                       </>
                     )}
                     {track.id !== "advanced" && trackLessons.map((item) => (
-                      <LessonSidebarButton active={active === item.slug} completed={completedLessons.has(item.slug)} freeLocked={isFreeUser && item.track > 1} key={item.slug} lesson={item} onClick={() => chooseLesson(item.slug)} />
+                      <LessonSidebarButton active={active === item.slug} completed={completedLessons.has(item.slug)} key={item.slug} lesson={item} onClick={() => chooseLesson(item.slug)} />
                     ))}
                   </>
                 )}
@@ -461,9 +257,18 @@ function LearnPage() {
           <div className="steps">
             {lesson.steps.map((step) => <Card key={step.title}><h3>{step.title}</h3><p>{step.body}</p></Card>)}
           </div>
-          <Button onClick={markLessonComplete}><Check size={16} />{completedLessons.has(lesson.slug) ? "Completed" : "Mark as complete"}</Button>
+          <Button disabled={savingProgress || completedLessons.has(lesson.slug)} onClick={markLessonComplete}><Check size={16} />{savingProgress ? "Saving..." : completedLessons.has(lesson.slug) ? "Lesson reviewed" : "Mark lesson reviewed"}</Button>
+          <p className="journey-disclosure">{session?.user ? "Review progress is saved to your account." : "Review progress lasts for this visit. Sign in to save it."} Reviewing a lesson does not verify practical skill.</p>
+          {progressError && <p role="alert" className="auth-error">{progressError}</p>}
+          <ProjectPractice session={session} repos={signedInRepos} />
         </article>
       </div>
+      <nav className="learn-secondary" aria-label="More learning options">
+        <Link to="/learn?view=catalog">All free lessons</Link>
+        <Link to="/dashboard">Your project journey</Link>
+        <Link to="/certification/git-fundamentals">Optional paid assessments</Link>
+        <button className="button soft" disabled={!session?.user} onClick={() => setShowFullOnboarding(true)} type="button">Change starting point</button>
+      </nav>
     </PageFrame>
   );
 }
@@ -598,12 +403,11 @@ function LearnCatalog({ completedLessons, onOpenLesson, query, selectedTag, setQ
   );
 }
 
-function LessonSidebarButton({ active, completed, freeLocked, lesson, onClick }) {
+function LessonSidebarButton({ active, completed, lesson, onClick }) {
   return (
     <button className={active ? "active" : ""} onClick={onClick}>
       <i className={completed ? "lesson-dot complete" : "lesson-dot"} />
       <span>{lesson.title}</span>
-      {freeLocked && <Lock size={13} />}
       <LessonTag tag={lesson.tag} compact />
     </button>
   );

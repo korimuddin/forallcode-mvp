@@ -1,3 +1,4 @@
+import AssessmentDisclosure from "../components/learn/AssessmentDisclosure";
 import { functionFetch } from "../lib/functionFetch";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -106,6 +107,7 @@ export default function OpenSourceCertInfo() {
         <p className="eyebrow">Certificate of Proficiency</p>
         <h1>Open Source Contributor</h1>
         <p>Contributing to open source is one of the most visible things a developer can do. It proves you can read unfamiliar code, communicate clearly with maintainers, follow project standards, and deliver work that real people depend on. This certificate demonstrates that you understand the full contribution lifecycle — from finding the right project to getting your first PR merged.</p>
+        <AssessmentDisclosure />
         <CertTaster config={OPEN_SOURCE_TASTER} />
         <div className="cert-hero-actions">
           {loading ? (

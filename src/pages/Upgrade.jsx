@@ -82,8 +82,8 @@ export default function Upgrade() {
     <div className="upgrade-page">
       <section className="upgrade-pricing">
         <div className="upgrade-heading">
-          <h1>Simple, honest pricing.</h1>
-          <p>Start free. Upgrade when you need more.</p>
+          <h1>Free learning. Optional project tools.</h1>
+          <p>All visual lessons and the project practice check are free. Pro adds workspace and publishing options; paid certificate assessments are separate.</p>
         </div>
 
         <div className="billing-toggle" aria-label="Billing frequency">
@@ -106,7 +106,6 @@ export default function Upgrade() {
           </article>
 
           <article className="plan-card pro-card">
-            <span className="popular-badge">Most popular</span>
             <h2>Pro</h2>
             <p className="plan-price"><strong>{price}</strong> {period}</p>
             <p className="plan-save-copy">{priceHelp}</p>
@@ -135,8 +134,9 @@ export default function Upgrade() {
             <p>Yes. Billing is managed through Stripe, and cancellation keeps Pro active until the end of the paid period.</p>
           </article>
           <article>
-            <h3>What changes immediately?</h3>
+            <h3>What does Pro change?</h3>
             <p>Private repo limits, sticky note limits, and landing page limits lift as soon as Stripe confirms your subscription.</p>
+            <p>These are ForAllCode limits. Pro does not change your GitHub plan or what GitHub offers for free.</p>
           </article>
         </div>
       </section>

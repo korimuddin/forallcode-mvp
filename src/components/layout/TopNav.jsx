@@ -93,6 +93,8 @@ export default function TopNav() {
   }, []);
 
   useEffect(() => {
+    let alive = true;
+    let channel;
     async function loadNotifications() {
       if (!supabase || !session?.user?.id) {
         setNotificationItems([]);
@@ -105,6 +107,7 @@ export default function TopNav() {
         .select("*", { count: "exact", head: true })
         .eq("user_id", session.user.id)
         .eq("read", false);
+      if (!alive) return;
       setUnreadCount(count || 0);
 
       const { data } = await supabase
@@ -113,10 +116,11 @@ export default function TopNav() {
         .eq("user_id", session.user.id)
         .order("created_at", { ascending: false })
         .limit(5);
+      if (!alive) return;
       if (data) setNotificationItems(data);
 
-      const channel = supabase
-        .channel("notifications")
+      channel = supabase
+        .channel(`notifications-${session.user.id}`)
         .on("postgres_changes", {
           event: "INSERT",
           schema: "public",
@@ -129,15 +133,16 @@ export default function TopNav() {
         })
         .subscribe();
 
-      return () => supabase.removeChannel(channel);
     }
 
-    let cleanup;
-    loadNotifications().then((value) => {
-      cleanup = value;
+    loadNotifications().catch(() => {
+      if (alive) setNotificationItems([]);
     });
-    return () => cleanup?.();
-  }, [session]);
+    return () => {
+      alive = false;
+      if (channel) supabase.removeChannel(channel);
+    };
+  }, [session?.user?.id]);
 
   useEffect(() => {
     if (!toastMessage) return undefined;
@@ -391,7 +396,8 @@ export default function TopNav() {
                 <NavigationMenuTrigger data-active={/^\/(learn|certification)(\/|$)/.test(location.pathname) ? "true" : undefined}><BookOpen size={16} aria-hidden="true" />Learn</NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <ul className="fac-navigation-grid">
-                    <MenuDestination to="/learn/pull-requests" title="Pull Requests" description="Continue the lesson" icon={GitPullRequest} />
+                    <MenuDestination to="/learn/commits" title="Start with commits" description="Your first Git concept" icon={BookOpen} />
+                    <MenuDestination to="/learn/pull-request-best-practices#project-practice" title="Project practice" description="Check your README pull request" icon={GitPullRequest} />
                     <MenuDestination to="/learn?view=catalog" title="Browse all lessons" description="Explore the learning catalogue" icon={BookOpen} />
                     <MenuDestination to="/certification/git-fundamentals" title="Git Fundamentals" description="Certificate" icon={Award} />
                     <MenuDestination to="/certification/git-for-teams" title="Git for Teams" description="Certificate" icon={Award} />
@@ -400,7 +406,7 @@ export default function TopNav() {
                   </ul>
                 </NavigationMenuContent>
               </NavigationMenuItem>
-              {[{ to: "/explore", label: "Explore" }, { to: "/marketplace", label: "Marketplace" }].map(({ to, label }) => (
+              {[{ to: profile.username ? `/${encodeURIComponent(profile.username)}/portfolio` : "/profile", label: "Portfolio" }, { to: "/explore", label: "Explore" }].map(({ to, label }) => (
                 <NavigationMenuItem key={to}>
                   <NavigationMenuLink asChild className={navigationMenuTriggerStyle()} active={location.pathname === to || location.pathname.startsWith(`${to}/`)}>
                     <Link to={to}>{label}</Link>
@@ -451,6 +457,7 @@ export default function TopNav() {
                   <Link to="/workspace">My workspace</Link>
                   <Link to="/repos">My repos</Link>
                   <Link to="/stars">Starred repos</Link>
+                  <Link to="/marketplace">Course marketplace</Link>
                   <span className="dropdown-divider" />
                   <Link to="/settings/account">Settings</Link>
                   <span className="dropdown-divider" />

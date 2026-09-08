@@ -1,3 +1,4 @@
+import AssessmentDisclosure from "../components/learn/AssessmentDisclosure";
 import { functionFetch } from "../lib/functionFetch";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -96,6 +97,7 @@ export default function CertificationInfo() {
         <p className="eyebrow">ForAllCode certification</p>
         <h1>Git Fundamentals Certificate</h1>
         <p>Show that you understand branches, commits, collaboration, pull requests, and the everyday Git workflows real teams use.</p>
+        <AssessmentDisclosure />
         <CertTaster config={GIT_FUNDAMENTALS_TASTER} />
         <div className="cert-hero-actions">
           {loading ? (

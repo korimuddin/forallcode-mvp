@@ -1,306 +1,114 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import FeedEvent from "../components/feed/FeedEvent";
+import { ArrowRight, BookOpen, Code2, FileText, GitPullRequest } from "lucide-react";
 import OnboardingFlow from "../components/onboarding/OnboardingFlow";
-import Skeleton from "../components/ui/Skeleton";
+import FollowingActivity from "../components/feed/FollowingActivity";
 import { useDocumentTitle, useSignedInUserData } from "../lib/hooks";
 import { supabase } from "../lib/supabase";
-import { PageFrame, Card, Button, RepoListSkeleton } from "./PageShared";
+import { firstProjectLessons, nextProjectLesson, repositoryPath } from "../lib/projectJourney";
+import { learnLessons } from "../data/learnLessons";
+import { trackUsage } from "../lib/trackUsage";
+import { PageFrame, RepoListSkeleton } from "./PageShared";
+import "../styles/project-journey.css";
 
-function DashboardPage() {
-  useDocumentTitle("Dashboard");
-  const { session, profile, repos: userRepos, loading, error } = useSignedInUserData();
-  const [feedEvents, setFeedEvents] = useState([]);
-  const [feedLoading, setFeedLoading] = useState(true);
-  const [feedError, setFeedError] = useState("");
-  const [heroIndex, setHeroIndex] = useState(0);
-  const [showOnboarding, setShowOnboarding] = useState(false);
-  const displayName = profile?.displayName || "there";
-  const firstName = displayName.split(" ")[0] || displayName;
-  const visibleRepos = userRepos.slice(0, 2);
-  const dashboardHeroSlides = [
-    {
-      eyebrow: "ForAllCode",
-      title: `Welcome back, ${firstName}`,
-      text: "Your workspace is ready. Pick up where you left off, follow the work, and keep the useful ideas in sight.",
-      theme: "welcome",
-      cta: "Open dashboard"
-    },
-    {
-      eyebrow: "Featured profiles",
-      title: "Monthly rising contributors",
-      text: "Discover developers who are building, explaining, and sharing work that helps the community move further.",
-      theme: "profiles",
-      cta: "Explore profiles"
-    },
-    {
-      eyebrow: "Featured workspaces",
-      title: visibleRepos[0]?.name || "Build in public, beautifully",
-      text: visibleRepos[0]?.description || "Turn active repositories into friendly workspaces with notes, visual maps, and project context.",
-      theme: "workspaces",
-      cta: "View workspaces"
-    },
-    {
-      eyebrow: "Featured courses",
-      title: "Have you tried the DevOps course?",
-      text: "Go deeper on CI/CD, environments, deployment strategy, observability, and the habits that make shipping feel calmer.",
-      theme: "courses",
-      cta: "Browse courses"
-    },
-    {
-      eyebrow: "ForAllCode features",
-      title: "Have you tried creating notes?",
-      text: "Create notebooks inside your repository and keep project thinking beside the code where future contributors can find it.",
-      theme: "notes",
-      cta: "Try notes"
-    },
-    {
-      eyebrow: "Keep going",
-      title: "Small commits still count.",
-      text: "Great software is rarely one heroic leap. It is careful progress, shared clearly, one useful change at a time.",
-      theme: "quote",
-      cta: "Start gently"
-    }
-  ];
-  const activeHeroSlide = dashboardHeroSlides[heroIndex] || dashboardHeroSlides[0];
+export function DashboardPage() {
+  useDocumentTitle("Your next step · ForAllCode");
+  const { session, profile, repos, loading, error } = useSignedInUserData();
+  const [selectedRepo, setSelectedRepo] = useState("");
+  const [progress, setProgress] = useState([]);
+  const [progressLoading, setProgressLoading] = useState(true);
+  const [progressError, setProgressError] = useState("");
+  const [retry, setRetry] = useState(0);
+  const [onboardingDismissed, setOnboardingDismissed] = useState(false);
+  const [activityOpen, setActivityOpen] = useState(false);
+  const repo = repos.find(item => repositoryPath(item) === selectedRepo) || repos[0];
+  const repoPath = repo ? repositoryPath(repo) : "/repos/new";
+  const nextSlug = nextProjectLesson(progress);
+  const nextLesson = learnLessons.find(item => item.slug === nextSlug);
+  const reviewed = firstProjectLessons.filter(slug => progress.includes(slug)).length;
+  const portfolioPath = profile?.username ? `/${encodeURIComponent(profile.username)}/portfolio` : "/settings/profile";
 
   useEffect(() => {
     let alive = true;
-
-    async function loadFollowingFeed() {
-      if (!supabase || !session?.user?.id) {
-        setFeedEvents([]);
-        setFeedLoading(false);
-        return;
-      }
-
-      setFeedLoading(true);
-      setFeedError("");
-
+    setProgress([]);
+    setProgressError("");
+    setProgressLoading(true);
+    async function load() {
       try {
-        const { data: followingRows, error: followingError } = await supabase
-          .from("follows")
-          .select("following_id")
-          .eq("follower_id", session.user.id);
-        if (followingError) throw followingError;
-
-        const followingIds = (followingRows || []).map((row) => row.following_id).filter(Boolean);
-        if (followingIds.length === 0) {
-          if (alive) setFeedEvents([]);
-          return;
-        }
-
-        const { data: events, error: eventsError } = await supabase
-          .from("feed_events")
-          .select(`
-            *,
-            profiles!feed_events_actor_id_fkey(username, display_name, avatar_style, avatar_url),
-            repositories(name, description, language, stars_count, is_private, profiles!repositories_owner_id_fkey(username)),
-            issues(number, title, status),
-            pull_requests(number, title, status)
-          `)
-          .in("actor_id", followingIds)
-          .order("created_at", { ascending: false })
-          .limit(30);
-        if (eventsError) throw eventsError;
-
-        if (alive) setFeedEvents((events || []).filter((event) => !event.repositories?.is_private));
-      } catch (loadError) {
-        if (alive) setFeedError(loadError.message || "Could not load followed activity.");
+        if (!supabase || !session?.user?.id) return;
+        const { data, error: loadError } = await supabase.from("learn_progress")
+          .select("lesson_slug,completed").eq("user_id", session.user.id);
+        if (loadError) throw loadError;
+        if (alive) setProgress((data || []).filter(item => item.completed).map(item => item.lesson_slug));
+      } catch {
+        if (alive) setProgressError("Your learning progress could not be loaded.");
       } finally {
-        if (alive) setFeedLoading(false);
+        if (alive) setProgressLoading(false);
       }
     }
+    load();
+    return () => { alive = false; };
+  }, [session?.user?.id, retry]);
 
-    loadFollowingFeed();
-    return () => {
-      alive = false;
-    };
-  }, [session?.user?.id]);
-
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      setHeroIndex((index) => (index + 1) % dashboardHeroSlides.length);
-    }, 6200);
-    return () => window.clearInterval(timer);
-  }, [dashboardHeroSlides.length]);
-
-  useEffect(() => {
-    if (profile?.onboardingCompleted === false) {
-      setShowOnboarding(true);
-    }
-  }, [profile?.onboardingCompleted]);
+  const nextAction = !repo
+    ? { title: "Start with one small project", text: "A personal introduction is enough. Create a repository with a README, then make one useful improvement.", href: "/repos/new", label: "Create your first project" }
+    : nextLesson
+      ? { title: `Next: ${nextLesson.title}`, text: `Apply one Git concept to ${repo.name}. Start with a small README improvement you can describe in your own words.`, href: `/learn/${nextSlug}`, label: "Open your next lesson" }
+      : { title: "Put your learning into practice", text: "Open a README pull request and check the evidence of your change. Reviewing lessons is a starting point, not proof of practical skill.", href: "/learn/pull-request-best-practices#project-practice", label: "Check your project work" };
 
   return (
-    <PageFrame title="" eyebrow="">
-      {showOnboarding && session?.user && (
-        <OnboardingFlow
-          user={session.user}
-          profile={profile}
-          repos={userRepos}
-          onComplete={() => setShowOnboarding(false)}
-        />
+    <PageFrame title="Your next step" eyebrow="Learn. Build. Explain.">
+      {profile?.onboardingCompleted === false && !onboardingDismissed && session?.user && (
+        <OnboardingFlow user={session.user} profile={profile} repos={repos} onComplete={() => setOnboardingDismissed(true)} />
       )}
-      <section className={`phase-dashboard-hero dashboard-hero-${activeHeroSlide.theme}`}>
-        <div className="dashboard-hero-copy">
-          <p className="eyebrow">{activeHeroSlide.eyebrow}</p>
-          <h1>{activeHeroSlide.title}</h1>
-          <p>{activeHeroSlide.text}</p>
-          <span>{activeHeroSlide.cta}</span>
-        </div>
-        <DashboardHeroVisual theme={activeHeroSlide.theme} repos={visibleRepos} />
-        <div className="carousel-dots phase-dots" aria-label="Dashboard hero slides">
-          {dashboardHeroSlides.map((slide, index) => (
-            <button
-              aria-label={`Show dashboard card ${index + 1}`}
-              className={index === heroIndex ? "active" : ""}
-              key={slide.theme}
-              onClick={() => setHeroIndex(index)}
-              type="button"
-            />
-          ))}
-        </div>
-      </section>
-
-      <div className="phase-dashboard-grid">
-        <section>
-          <div className="phase-section-head">
-            <div><p className="eyebrow">FOLLOWED</p><h2>Users and projects</h2></div>
-            <Link to="/following">Manage</Link>
-          </div>
-          <Card>
-            {feedLoading ? <DashboardActivitySkeleton /> : feedEvents.map((event) => <FeedEvent event={event} key={event.id} />)}
-            {!feedLoading && feedError && <p className="auth-error">{feedError}</p>}
-            {!feedLoading && !feedError && feedEvents.length === 0 && (
-              <div className="dashboard-feed-empty">
-                <h3>No followed activity yet</h3>
-                <p>Follow some developers to see their activity.</p>
-                <Button to="/explore" variant="soft">Find developers</Button>
-              </div>
-            )}
-          </Card>
-
-          <div className="phase-section-head compact">
-            <div><p className="eyebrow">EDUCATION</p></div>
-          </div>
-          <Card>
-            <div className="education-callout">
-              <h3>Continue learning</h3>
-              <p>Start with Branching</p>
-              <span><b /></span>
-              <Button to="/learn" variant="soft">Continue →</Button>
-            </div>
-          </Card>
+      <div className="project-journey">
+        <section className="journey-next" aria-labelledby="next-action-heading">
+          <p>Welcome{profile?.displayName ? `, ${profile.displayName.split(" ")[0]}` : ""}.</p>
+          {loading || progressLoading ? <RepoListSkeleton /> : error ? (
+            <p role="alert">Your projects could not be loaded. <Link to="/repos">Open repositories to reconnect or retry.</Link></p>
+          ) : progressError ? (
+            <div role="alert"><p>{progressError}</p><button className="button soft" type="button" onClick={() => setRetry(value => value + 1)}>Retry progress</button></div>
+          ) : (
+            <>
+              <h2 id="next-action-heading">{nextAction.title}</h2>
+              <p>{nextAction.text}</p>
+              <Link className="button" to={nextAction.href} onClick={() => trackUsage(session?.user?.id, "journey_action_opened", { action: nextAction.label }).catch(() => {})}>{nextAction.label}<ArrowRight size={16} /></Link>
+            </>
+          )}
         </section>
 
-        <aside>
-          <div className="phase-section-head">
-            <div><p className="eyebrow">FEATURED</p><h2>Workspaces and projects</h2></div>
-            <Link to="/explore">Explore</Link>
+        {!loading && !error && repos.length > 0 && (
+          <div className="journey-project-picker">
+            <label htmlFor="active-project">Project for this session</label>
+            <select id="active-project" value={repoPath} onChange={event => setSelectedRepo(event.target.value)}>
+              {repos.map(item => <option key={repositoryPath(item)} value={repositoryPath(item)}>{item.owner}/{item.name}</option>)}
+            </select>
+            <Link to={repoPath}>Open project<ArrowRight size={16} /></Link>
           </div>
-          {loading && <RepoListSkeleton />}
-          {!loading && error && <p className="auth-error">{error}</p>}
-          {!loading && !error && visibleRepos.map((repo, index) => (
-            <Link className={`featured-project-card card-${index + 1}`} key={repo.name} to={`/${repo.owner}/${repo.name}`}>
-              <div>
-                <h3>{repo.name}</h3>
-                <p>{repo.description}</p>
-                <div><span>{repo.stars} stars</span><span>Active</span></div>
-              </div>
-            </Link>
-          ))}
-          {!loading && !error && visibleRepos.length === 0 && (
-            <p className="empty-helper">No GitHub repositories found yet. Make sure you granted repo access when signing in.</p>
-          )}
+        )}
+
+        <section aria-labelledby="project-path-heading">
+          <h2 id="project-path-heading">From first change to project story</h2>
+          <ol className="journey-steps">
+            <li><Code2 aria-hidden="true" /><div><h3>Choose a small project</h3><p>A personal introduction, a reading list, or a project setup guide. Keep your first change small.</p><Link to={repoPath}>{repo ? `Work on ${repo.name}` : "Create a project"}</Link></div></li>
+            <li><BookOpen aria-hidden="true" /><div><h3>Understand your change</h3><p>{progressLoading ? "Loading lesson progress..." : progressError ? "Lesson progress unavailable." : `${reviewed} of ${firstProjectLessons.length} suggested lessons reviewed.`} Practice matters more than ticking a box.</p><Link to={`/learn/${nextSlug || "commits"}`}>Study {nextLesson?.title || "Commits"}</Link></div></li>
+            <li><GitPullRequest aria-hidden="true" /><div><h3>Open a pull request</h3><p>Improve a README on a branch, explain your commit, and check your own pull request against GitHub.</p><Link to="/learn/pull-request-best-practices#project-practice">Try the project task</Link></div></li>
+            <li><FileText aria-hidden="true" /><div><h3>Explain what you built</h3><p>Write the problem, your decisions, your contribution, and what you learned. Add that project to your portfolio.</p>{repo ? <Link to={`${repoPath}/readme`}>Write your project story</Link> : <Link to="/repos/new">Create a project first</Link>}<Link to={portfolioPath}>Open portfolio</Link></div></li>
+          </ol>
+        </section>
+        <aside className="journey-trust">
+          <h2>Your work and your data</h2>
+          <p>Code and commits live on GitHub. ForAllCode stores your learning progress, profile, portfolio settings, and README drafts. Saving a README to your repo creates a GitHub commit; saving a draft does not.</p>
+          <Link to="/settings/integrations">Manage GitHub connection</Link>
         </aside>
+        <nav className="journey-secondary" aria-label="More from ForAllCode">
+          <Link to="/workspace">Workspace</Link><Link to="/repos">All repositories</Link><Link to="/explore">Community</Link><Link to="/marketplace">Course marketplace</Link>
+        </nav>
+        <details className="journey-secondary-activity" onToggle={event => setActivityOpen(event.currentTarget.open)}>
+          <summary>Followed community activity</summary>
+          {activityOpen && <FollowingActivity userId={session?.user?.id} />}
+        </details>
       </div>
     </PageFrame>
   );
 }
-
-function DashboardHeroVisual({ repos = [], theme }) {
-  if (theme === "profiles") {
-    return (
-      <div className="dashboard-hero-visual profiles" aria-hidden="true">
-        {["KP", "AM", "JS"].map((initials, index) => (
-          <span key={initials} style={{ "--lift": `${index * 18}px` }}>
-            <b>{initials}</b>
-            <i />
-          </span>
-        ))}
-      </div>
-    );
-  }
-
-  if (theme === "workspaces") {
-    return (
-      <div className="dashboard-hero-visual workspaces" aria-hidden="true">
-        {(repos.length ? repos : [{ name: "orbit-readme" }, { name: "first-pr-path" }]).slice(0, 2).map((repo, index) => (
-          <article key={repo.name || index}>
-            <strong>{repo.name || "workspace"}</strong>
-            <span />
-            <span />
-          </article>
-        ))}
-      </div>
-    );
-  }
-
-  if (theme === "courses") {
-    return (
-      <div className="dashboard-hero-visual courses" aria-hidden="true">
-        <span>DevOps</span>
-        <div><i /><i /><i /></div>
-        <b>CI</b>
-      </div>
-    );
-  }
-
-  if (theme === "notes") {
-    return (
-      <div className="dashboard-hero-visual notes" aria-hidden="true">
-        <article>Notebook</article>
-        <span>Deploy notes</span>
-        <span>README ideas</span>
-      </div>
-    );
-  }
-
-  if (theme === "quote") {
-    return (
-      <div className="dashboard-hero-visual quote" aria-hidden="true">
-        <span>“</span>
-        <i />
-      </div>
-    );
-  }
-
-  return (
-    <div className="dashboard-hero-visual welcome" aria-hidden="true">
-      <svg viewBox="0 0 420 180">
-        <path d="M16 150c78-86 142-86 220 0s128 54 168-2" />
-        <path d="M80 170c58-52 110-52 160 0s96 26 132-8" />
-      </svg>
-    </div>
-  );
-}
-
-function DashboardActivitySkeleton() {
-  return (
-    <div className="dashboard-activity-skeleton">
-      {Array.from({ length: 4 }).map((_, index) => (
-        <div className="phase-activity-row" key={index}>
-          <Skeleton className="skeleton-avatar" />
-          <div>
-            <Skeleton className="skeleton-text medium" />
-            <Skeleton className="skeleton-text wide" />
-          </div>
-          <Skeleton className="skeleton-pill" />
-          <Skeleton className="skeleton-text short" />
-        </div>
-      ))}
-    </div>
-  );
-}
-
-export { DashboardPage };

@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test("landing page renders hero and GitHub CTA", async ({ page }) => {
   await page.goto("/home");
-  await expect(page.getByRole("heading", { name: /your first home for code/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "ForAllCode", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: /github/i })).toBeVisible();
 });
 
@@ -27,7 +27,7 @@ test("unknown routes do not white-screen", async ({ page }) => {
   await page.goto("/missing/path/does-not-exist");
   await expect(page.getByRole("heading", { name: "Page not found" })).toBeVisible();
   await page.getByRole("link", { name: "Return home" }).click();
-  await expect(page.getByRole("heading", { name: /your first home for code/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "ForAllCode", exact: true })).toBeVisible();
 });
 
 test("markdown strips executable attributes and keeps copy controls", async ({ page }) => {

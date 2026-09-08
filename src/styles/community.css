@@ -1,0 +1,171 @@
+/* Shared Reddit-inspired chrome. Project media and code syntax retain their own colours. */
+:root {
+  --brand: #c93600;
+  --brand-hover: #a82d00;
+  --brand-soft: #fff0e8;
+  --brand-text: #a82d00;
+  --surface: #ffffff;
+  --surface-hover: #f2f4f5;
+  --line: #d6dadd;
+  --ui-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+}
+:root[data-theme="dark"] {
+  --brand: #c93600;
+  --brand-hover: #a82d00;
+  --brand-soft: #34231b;
+  --brand-text: #ffad8d;
+  --surface: #171c1f;
+  --surface-hover: #222a2e;
+  --line: #343b3f;
+}
+html, body { background: var(--cream); color: var(--ink); }
+body { font-family: var(--ui-font); font-size: 14px; line-height: 1.5; }
+body::before { content: none; }
+html body :is(h1, h2, h3, h4, button, input, select, textarea, .brand, .eyebrow) { font-family: var(--ui-font); letter-spacing: 0 !important; }
+html body h1 { font-size: 28px; line-height: 1.25; font-weight: 700; }
+html body h2 { font-size: 20px; line-height: 1.35; font-weight: 650; }
+html body h3 { font-size: 16px; line-height: 1.4; font-weight: 650; }
+html body :is(.page-heading h1, .issue-list-header h1, .pr-list-header h1, .discussion-list-header h1, .settings-sidebar h1) { font-size: 28px; }
+html body :is(button, .button, .eyebrow, .badge, .language-pill) { text-transform: none; }
+html body :is(p, label) { line-height: 1.6; }
+html body :is(.eyebrow, .page-heading .eyebrow) { font-size: 12px; font-weight: 600; color: var(--ink2); }
+html body .top-nav {
+  position: sticky; top: 0; z-index: 70; min-height: 64px; padding: 10px 24px; gap: 24px;
+  border-bottom: 1px solid var(--line); background: var(--cream); box-shadow: none; backdrop-filter: none;
+}
+html body .brand { font-size: 22px; font-weight: 750; color: var(--brand-text); text-transform: none; gap: 10px; white-space: nowrap; }
+html body .brand-mark { width: 30px; height: 30px; background: transparent; border: 0; }
+html body .brand-mark img { width: 30px; height: 30px; object-fit: contain; }
+html body .top-nav-center { min-width: 0; flex: 1; justify-content: center; }
+html body .nav-search-wrap { flex: 1; min-width: 120px; max-width: 620px; }
+html body .search-box { width: 100%; min-height: 42px; background: var(--cream2); border: 1px solid transparent; box-shadow: none; }
+html body .search-box:hover, html body .search-box:focus-within { border-color: var(--ink3-text); background: var(--surface-hover); }
+html body :is(.integrated-local-search, .global-search-box input) { font-size: 14px; font-weight: 400; background: transparent; color: var(--ink); }
+html body .search-scope-toggle { background: transparent; border: 0; }
+html body .search-scope-toggle button { font-size: 12px; font-weight: 500; background: transparent; color: var(--ink2); }
+html body .search-scope-toggle button.active { background: var(--surface); color: var(--ink); }
+html body :is(.avatar-trigger, .nav-icon-button, .icon-button) { min-height: 36px; background: transparent; color: var(--ink); border: 1px solid transparent; box-shadow: none; }
+html body :is(.avatar-trigger, .nav-icon-button, .icon-button):hover { background: var(--surface-hover); }
+html body .avatar-name { font-size: 13px; font-weight: 600; }
+html body :is(.dropdown-menu, .global-search-menu, .fac-navigation-content) { background: var(--surface); color: var(--ink); border: 1px solid var(--line); box-shadow: 0 5px 18px #0002; }
+html body :is(.dropdown-menu a, .dropdown-menu button):hover { background: var(--surface-hover); }
+
+.community-sidebar { position: fixed; inset: 64px auto 0 0; z-index: 40; width: 236px; padding: 18px 16px; overflow-y: auto; background: var(--cream); border-right: 1px solid var(--line); }
+.community-sidebar nav { padding: 10px 0 18px; border-bottom: 1px solid var(--line); }
+.community-sidebar nav:first-child { padding-top: 0; }
+.community-sidebar nav > p { margin: 6px 12px 10px; font-size: 12px; color: var(--ink2); }
+.community-nav-link { display: flex; align-items: center; gap: 12px; min-height: 42px; padding: 10px 12px; color: var(--ink); font-size: 14px; line-height: 1.3; }
+.community-nav-link svg { flex-shrink: 0; }
+.community-nav-link:hover { background: var(--surface-hover); }
+.community-nav-link.active { background: var(--cream2); font-weight: 600; box-shadow: inset 3px 0 var(--brand); }
+.community-nav-link.active svg { color: var(--brand-text); }
+.community-sidebar-note { padding: 14px 12px; font-size: 12px; color: var(--ink2); }
+html body .app-shell > main { width: 100%; max-width: 1240px; margin-inline: auto; }
+html body .community-shell > main { width: calc(100% - 236px); max-width: none; margin-left: 236px; }
+html body .app-shell main :is(.page-frame, .phase-repo-page, .explore-page, .notifications-page, .settings-shell, .marketplace-page, .cert-page, .upgrade-page) { width: 100%; max-width: 1120px; margin-inline: auto; padding: 28px 32px; }
+html body .page-heading { margin-bottom: 24px; }
+html body .page-heading h1 { margin-top: 4px; }
+html body :is(.hero, .band, .phase-filter-bar, .profile-header, .learn-layout, .settings-section, .education-callout, .repo-empty-state, .learn-catalog-header, .learn-catalog-empty, .phase-repo-header, .phase-code-tab, .repo-create-shell, .repo-create-card, .repo-create-preview, .auth-panel > .card, .settings-plan-card, .settings-connected-card, .settings-integration-card) {
+  background: var(--surface); color: var(--ink); border-color: var(--line); box-shadow: none; border-radius: 0 !important;
+}
+html body :is(.card, .stat, .featured-project-card, .repo-card, .phase-repo-card:not(.has-repo-hero), .portfolio-card, .workspace-card, .learn-card, .lesson-card, .learn-cert-card, .learn-catalog-card, .marketplace-course-card, .course-card, .cert-card, .plan-card, .project-card, .issue-card, .pr-card, .discussion-card, .gist-card, .explore-repo-card, .settings-radio-cards button, .settings-toggle-row, .comfort-card, .lesson-content, .lesson-sidebar, .feed-event-preview, .feed-repo-preview, .empty-state) {
+  border-radius: 0 !important; background: var(--surface); border-color: var(--line); color: var(--ink); box-shadow: none !important;
+}
+html body :is(.phase-repo-card, .repo-card, .explore-repo-card, .marketplace-course-card):hover { background: var(--surface-hover); box-shadow: none; transform: none; }
+html body :is(.phase-repo-list.rows, .phase-repo-list.list) { grid-template-columns: minmax(0, 1fr); gap: 0; }
+html body .phase-repo-list.rows .phase-repo-card { border: 0; border-bottom: 1px solid var(--line); padding: 20px 12px; }
+html body .phase-repo-list.grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); }
+html body :is(.issue-row, .pr-row, .discussion-row, .notification-row, .gist-list-item, .feed-event) { border-color: var(--line); box-shadow: none; }
+html body :is(.issue-row, .pr-row, .discussion-row, .notification-row):hover { background: var(--surface-hover); }
+html body :is(.button, .settings-save-button, .onboarding-primary, .repo-create-submit, .upgrade-primary, .readme-save-button, .nav-primary-button) {
+  background: var(--brand); color: #fff; border: 1px solid var(--brand); border-radius: 0 !important; min-height: 40px; font-size: 14px; font-weight: 650; text-transform: none; box-shadow: none; line-height: 1.3;
+}
+html body :is(.button, .settings-save-button, .onboarding-primary, .repo-create-submit, .upgrade-primary, .readme-save-button):hover { background: var(--brand-hover); border-color: var(--brand-hover); color: #fff; transform: none; }
+html body :is(.button.soft, .button.ghost, .onboarding-secondary, .onboarding-ghost, .settings-ghost, .repo-header-actions button, .phase-repo-actions a, .phase-repo-actions button, .readme-ghost-button) { background: var(--cream2); color: var(--ink); border: 1px solid var(--line); font-weight: 600; text-transform: none; box-shadow: none; }
+html body :is(.button.soft, .button.ghost, .onboarding-secondary, .onboarding-ghost, .settings-ghost, .readme-ghost-button):hover { background: var(--surface-hover); color: var(--ink); border-color: var(--ink3-text); }
+html body :is(button:disabled, .button:disabled) { opacity: .5; cursor: not-allowed; }
+html body :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]), textarea, select) { border-radius: 0 !important; background-color: var(--surface); color: var(--ink); border-color: var(--ink3-text); box-shadow: none; }
+html body :is(input, textarea)::placeholder { color: var(--ink3-text); }
+html body :is(input[type="checkbox"], input[type="radio"], progress) { accent-color: var(--brand); }
+html body :is(.badge, .repo-visibility-pill, .settings-plan-badge, .lesson-tag, .current-plan-pill) { background: var(--cream2); color: var(--ink2); border-color: var(--line); font-weight: 500; text-transform: none; }
+html body :is(.tab-row .active, .repo-tab-bar .active, .lesson-sidebar .active, .explore-tab-row .active, .settings-nav-item.active) { color: var(--ink); background: var(--cream2); border-color: var(--brand); }
+html body .settings-shell { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 28px; }
+html body .settings-sidebar { background: transparent; border: 0; padding: 0; }
+html body .settings-sidebar nav { display: flex; flex-direction: column; overflow: visible; align-items: stretch; }
+html body .settings-sidebar nav p { margin: 18px 10px 8px; white-space: normal; }
+html body .settings-nav-item { text-align: left; white-space: normal; padding: 10px; justify-content: flex-start; }
+html body .settings-content { width: 100%; max-width: none; padding: 0; margin: 0; }
+html body .settings-section { border: 0; border-bottom: 1px solid var(--line); padding: 22px 0; }
+html body .settings-section h2 { font-size: 20px; }
+html body .learn-layout { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 24px; border: 0; }
+html body .lesson-sidebar { border: 0; border-right: 1px solid var(--line); padding: 0 16px 0 0; }
+html body .lesson-content { padding: 0; border: 0; }
+html body .lesson-content .steps { grid-template-columns: minmax(0, 1fr); gap: 0; }
+html body .lesson-content .steps .card { padding: 18px 0; border: 0; border-bottom: 1px solid var(--line); }
+html body .git-diagram { background: var(--cream2); border-color: var(--line); border-radius: 0; }
+html body .project-journey { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 24px 32px; }
+html body .journey-next { grid-column: 1; padding: 0 0 24px; border-top: 0; }
+html body .journey-next h2 { font-size: 24px !important; }
+html body .project-journey .button, html body .project-practice .button { background: var(--brand); color: #fff; }
+html body .project-journey .button:hover, html body .project-practice .button:hover { background: var(--brand-hover); }
+html body .journey-project-picker { grid-column: 1; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; }
+html body .journey-project-picker label { grid-column: 1 / -1; margin: 0; font-size: 12px; }
+html body .journey-project-picker a { font-size: 13px; }
+html body .project-journey > section:not(.journey-next) { grid-column: 1; }
+html body .journey-steps { grid-template-columns: minmax(0, 1fr); gap: 0; }
+html body .journey-steps li { padding: 20px 0; }
+html body .journey-steps h3 { font-size: 17px !important; }
+html body .journey-steps p { margin: 8px 0; font-size: 14px; }
+html body .journey-steps a { display: inline-block; margin: 8px 18px 0 0; font-size: 13px; font-weight: 600; }
+html body .journey-trust { grid-column: 2; grid-row: 1 / span 3; align-self: start; background: var(--cream2); border: 0; padding: 20px; position: sticky; top: 90px; }
+html body .journey-trust p, html body .journey-trust a { font-size: 13px; }
+html body .journey-secondary { grid-column: 1 / -1; }
+html body .journey-secondary-activity { grid-column: 1 / -1; border-top: 1px solid var(--line); padding-top: 16px; }
+html body .journey-secondary-activity summary { cursor: pointer; font-weight: 600; }
+html body .project-journey a:not(.button), html body .project-practice a { text-decoration: none; }
+html body .project-journey a:not(.button):hover, html body .project-practice a:hover { text-decoration: underline; }
+html body :is(.empty-state, .repo-empty-state, .explore-empty) { padding: 36px 24px; border: 1px solid var(--line); }
+html body .empty-state-icon { border-radius: 0 !important; background: var(--cream2); color: var(--ink2); }
+html body :is(.onboarding-card, .portfolio-editor, .modal, .modal-card, .command-palette, .github-panel) { background: var(--surface); border-color: var(--line); color: var(--ink); border-radius: 0 !important; }
+html body .onboarding-card { box-shadow: 0 16px 64px #0005; }
+html body :is(.readme-studio-header, .readme-editor-toolbar, .readme-preview-toolbar, .readme-studio-status, .readme-preview-content) { background: var(--surface); color: var(--ink); border-color: var(--line); }
+html body .landing-hero { border: 0; box-shadow: none; background: var(--surface); }
+html body .landing-hero h1 { font-size: 48px; letter-spacing: 0; line-height: 1.1; }
+html body .landing-hero p { color: var(--ink2); }
+html body .feature-grid .card { border: 0; border-top: 1px solid var(--line); }
+html body .about-page .about-hero { background: var(--cream2); }
+html body .about-page .about-hills { display: none; }
+html body .app-shell > footer { background: var(--cream); border-top: 1px solid var(--line); color: var(--ink2); box-shadow: none; }
+html body .app-shell > footer a { color: var(--ink2); }
+html body :where(a, button, input, select, textarea, summary, [tabindex="0"]):focus-visible { outline: 2px solid var(--brand-text); outline-offset: 3px; }
+@media (min-width: 1241px) {
+  .community-shell .top-nav-center > [data-slot="navigation-menu"] { display: none; }
+  html body .community-shell .top-nav-center { justify-content: center; }
+}
+@media (max-width: 1240px) {
+  .community-sidebar { display: none; }
+  html body .community-shell > main { width: 100%; margin-left: 0; }
+  html body .top-nav-center.open { background: var(--cream); border: 1px solid var(--line); box-shadow: 0 10px 20px #0002; }
+}
+@media (max-width: 800px) {
+  html body .project-journey { grid-template-columns: minmax(0, 1fr); }
+  html body .journey-trust { grid-column: 1; grid-row: auto; position: static; padding: 20px; }
+  html body .learn-layout { grid-template-columns: minmax(0, 1fr); }
+  html body .lesson-sidebar { border-right: 0; }
+  html body .settings-shell { grid-template-columns: minmax(0, 1fr); }
+  html body .settings-sidebar { border-bottom: 1px solid var(--line); padding-bottom: 16px; }
+  html body .settings-sidebar nav { flex-direction: row; flex-wrap: wrap; gap: 4px; }
+  html body .settings-sidebar nav p { flex-basis: 100%; }
+}
+@media (max-width: 540px) {
+  html body .top-nav { padding: 10px 12px; gap: 10px; }
+  html body .brand { font-size: 18px; gap: 6px; }
+  html body .brand-mark, html body .brand-mark img { width: 26px; height: 26px; }
+  html body .top-nav-right { gap: 4px; }
+  html body .avatar-name { display: none; }
+  html body .app-shell main :is(.page-frame, .phase-repo-page, .explore-page, .notifications-page, .settings-shell, .marketplace-page, .cert-page, .upgrade-page) { padding: 20px 16px; }
+  html body h1, html body .page-heading h1 { font-size: 24px; }
+  html body .landing-hero h1 { font-size: 36px; }
+  html body .journey-project-picker { grid-template-columns: minmax(0, 1fr); }
+  html body .journey-project-picker label { grid-column: auto; }
+}

@@ -1,6 +1,6 @@
 # ForAllCode
 
-A warm, human GitHub alternative prototype built from `FORALLCODE_SPEC.md`.
+A beginner-friendly companion to GitHub: learn Git, practice on a real project, and explain the result in a portfolio. Code stays on GitHub; ForAllCode adds visual learning, project guidance, and presentation tools.
 
 ## Run locally
 

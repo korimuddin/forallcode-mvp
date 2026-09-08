@@ -6,11 +6,11 @@ import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { BrowserRouter } from "react-router-dom";
 import CommandPalette from "./components/layout/CommandPalette";
 import TopNav from "./components/layout/TopNav";
+import CommunitySidebar from "./components/layout/CommunitySidebar";
 import LockInOverlay from "./components/lockin/LockInOverlay";
 import { AdminGuard } from "./components/admin/AdminGuard";
 import GitHubPanelProvider from "./components/GitHubPanel/GitHubPanel";
 import ErrorBoundary from "./components/ui/ErrorBoundary";
-import ParticleBackground from "./components/ui/ParticleBackground";
 import Skeleton from "./components/ui/Skeleton";
 import { applyAppearance, readAppearance } from "./lib/appearance";
 import { useAuthSession, useDocumentTitle } from "./lib/hooks";
@@ -20,6 +20,7 @@ import { LockInProvider, useLockIn } from "./lib/useLockIn";
 import { SubscriptionProvider } from "./lib/useSubscription";
 import "./styles.css";
 import "./styles/mobile.css";
+import "./styles/community.css";
 
 const About = lazy(() => import("./pages/About"));
 const AdminFeedback = lazy(() => import("./pages/AdminFeedback"));
@@ -143,6 +144,7 @@ function AppRoutes() {
   const isCertificatePage = /^\/certificates\/[^/]+\/?$/.test(location.pathname);
   const { session, checked } = useAuthSession();
   const { completionMessage, isActive } = useLockIn();
+  const communityShell = Boolean(session) && !isEntryPage && !isPortfolioPage && !isCertificatePage && !["/home", "/login", "/about"].includes(location.pathname);
 
   useEffect(() => {
     if (!checked || isEntryPage) return;
@@ -155,12 +157,12 @@ function AppRoutes() {
 
   return (
     <>
-      <ParticleBackground />
       {isActive && <LockInOverlay />}
       {completionMessage && <div className="lockin-toast" role="status">{completionMessage}</div>}
       {!isEntryPage && !isPortfolioPage && !isCertificatePage && <CommandPalette />}
-      <div className={isEntryPage ? "app-shell entry-shell" : isPortfolioPage ? "app-shell portfolio-shell" : isCertificatePage ? "app-shell certificate-shell" : "app-shell"}>
+      <div className={isEntryPage ? "app-shell entry-shell" : isPortfolioPage ? "app-shell portfolio-shell" : isCertificatePage ? "app-shell certificate-shell" : communityShell ? "app-shell community-shell" : "app-shell"}>
         {!isEntryPage && !isPortfolioPage && !isCertificatePage && <TopNav />}
+        {communityShell && <CommunitySidebar />}
         {!isEntryPage && !isPortfolioPage && !isCertificatePage && <ImpersonationBanner />}
         <main>
           <ChunkLoadBoundary key={location.pathname}>

@@ -20,6 +20,8 @@ import {
   Strikethrough
 } from "lucide-react";
 import BlockInserter from "../components/readme/BlockInserter";
+import Skeleton from "../components/ui/Skeleton";
+import "../styles/project-journey.css";
 import { allReadmeTemplateOptions, readmeTemplates } from "../data/readmeTemplates";
 import { useDocumentTitle } from "../lib/hooks";
 import { celebrate } from "../lib/celebrate";
@@ -285,6 +287,7 @@ export default function ReadmeStudio() {
   }
 
   async function handleSave() {
+    if (!window.confirm("Create a commit that updates README.md on this repository's default branch on GitHub? Your ForAllCode draft is saved separately.")) return;
     setSaveState("saving");
     setStatus("Saving README");
 
@@ -372,7 +375,7 @@ export default function ReadmeStudio() {
   }
 
   const saveButtonContent = {
-    idle: <><Save size={14} />Save to repo</>,
+    idle: <><Save size={14} />Commit to GitHub</>,
     saving: "Saving…",
     saved: "✓ Saved"
   };
@@ -426,6 +429,7 @@ export default function ReadmeStudio() {
         </div>
       </header>
 
+      <p className="readme-save-disclosure">Drafts auto-save to ForAllCode every 30 seconds. Commit to GitHub updates README.md on the default branch. For a practice pull request, edit on a branch in GitHub instead. The free Project case study template is in Templates.</p>
       <div className="readme-studio-body">
         <section className={`readme-editor-column ${mobileView === "edit" ? "mobile-active" : ""}`} aria-label="Markdown editor">
           <div className="readme-editor-toolbar">

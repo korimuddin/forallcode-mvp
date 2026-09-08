@@ -1,201 +1,74 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
 import { supabase } from "../../lib/supabase";
+import { repositoryPath } from "../../lib/projectJourney";
+import { trackUsage } from "../../lib/trackUsage";
 import OnboardingStep from "./OnboardingStep";
-import GitComfortStep from "./steps/GitComfortStep";
-import GitHubSyncStep from "./steps/GitHubSyncStep";
-import GoalsStep from "./steps/GoalsStep";
-import NavigationStep from "./steps/NavigationStep";
-import ProfileStep from "./steps/ProfileStep";
-import ReadyStep from "./steps/ReadyStep";
-import ReposStep from "./steps/ReposStep";
-import WelcomeStep from "./steps/WelcomeStep";
-import WorkspaceStep from "./steps/WorkspaceStep";
-import { celebrate } from "../../lib/celebrate";
+import "../../styles/project-journey.css";
 
-const TOTAL_STEPS = 9;
-
-const placeholderSteps = [
-  {
-    title: "Welcome to ForAllCode",
-    text: "Placeholder for the welcome step. The full step content comes next."
-  },
-  {
-    title: "Git comfort level",
-    text: "Placeholder for choosing how comfortable this user feels with Git."
-  },
-  {
-    title: "Your goal",
-    text: "Placeholder for capturing what the user wants ForAllCode to help with."
-  },
-  {
-    title: "Navigation tour",
-    text: "Placeholder for introducing Repos, Learn, Explore, and Workspace."
-  },
-  {
-    title: "Workspace preview",
-    text: "Placeholder for showing the illustrated desk and focus tools."
-  },
-  {
-    title: "Repo tools",
-    text: "Placeholder for showing README Studio, Landing Designer, issues, and notes."
-  },
-  {
-    title: "GitHub sync",
-    text: "Placeholder for explaining how GitHub data stays connected."
-  },
-  {
-    title: "Profile preview",
-    text: "Placeholder for introducing the public profile and portfolio."
-  },
-  {
-    title: "Ready to begin",
-    text: "Placeholder for personalised quick actions."
-  }
+const goals = [
+  { id: "learn-git", title: "Understand my first Git change", text: "Start with commits, then try a small project task." },
+  { id: "beautiful-repos", title: "Improve a project", text: "Make one useful change to a README." },
+  { id: "build-profile", title: "Explain my work", text: "Write a project story and build my portfolio." }
 ];
 
 export default function OnboardingFlow({ user, profile, repos = [], onComplete }) {
   const navigate = useNavigate();
-  const [stepIndex, setStepIndex] = useState(0);
+  const [step, setStep] = useState(1);
+  const [goal, setGoal] = useState(goals.find(item => item.id === profile?.onboardingGoal)?.id || "learn-git");
   const [saving, setSaving] = useState(false);
-  const currentStep = stepIndex + 1;
-  const step = placeholderSteps[stepIndex] || placeholderSteps[0];
+  const [error, setError] = useState("");
+  const firstRepo = repos[0];
+  const destination = goal === "learn-git" ? "/learn/commits"
+    : firstRepo ? `${repositoryPath(firstRepo)}/readme` : "/repos/new";
+  const action = goal === "learn-git" ? "Start with commits" : firstRepo ? "Open README Studio" : "Create a project";
 
-  const friendlyName = useMemo(() => {
-    return profile?.displayName || profile?.username || user?.user_metadata?.name || "there";
-  }, [profile, user]);
-  const firstName = friendlyName.split(" ")[0] || friendlyName;
-
-  async function completeOnboarding() {
+  async function finish(path) {
     if (saving) return;
     setSaving(true);
+    setError("");
     try {
-      if (supabase && user?.id) {
-        await supabase
-          .from("profiles")
-          .update({ onboarding_completed: true })
-          .eq("id", user.id);
-      }
-      celebrate();
-      window.dispatchEvent(new CustomEvent("forallcode-toast", { detail: "Onboarding complete! 🎉 ForAllCode is yours now." }));
+      if (!supabase || !user?.id) throw new Error("Sign in to save your starting point.");
+      const { error: saveError } = await supabase.from("profiles")
+        .update({ onboarding_completed: true, onboarding_goal: goal }).eq("id", user.id);
+      if (saveError) throw saveError;
+      trackUsage(user.id, "onboarding_completed", { goal, skipped: !path }).catch(() => {});
       onComplete?.();
+      if (path) navigate(path);
+    } catch (saveError) {
+      setError(saveError.message || "Could not save your starting point. Please try again.");
     } finally {
       setSaving(false);
     }
   }
 
-  function goNext() {
-    if (stepIndex >= TOTAL_STEPS - 1) {
-      completeOnboarding();
-      return;
-    }
-    setStepIndex((index) => Math.min(index + 1, TOTAL_STEPS - 1));
-  }
-
-  async function completeAndOpenWorkspace() {
-    await completeOnboarding();
-    navigate("/workspace");
-  }
-
-  async function completeAndOpenProfileSettings() {
-    await completeOnboarding();
-    navigate("/settings/profile");
-  }
-
-  async function completeAndNavigate(path) {
-    await completeOnboarding();
-    navigate(path);
-  }
-
-  const cardClassName = stepIndex === 0 ? "onboarding-card-welcome" : "";
-
   return (
-    <OnboardingStep cardClassName={cardClassName} currentStep={currentStep} totalSteps={TOTAL_STEPS}>
-      {stepIndex === 0 ? (
-        <WelcomeStep firstName={firstName} onNext={goNext} profile={profile} />
-      ) : stepIndex === 1 ? (
-        <GitComfortStep
-          initialValue={profile?.gitComfortLevel}
-          onBack={() => setStepIndex(0)}
-          onNext={goNext}
-          onSkip={completeOnboarding}
-          user={user}
-        />
-      ) : stepIndex === 2 ? (
-        <GoalsStep
-          initialValue={profile?.onboardingGoal}
-          onBack={() => setStepIndex(1)}
-          onNext={goNext}
-          onSkip={completeOnboarding}
-          user={user}
-        />
-      ) : stepIndex === 3 ? (
-        <NavigationStep
-          onBack={() => setStepIndex(2)}
-          onNext={goNext}
-          onSkip={completeOnboarding}
-        />
-      ) : stepIndex === 4 ? (
-        <WorkspaceStep
-          onBack={() => setStepIndex(3)}
-          onSetupWorkspace={completeAndOpenWorkspace}
-          onSkip={goNext}
-        />
-      ) : stepIndex === 5 ? (
-        <ReposStep
-          onBack={() => setStepIndex(4)}
-          onNext={goNext}
-          onSkip={completeOnboarding}
-        />
-      ) : stepIndex === 6 ? (
-        <GitHubSyncStep
-          onBack={() => setStepIndex(5)}
-          onNext={goNext}
-          onSkip={completeOnboarding}
-        />
-      ) : stepIndex === 7 ? (
-        <ProfileStep
-          onBack={() => setStepIndex(6)}
-          onCustomiseProfile={completeAndOpenProfileSettings}
-          onNext={goNext}
-          onSkip={completeOnboarding}
-          profile={profile}
-        />
-      ) : stepIndex === 8 ? (
-        <ReadyStep
-          firstName={firstName}
-          goals={profile?.onboardingGoal}
-          onAction={completeAndNavigate}
-          onDashboard={completeOnboarding}
-          repos={repos}
-        />
-      ) : (
-        <div className="onboarding-placeholder">
-          <p className="eyebrow">First-time setup</p>
-          <h2>{step.title}</h2>
-          <p>
-            Hi {friendlyName}. {step.text}
-          </p>
-          <p className="onboarding-placeholder-note">
-            {repos.length > 0
-              ? `We can see ${repos.length} synced repos ready for the finished flow.`
-              : "Your synced repos will be available to the finished flow when they load."}
-          </p>
-          <div className="onboarding-actions">
-            <button className="onboarding-ghost" disabled={saving} onClick={completeOnboarding} type="button">
-              Skip for now
-            </button>
-            {stepIndex > 0 && (
-              <button className="onboarding-secondary" disabled={saving} onClick={() => setStepIndex((index) => Math.max(index - 1, 0))} type="button">
-                Back
-              </button>
-            )}
-            <button className="onboarding-primary" disabled={saving} onClick={goNext} type="button">
-              {saving ? "Saving..." : stepIndex === TOTAL_STEPS - 1 ? "Finish" : "Next"}
-            </button>
-          </div>
+    <OnboardingStep currentStep={step} totalSteps={2}>
+      <div className="journey-onboarding">
+        {step === 1 ? <>
+          <h2>What would you like to do first?</h2>
+          <fieldset disabled={saving}>
+            <legend className="sr-only">Choose your starting point</legend>
+            {goals.map(item => <label className="journey-goal" key={item.id}>
+              <input type="radio" name="starting-goal" value={item.id} checked={goal === item.id} onChange={() => setGoal(item.id)} />
+              <span><strong>{item.title}</strong><small>{item.text}</small></span>
+            </label>)}
+          </fieldset>
+        </> : <>
+          <h2>One small step, then real work</h2>
+          <p>{goal === "learn-git" ? "Read the commits lesson, then improve a README on a branch and open a pull request." : "Use the free Project case study template to explain the problem, your decisions, and what you learned. Existing README content is replaced only after confirmation."}</p>
+          <p>Your repositories stay on GitHub. ForAllCode stores learning progress and README drafts. Saving a README to the repository creates a GitHub commit.</p>
+        </>}
+        {error && <p className="auth-error" role="alert">{error}</p>}
+        <div className="onboarding-actions">
+          <button className="onboarding-ghost" disabled={saving} type="button" onClick={() => finish()}>Skip setup</button>
+          {step === 2 && <button className="onboarding-secondary" disabled={saving} type="button" onClick={() => setStep(1)}>Back</button>}
+          <button className="onboarding-primary" disabled={saving} type="button" onClick={() => step === 1 ? setStep(2) : finish(destination)}>
+            {saving ? "Saving..." : step === 1 ? "Continue" : action}<ArrowRight size={16} />
+          </button>
         </div>
-      )}
+      </div>
     </OnboardingStep>
   );
 }

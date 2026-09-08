@@ -1,5 +1,6 @@
 import { Upload, X } from "lucide-react";
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { getCurrentSession, supabase, uploadPortfolioScreenshot } from "../../lib/supabase";
 import TechStackPicker from "./TechStackPicker";
 
@@ -156,6 +157,7 @@ export default function PortfolioEditor({
                 </label>
                 {entry && (
                   <div className="portfolio-editor-fields">
+                    <p>Explain the problem, your contribution, your decisions, and what you learned in your project README. <Link to={`/${encodeURIComponent(profile.username)}/${encodeURIComponent(repo.name)}/readme`}>Write the project story</Link>. Drafts stay in ForAllCode until you commit them to GitHub.</p>
                     <label>
                       Live URL
                       <input value={entry.live_url || ""} onChange={(event) => updateEntry(repo.id, "live_url", event.target.value)} placeholder="https://project.example.com" />
