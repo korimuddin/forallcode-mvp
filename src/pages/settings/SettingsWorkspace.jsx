@@ -76,6 +76,8 @@ export default function SettingsWorkspace() {
 
   async function handleSave() {
     setStatus("saving");
+    try {
+      if (!supabase || !session?.user?.id) throw new Error("Sign in to save.");
     const settingsToSave = { ...settings, deskTheme: visibleDeskTheme };
     if (session?.user?.id) setUserPreference(session.user.id, "workspace", settingsToSave);
     if (supabase && session?.user?.id) {
@@ -87,10 +89,13 @@ export default function SettingsWorkspace() {
         show_decorations: settingsToSave.showDecorations,
         default_note_colour: settingsToSave.defaultNoteColour
       }, { onConflict: "user_id" });
-      if (error) console.warn("Could not sync workspace settings to Supabase.", error);
+      if (error) throw error;
     }
     setStatus("saved");
     setTimeout(() => setStatus("default"), 1800);
+    } catch {
+      setStatus("error");
+    }
   }
 
   return (
@@ -154,14 +159,14 @@ function ThemeSelector({ currentTheme, isPro, onSelect }) {
 function DeskPreview({ theme }) {
   return (
     <svg aria-hidden="true" viewBox="0 0 120 72">
-      <rect width="120" height="72" rx="12" fill={theme.desk} />
-      <rect x="12" y="48" width="96" height="8" rx="4" fill={theme.deskEdge} />
-      <rect x="22" y="14" width="46" height="28" rx="6" fill={theme.monitor} stroke={theme.deskEdge} />
-      <rect x="28" y="20" width="34" height="16" rx="3" fill={theme.screen} />
-      <rect x="75" y="16" width="18" height="18" rx="6" fill={theme.mug} stroke={theme.deskEdge} />
-      <rect x="82" y="42" width="18" height="18" rx="5" fill={theme.plant} />
+      <rect width="120" height="72" fill={theme.desk} />
+      <rect x="12" y="48" width="96" height="8" fill={theme.deskEdge} />
+      <rect x="22" y="14" width="46" height="28" fill={theme.monitor} stroke={theme.deskEdge} />
+      <rect x="28" y="20" width="34" height="16" fill={theme.screen} />
+      <rect x="75" y="16" width="18" height="18" fill={theme.mug} stroke={theme.deskEdge} />
+      <rect x="82" y="42" width="18" height="18" fill={theme.plant} />
       <circle cx="94" cy="40" r="8" fill={theme.leaf} />
-      <rect x="28" y="58" width="54" height="5" rx="3" fill={theme.keyboard} />
+      <rect x="28" y="58" width="54" height="5" fill={theme.keyboard} />
     </svg>
   );
 }

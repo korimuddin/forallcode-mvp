@@ -27,8 +27,10 @@ exports.handler = async (event) => {
   }, { onConflict: "key" });
 
   switch (stripeEvent.type) {
-    case "checkout.session.completed": {
+    case "checkout.session.completed":
+    case "checkout.session.async_payment_succeeded": {
       if (session.mode === "payment" && session.metadata?.course_id) {
+        if (session.payment_status !== "paid") break;
         const courseId = session.metadata.course_id;
         const userId = session.metadata.supabase_user_id;
         const price = Number(session.amount_total || 0) / 100;
@@ -72,25 +74,11 @@ exports.handler = async (event) => {
       if (session.mode === "payment" && session.metadata?.cert_type) {
         const userId = session.metadata.supabase_user_id;
         const certType = session.metadata.cert_type;
-        const { data: existing } = await supabase
-          .from("certifications")
-          .select("id")
-          .eq("user_id", userId)
-          .eq("cert_type", certType)
-          .maybeSingle();
-
-        if (existing?.id) {
-          await supabase
-            .from("certifications")
-            .update({ stripe_payment_id: session.payment_intent })
-            .eq("id", existing.id);
-        } else {
-          await supabase.from("certifications").insert({
-            user_id: userId,
-            cert_type: certType,
-            stripe_payment_id: session.payment_intent
-          });
-        }
+        if (session.payment_status !== "paid") break;
+        const { error } = await supabase.rpc("grant_certificate_payment", {
+          buyer: userId, kind: certType, payment: session.payment_intent
+        });
+        if (error) return { statusCode: 500, body: "Could not record certificate payment" };
         break;
       }
 

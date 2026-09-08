@@ -10,7 +10,7 @@ export function UpgradeButton({ small = false }) {
         background: "#9b8fd4",
         color: "#fffdf9",
         border: "none",
-        borderRadius: 30,
+        borderRadius: 0,
         padding: small ? "5px 14px" : "10px 24px",
         fontSize: small ? 12 : 14,
         fontWeight: 600,

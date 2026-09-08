@@ -1,3 +1,4 @@
+import { functionFetch } from "../lib/functionFetch";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Award, BookOpen, CheckCircle2, Clock, ExternalLink, Github } from "lucide-react";
@@ -69,7 +70,7 @@ export default function CertificationInfo() {
     }
 
     setCheckoutStatus("loading");
-    const response = await fetch("/.netlify/functions/create-cert-checkout", {
+    const response = await functionFetch("/.netlify/functions/create-cert-checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

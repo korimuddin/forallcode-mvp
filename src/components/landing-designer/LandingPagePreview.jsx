@@ -91,7 +91,7 @@ export default function LandingPagePreview({
               background: isBold ? "#fffdf9" : theme.accent,
               color: isBold ? theme.dark : "#fffdf9",
               padding: "12px 28px",
-              borderRadius: 30,
+              borderRadius: 0,
               fontSize: 14,
               fontWeight: 700,
               textDecoration: "none",
@@ -109,7 +109,7 @@ export default function LandingPagePreview({
                 background: "transparent",
                 color: isBold ? "#fffdf9" : theme.accent,
                 padding: "12px 28px",
-                borderRadius: 30,
+                borderRadius: 0,
                 fontSize: 14,
                 border: `1.5px solid ${isBold ? "#fffdf9" : theme.accent}`,
                 textDecoration: "none",
@@ -144,7 +144,7 @@ export default function LandingPagePreview({
             style={{
               background: resolveToken(style.featureBg, theme),
               border: style.featureBorder,
-              borderRadius: style.borderRadius,
+              borderRadius: 0,
               padding: 20
             }}
           >
@@ -179,7 +179,7 @@ export default function LandingPagePreview({
             background: isBold ? "#fffdf9" : theme.accent,
             color: isBold ? theme.dark : "#fffdf9",
             padding: "13px 32px",
-            borderRadius: 30,
+            borderRadius: 0,
             fontSize: 14,
             fontWeight: 700,
             textDecoration: "none",

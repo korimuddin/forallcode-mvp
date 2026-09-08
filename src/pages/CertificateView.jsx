@@ -50,15 +50,11 @@ export default function CertificateView() {
         return;
       }
 
-      const { data } = await supabase
-        .from("certifications")
-        .select("*, profiles(display_name, username)")
-        .eq("verification_code", verificationCode)
-        .maybeSingle();
+      const { data } = await supabase.rpc("verify_public_certificate", { code: verificationCode }).maybeSingle();
 
       if (!alive) return;
       setCert(data || null);
-      setProfile(data?.profiles || null);
+      setProfile(data || null);
       setLoading(false);
     }
 

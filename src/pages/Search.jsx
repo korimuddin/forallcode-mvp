@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { CircleDot, Search as SearchIcon, Star } from "lucide-react";
+import EmptyState from "../components/ui/EmptyState";
 import IllustratedAvatar from "../components/ui/IllustratedAvatar";
 import Skeleton from "../components/ui/Skeleton";
 import { performSearch } from "../lib/globalSearch";
@@ -116,10 +117,13 @@ export default function SearchPage() {
       )}
       {!loading && error && <p className="auth-error">{error}</p>}
       {!loading && !error && pagedItems.length === 0 && (
-        <div className="issue-empty-state">
-          <h2>No results found</h2>
-          <p>Try a repository name, username, issue title, or lesson topic.</p>
-        </div>
+        <EmptyState
+          icon={<SearchIcon size={34} />}
+          title={query ? `Nothing matched '${query}'.` : "Search can help when you know what you want."}
+          body={query ? "Try fewer words, or browse Explore for inspiration." : "Try a repository name, username, issue title, or lesson topic."}
+          actionLabel="Browse Explore"
+          to="/explore"
+        />
       )}
       {!loading && !error && pagedItems.length > 0 && (
         <div className="search-results-list">

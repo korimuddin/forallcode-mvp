@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { Plus } from "lucide-react";
+import { CircleDot, Plus } from "lucide-react";
 import IssueCard, { getIssueCommentCount } from "../components/issues/IssueCard";
 import IssueFilters from "../components/issues/IssueFilters";
+import EmptyState from "../components/ui/EmptyState";
+import Hint from "../components/ui/Hint";
 import Skeleton from "../components/ui/Skeleton";
 import { useDocumentTitle } from "../lib/hooks";
 import { supabase } from "../lib/supabase";
@@ -28,12 +30,12 @@ function RepoIssuesHeader({ repo, username, repoName, activeStatus, onStatusChan
           Issues
           {openCount > 0 && <span className="repo-tab-count">{openCount}</span>}
         </Link>
-        <Link to={`/${username}/${repoName}/pulls`}>Pull requests</Link>
+        <Link to={`/${username}/${repoName}/pulls`}><Hint term="pull-request">Pull requests</Hint></Link>
         <Link to={`/${username}/${repoName}/discussions`}>Discussions</Link>
         <Link to={`/${username}/${repoName}/projects`}>Projects</Link>
         {showInsights && <Link to={`/${username}/${repoName}/insights`}>Insights</Link>}
-        <Link to={`/${username}/${repoName}`}>Commits</Link>
-        <Link to={`/${username}/${repoName}`}>Branches</Link>
+        <Link to={`/${username}/${repoName}`}><Hint term="commit">Commits</Hint></Link>
+        <Link to={`/${username}/${repoName}`}><Hint term="branch">Branches</Hint></Link>
         <Link to={`/${username}/${repoName}`}>Settings</Link>
       </nav>
       <div className="issues-header-row">
@@ -203,10 +205,13 @@ export default function IssueList() {
       )}
       {!loading && error && <p className="auth-error">{error}</p>}
       {!loading && !error && visibleIssues.length === 0 && (
-        <div className="issue-empty-state">
-          <h2>No {activeStatus} issues yet</h2>
-          <p>{activeStatus === "open" ? "This project is calm right now. New issues will appear here." : "Closed issues will collect here once work is wrapped up."}</p>
-        </div>
+        <EmptyState
+          icon={<CircleDot size={34} />}
+          title={activeStatus === "open" ? "No issues yet — that's not a bad thing!" : "Wrapped-up fixes will collect here."}
+          body={activeStatus === "open" ? "When you spot something to fix or an idea to remember, jot it here." : "Once an idea is handled, closed issues make it easy to see what changed and why."}
+          actionLabel={signedIn ? "Start an issue" : undefined}
+          to={signedIn ? `/${username}/${repoName}/issues/new` : undefined}
+        />
       )}
       {!loading && !error && visibleIssues.length > 0 && (
         <div className="issue-list">

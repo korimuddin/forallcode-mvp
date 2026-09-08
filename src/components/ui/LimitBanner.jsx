@@ -18,7 +18,7 @@ export function LimitBanner({ limitKey, currentCount }) {
     <div style={{
       background: atLimit ? "#f5d5d8" : "#f5e4c4",
       border: `1px solid ${atLimit ? "#eebfc4" : "#ecd09c"}`,
-      borderRadius: 12,
+      borderRadius: 0,
       padding: "10px 16px",
       display: "flex",
       alignItems: "center",

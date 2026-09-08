@@ -1,15 +1,11 @@
+const { authenticated, siteUrl } = require("./lib/auth.cjs");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
-const { createClient } = require("@supabase/supabase-js");
 
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
-
-exports.handler = async (event) => {
+exports.handler = authenticated(async (event, user, supabase) => {
+  const userId = user.id;
   if (event.httpMethod !== "POST") return { statusCode: 405 };
 
-  const { userId, returnUrl } = JSON.parse(event.body);
+  const { returnUrl } = JSON.parse(event.body);
 
   const { data: sub } = await supabase
     .from("subscriptions")
@@ -23,8 +19,8 @@ exports.handler = async (event) => {
 
   const session = await stripe.billingPortal.sessions.create({
     customer: sub.stripe_customer_id,
-    return_url: returnUrl
+    return_url: siteUrl(returnUrl, "/settings/account")
   });
 
   return { statusCode: 200, body: JSON.stringify({ url: session.url }) };
-};
+});

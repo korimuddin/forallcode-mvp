@@ -1,3 +1,4 @@
+import { functionFetch } from "../lib/functionFetch";
 import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { BookOpen, CheckCircle2, Clock, Star } from "lucide-react";
@@ -103,7 +104,7 @@ export default function CourseDetail() {
 
     setPurchaseState("loading");
     setError("");
-    const response = await fetch("/.netlify/functions/create-course-checkout", {
+    const response = await functionFetch("/.netlify/functions/create-course-checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

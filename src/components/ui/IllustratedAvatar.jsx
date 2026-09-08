@@ -30,7 +30,7 @@ export default function IllustratedAvatar({
         style={{
           width: dimension,
           height: dimension,
-          borderRadius: "50%",
+          borderRadius: 0,
           objectFit: "cover",
           display: "block"
         }}
@@ -49,11 +49,11 @@ export default function IllustratedAvatar({
       height={size}
       style={{ display: "block", flex: "0 0 auto" }}
     >
-      <circle cx="24" cy="24" r="24" fill={colors.bg} />
-      <ellipse cx="24" cy="20" rx="10" ry="10" fill="#fffdf9" opacity="0.92" />
-      <ellipse cx="24" cy="42" rx="16" ry="12" fill="#fffdf9" opacity="0.92" />
-      <circle cx="20" cy="18" r="1.5" fill={colors.eye} />
-      <circle cx="28" cy="18" r="1.5" fill={colors.eye} />
+      <rect x="0" y="0" width="48" height="48" fill={colors.bg} />
+      <rect x="14" y="10" width="20" height="20" fill="#fffdf9" opacity="0.92" />
+      <rect x="8" y="30" width="32" height="18" fill="#fffdf9" opacity="0.92" />
+      <rect x="18.5" y="16.5" width="3" height="3" fill={colors.eye} />
+      <rect x="26.5" y="16.5" width="3" height="3" fill={colors.eye} />
       <path
         d="M21 23 Q24 26 27 23"
         fill="none"

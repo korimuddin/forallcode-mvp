@@ -59,6 +59,10 @@ function createParticleTexture(THREE) {
 export default function ParticleBackground() {
   const canvasRef = useRef(null);
 
+  if (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    return null;
+  }
+
   useEffect(() => {
     if (!canvasRef.current || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return undefined;
 

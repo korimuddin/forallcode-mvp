@@ -110,6 +110,8 @@ export default function SettingsProfile() {
 
   async function handleSave() {
     setStatus("saving");
+    try {
+      if (!supabase || !session?.user?.id) throw new Error("Sign in to save.");
     if (session?.user?.id) setUserPreference(session.user.id, "profile", profile);
     if (supabase && session?.user?.id) {
       const { error } = await supabase
@@ -130,10 +132,13 @@ export default function SettingsProfile() {
           professional_title: profile.professionalTitle,
           skills: profile.skills.split(",").map((skill) => skill.trim()).filter(Boolean)
         }, { onConflict: "id" });
-      if (error) console.warn("Could not sync profile settings to Supabase.", error);
+      if (error) throw error;
     }
     setStatus("saved");
     setTimeout(() => setStatus("default"), 1800);
+    } catch {
+      setStatus("error");
+    }
   }
 
   return (

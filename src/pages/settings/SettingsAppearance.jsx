@@ -80,6 +80,7 @@ export default function SettingsAppearance() {
 
       <SettingsSection title="Accessibility">
         <SettingsToggle label="Reduce motion" description="Disables animations on the workspace desk and page transitions." checked={appearance.reduceMotion} onChange={(value) => updateAppearance("reduceMotion", value)} />
+        <SettingsToggle label="Plain language hints" description="Shows beginner-friendly explanations for Git and GitHub terms." checked={appearance.plainLanguageHints !== false} onChange={(value) => updateAppearance("plainLanguageHints", value)} />
       </SettingsSection>
 
       <SettingsSection title="Density">

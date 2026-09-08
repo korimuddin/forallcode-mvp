@@ -31,7 +31,7 @@ export const stylePresets = {
     bodyColor: "#6b5f58",
     featureBg: "#fffdf9",
     featureBorder: "1px solid #e8e0d4",
-    borderRadius: "16px",
+    borderRadius: "0",
     ctaBg: "var(--light)"
   },
   bold: {
@@ -44,7 +44,7 @@ export const stylePresets = {
     bodyColor: "rgba(255,253,249,0.85)",
     featureBg: "rgba(255,253,249,0.12)",
     featureBorder: "1px solid rgba(255,253,249,0.2)",
-    borderRadius: "12px",
+    borderRadius: "0",
     ctaBg: "var(--accent)"
   },
   minimal: {
@@ -57,7 +57,7 @@ export const stylePresets = {
     bodyColor: "#6b5f58",
     featureBg: "#faf7f2",
     featureBorder: "1px solid #e8e0d4",
-    borderRadius: "8px",
+    borderRadius: "0",
     ctaBg: "#faf7f2"
   }
 };
@@ -232,10 +232,10 @@ export default function LandingDesigner() {
     .hero h1 { color: ${styleData.headingColor}; font-size: ${styleData.headingSize}; font-weight: ${styleData.headingWeight}; margin-bottom: 12px; line-height: 1.2; }
     .hero p { font-size: 17px; color: ${styleData.bodyColor}; max-width: 520px; margin: 0 auto 32px; }
     .button-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-    .btn-primary { background: ${isBold ? "#fffdf9" : themeData.accent}; color: ${isBold ? themeData.dark : "#fffdf9"}; padding: 12px 28px; border-radius: 30px; font-size: 14px; font-weight: 700; display: inline-block; }
-    .btn-secondary { background: transparent; color: ${isBold ? "#fffdf9" : themeData.accent}; padding: 12px 28px; border-radius: 30px; font-size: 14px; border: 1.5px solid ${isBold ? "#fffdf9" : themeData.accent}; display: inline-block; }
+    .btn-primary { background: ${isBold ? "#fffdf9" : themeData.accent}; color: ${isBold ? themeData.dark : "#fffdf9"}; padding: 12px 28px; border-radius: 0; font-size: 14px; font-weight: 700; display: inline-block; }
+    .btn-secondary { background: transparent; color: ${isBold ? "#fffdf9" : themeData.accent}; padding: 12px 28px; border-radius: 0; font-size: 14px; border: 1.5px solid ${isBold ? "#fffdf9" : themeData.accent}; display: inline-block; }
     .features { padding: 56px 40px; display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; background: ${isBold ? themeData.dark : "#fffdf9"}; }
-    .feature { background: ${resolveStyleToken(styleData.featureBg, themeData)}; border: ${styleData.featureBorder}; border-radius: ${styleData.borderRadius}; padding: 20px; }
+    .feature { background: ${resolveStyleToken(styleData.featureBg, themeData)}; border: ${styleData.featureBorder}; border-radius: 0; padding: 20px; }
     .feature .icon { color: ${themeData.accent}; font-size: 24px; margin-bottom: 8px; }
     .feature h3 { font-size: 14px; font-weight: 700; color: ${isBold ? "#fffdf9" : "#3d3530"}; margin-bottom: 4px; }
     .feature p { font-size: 13px; color: ${isBold ? "rgba(255,253,249,0.78)" : "#6b5f58"}; line-height: 1.5; }

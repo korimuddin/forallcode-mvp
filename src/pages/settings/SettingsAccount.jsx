@@ -1,3 +1,4 @@
+import { functionFetch } from "../../lib/functionFetch";
 import { useEffect, useMemo, useState } from "react";
 import { Github } from "lucide-react";
 import SettingsInput from "../../components/settings/SettingsInput";
@@ -26,7 +27,7 @@ function useSaveStatus() {
       setStatus("saved");
       setTimeout(() => setStatus("default"), 1800);
     } catch {
-      setStatus("default");
+      setStatus("error");
     }
   }
 
@@ -56,7 +57,7 @@ function BillingSection() {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user?.id) throw new Error("Please sign in before managing billing.");
 
-      const response = await fetch("/.netlify/functions/create-billing-portal", {
+      const response = await functionFetch("/.netlify/functions/create-billing-portal", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -172,18 +173,19 @@ export default function SettingsAccount() {
           username: account.githubUsername || currentProfile.username || ""
         });
       }
-      if (!supabase || !session?.user?.id) return;
+      if (!supabase || !session?.user?.id) throw new Error("Sign in to save.");
       const { error } = await supabase
         .from("profiles")
         .upsert({ id: session.user.id, display_name: account.displayName }, { onConflict: "id" });
-      if (error) console.warn("Could not sync account display name to Supabase.", error);
+      if (error) throw error;
     });
   }
 
   async function handleEmailSave() {
     await saveEmail(async () => {
-      if (!supabase || !session?.user?.id || isGitHubUser) return;
-      await supabase.auth.updateUser({ email });
+      if (!supabase || !session?.user?.id || isGitHubUser) throw new Error("Cannot update email for this account.");
+      const { error } = await supabase.auth.updateUser({ email });
+      if (error) throw error;
     });
   }
 
@@ -199,8 +201,9 @@ export default function SettingsAccount() {
     }
 
     await savePassword(async () => {
-      if (!supabase) return;
-      await supabase.auth.updateUser({ password: passwords.next });
+      if (!supabase || !session?.user?.id) throw new Error("Sign in to save.");
+      const { error } = await supabase.auth.updateUser({ password: passwords.next });
+      if (error) throw error;
       setPasswords({ current: "", next: "", confirm: "" });
     });
   }

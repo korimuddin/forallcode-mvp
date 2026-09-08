@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
-import { Bell, BookOpen, ChevronDown, Code2, Menu, Search, X } from "lucide-react";
+import { Award, Bell, BookOpen, ChevronDown, Code2, FileCode2, GitPullRequest, Menu, Plus, Search, Star, X } from "lucide-react";
+import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger, navigationMenuTriggerStyle } from "../ui/navigation-menu";
 import IllustratedAvatar from "../ui/IllustratedAvatar";
 import { UpgradeButton } from "../ui/UpgradeButton";
 import { LockInToggle } from "../lockin/LockInToggle";
@@ -21,6 +22,7 @@ export default function TopNav() {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [navigationValue, setNavigationValue] = useState("");
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(mockUser);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -38,6 +40,34 @@ export default function TopNav() {
   const notificationsRef = useRef(null);
   const avatarRef = useRef(null);
   const searchRef = useRef(null);
+  const headerRef = useRef(null);
+  const mobileToggleRef = useRef(null);
+
+  useEffect(() => {
+    setMobileOpen(false);
+    setNavigationValue("");
+    setAvatarOpen(false);
+    setNotificationsOpen(false);
+  }, [location.pathname, location.search]);
+
+  useEffect(() => {
+    if (!mobileOpen) return undefined;
+    const closeOutside = (event) => {
+      if (!headerRef.current?.contains(event.target)) setMobileOpen(false);
+    };
+    const closeOnEscape = (event) => {
+      if (event.key !== "Escape" || event.defaultPrevented) return;
+      setMobileOpen(false);
+      setNavigationValue("");
+      mobileToggleRef.current?.focus();
+    };
+    document.addEventListener("pointerdown", closeOutside);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOutside);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [mobileOpen]);
 
   const loggedIn = Boolean(session);
   const showAppNav = loggedIn;
@@ -114,6 +144,15 @@ export default function TopNav() {
     const timeout = window.setTimeout(() => setToastMessage(""), 2600);
     return () => window.clearTimeout(timeout);
   }, [toastMessage]);
+
+  useEffect(() => {
+    function handleAppToast(event) {
+      if (event.detail) setToastMessage(String(event.detail));
+    }
+
+    window.addEventListener("forallcode-toast", handleAppToast);
+    return () => window.removeEventListener("forallcode-toast", handleAppToast);
+  }, []);
 
   useEffect(() => {
     async function loadProfile() {
@@ -261,7 +300,7 @@ export default function TopNav() {
   }
 
   return (
-    <header className="top-nav">
+    <header className="top-nav" ref={headerRef}>
       {toastMessage && <div className="notification-toast" role="status">{toastMessage}</div>}
       <div className="top-nav-left">
         <Link className="brand" to={loggedIn ? "/dashboard" : "/"} aria-label="ForAllCode home">
@@ -271,7 +310,7 @@ export default function TopNav() {
       </div>
 
       {showAppNav && (
-        <nav className={mobileOpen ? "top-nav-center open" : "top-nav-center"} aria-label="Primary navigation">
+        <div id="primary-navigation-panel" className={mobileOpen ? "top-nav-center open" : "top-nav-center"}>
           <div className="nav-search-wrap" ref={searchRef}>
             <div className="search-box integrated-search-box">
               <Search size={17} />
@@ -323,36 +362,54 @@ export default function TopNav() {
             )}
           </div>
           <span className="nav-divider" />
-          <NavDropdown label="Repos" icon={<Code2 size={16} />} to="/repos">
-            <Link to="/repos">Your repos</Link>
-            <Link to="/stars">Starred</Link>
-            <Link to="/gists">Your gists</Link>
-            <Link to="/repos/new">+ New repository</Link>
-            <span className="dropdown-divider" />
-            {navRepos.map((repo) => (
-              <Link className="repo-dropdown-item" key={repo.name} to={repo.path}>
-                <span className="language-dot" style={{ backgroundColor: repo.colour }} />
-                {repo.name}
-              </Link>
-            ))}
-            {navRepos.length === 0 && <p className="dropdown-empty">No GitHub repos synced yet.</p>}
-          </NavDropdown>
-          <NavDropdown label="Learn" icon={<BookOpen size={16} />} to="/learn">
-            <Link to="/learn/pull-requests">Continue: Pull Requests</Link>
-            <div className="learn-progress">
-              <span>Progress: Git foundations</span>
-              <small><b style={{ width: "40%" }} /></small>
-            </div>
-            <span className="dropdown-divider" />
-            <Link to="/learn?view=catalog">Browse all lessons</Link>
-            <Link to="/certification/git-fundamentals">Git Fundamentals Certificate</Link>
-            <Link to="/certification/git-for-teams">Git for Teams Certificate</Link>
-            <Link to="/certification/command-line-essentials">Command Line Essentials Certificate</Link>
-            <Link to="/certification/open-source-contributor">Open Source Contributor Certificate</Link>
-          </NavDropdown>
-          <NavLink to="/explore">Explore</NavLink>
-          <NavLink to="/marketplace">Marketplace</NavLink>
-        </nav>
+          <NavigationMenu viewport={false} value={navigationValue} onValueChange={setNavigationValue} aria-label="Primary navigation"
+            onClick={(event) => {
+              if (event.target instanceof Element && event.target.closest("a[href]") && !event.metaKey && !event.ctrlKey && !event.shiftKey && event.button === 0) setMobileOpen(false);
+            }}>
+            <NavigationMenuList>
+              <NavigationMenuItem value="repos">
+                <NavigationMenuTrigger data-active={/^\/(repos|stars|gists)(\/|$)/.test(location.pathname) ? "true" : undefined}><Code2 size={16} aria-hidden="true" />Repos</NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <ul className="fac-navigation-grid">
+                    <MenuDestination to="/repos" title="Your repos" description="Your synced repositories" icon={Code2} />
+                    <MenuDestination to="/stars" title="Starred" description="Repositories you have saved" icon={Star} />
+                    <MenuDestination to="/gists" title="Your gists" description="Snippets and small projects" icon={FileCode2} />
+                    <MenuDestination to="/repos/new" title="New repository" description="Start a new project" icon={Plus} />
+                  </ul>
+                  <div className="fac-navigation-recent">
+                    <p className="fac-navigation-caption">Recent repositories</p>
+                    {navRepos.map((repo) => (
+                      <NavigationMenuLink asChild active={location.pathname === repo.path} key={repo.path}>
+                        <Link to={repo.path}><span className="language-dot" style={{ backgroundColor: repo.colour }} /><strong>{repo.name}</strong></Link>
+                      </NavigationMenuLink>
+                    ))}
+                    {navRepos.length === 0 && <p className="fac-navigation-caption">No GitHub repos synced yet.</p>}
+                  </div>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+              <NavigationMenuItem value="learn">
+                <NavigationMenuTrigger data-active={/^\/(learn|certification)(\/|$)/.test(location.pathname) ? "true" : undefined}><BookOpen size={16} aria-hidden="true" />Learn</NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <ul className="fac-navigation-grid">
+                    <MenuDestination to="/learn/pull-requests" title="Pull Requests" description="Continue the lesson" icon={GitPullRequest} />
+                    <MenuDestination to="/learn?view=catalog" title="Browse all lessons" description="Explore the learning catalogue" icon={BookOpen} />
+                    <MenuDestination to="/certification/git-fundamentals" title="Git Fundamentals" description="Certificate" icon={Award} />
+                    <MenuDestination to="/certification/git-for-teams" title="Git for Teams" description="Certificate" icon={Award} />
+                    <MenuDestination to="/certification/command-line-essentials" title="Command Line Essentials" description="Certificate" icon={Award} />
+                    <MenuDestination to="/certification/open-source-contributor" title="Open Source Contributor" description="Certificate" icon={Award} />
+                  </ul>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+              {[{ to: "/explore", label: "Explore" }, { to: "/marketplace", label: "Marketplace" }].map(({ to, label }) => (
+                <NavigationMenuItem key={to}>
+                  <NavigationMenuLink asChild className={navigationMenuTriggerStyle()} active={location.pathname === to || location.pathname.startsWith(`${to}/`)}>
+                    <Link to={to}>{label}</Link>
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
+              ))}
+            </NavigationMenuList>
+          </NavigationMenu>
+        </div>
       )}
 
       <div className="top-nav-right">
@@ -404,7 +461,7 @@ export default function TopNav() {
           </>
         )}
         {showAppNav && (
-          <button className="icon-button mobile-only" onClick={() => setMobileOpen(!mobileOpen)} aria-label="Menu">
+          <button ref={mobileToggleRef} className="icon-button mobile-only" type="button" onClick={() => { setMobileOpen(!mobileOpen); setNavigationValue(""); }} aria-label={mobileOpen ? "Close navigation" : "Open navigation"} aria-expanded={mobileOpen} aria-controls="primary-navigation-panel">
             {mobileOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
         )}
@@ -458,24 +515,14 @@ function NotificationDropdownItem({ item }) {
   );
 }
 
-function NavDropdown({ label, icon, children, to }) {
+function MenuDestination({ to, title, description, icon: Icon }) {
+  const location = useLocation();
   return (
-    <div className="dropdown">
-      {to ? (
-        <Link className="nav-trigger" to={to}>
-          {icon}
-          {label}
-          <ChevronDown size={14} />
-        </Link>
-      ) : (
-        <button className="nav-trigger" type="button">
-          {icon}
-          {label}
-          <ChevronDown size={14} />
-        </button>
-      )}
-      <div className="dropdown-menu">{children}</div>
-    </div>
+    <li>
+      <NavigationMenuLink asChild active={`${location.pathname}${location.search}` === to}>
+        <Link to={to}><Icon size={18} aria-hidden="true" /><span><strong>{title}</strong><small>{description}</small></span></Link>
+      </NavigationMenuLink>
+    </li>
   );
 }
 

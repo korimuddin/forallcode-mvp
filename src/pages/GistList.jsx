@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { FileCode2, Plus } from "lucide-react";
+import EmptyState from "../components/ui/EmptyState";
 import IllustratedAvatar from "../components/ui/IllustratedAvatar";
 import Skeleton from "../components/ui/Skeleton";
 import { useAuthSession, useDocumentTitle } from "../lib/hooks";
@@ -110,12 +111,13 @@ export default function GistList() {
       )}
       {!loading && error && <p className="auth-error">{error}</p>}
       {!loading && !error && gists.length === 0 && (
-        <section className="gist-empty-state">
-          <FileCode2 size={58} />
-          <h2>No gists here yet</h2>
-          <p>{loggedIn ? "Create a snippet for something you keep reaching for." : "Public snippets will appear here as people share them."}</p>
-          {loggedIn && <Link className="button primary" to="/gists/new">Create your first gist</Link>}
-        </section>
+        <EmptyState
+          icon={<FileCode2 size={34} />}
+          title={loggedIn ? "Tiny useful snippets can live here." : "Shared snippets will appear here."}
+          body={loggedIn ? "Create a note for a command, pattern, or idea you keep reaching for. Small bits of code count too." : "When people share public snippets, this becomes a gentle library of useful little ideas."}
+          actionLabel={loggedIn ? "Create your first gist" : undefined}
+          to={loggedIn ? "/gists/new" : undefined}
+        />
       )}
       {!loading && !error && gists.length > 0 && (
         <div className="gist-list">
