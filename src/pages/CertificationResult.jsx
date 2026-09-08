@@ -13,9 +13,27 @@ export default function CertificationResult({
 }) {
   useDocumentTitle("Certification Result");
   const [searchParams] = useSearchParams();
-  const score = Number(searchParams.get("score") || 0);
-  const passed = searchParams.get("passed") === "true";
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const score = result?.score || 0;
+  const passed = result?.passed === true;
   const [certificateUrl, setCertificateUrl] = useState("");
+
+  useEffect(() => {
+    let alive = true;
+    async function loadResult() {
+      setLoading(true);
+      setResult(null);
+      if (!supabase || !searchParams.get("attempt")) return;
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) return;
+      const { data, error } = await supabase.from("cert_attempts").select("score,passed")
+        .eq("id", searchParams.get("attempt")).eq("user_id", userData.user.id).eq("cert_type", certType).maybeSingle();
+      if (!error && alive) setResult(data);
+    }
+    loadResult().catch(() => {}).finally(() => { if (alive) setLoading(false); });
+    return () => { alive = false; };
+  }, [certType, searchParams]);
 
   useEffect(() => {
     if (!passed) return;
@@ -39,6 +57,9 @@ export default function CertificationResult({
 
     loadCertificate();
   }, [certType, passed]);
+
+  if (loading) return <div className="cert-page"><p>Loading result...</p></div>;
+  if (!result) return <div className="cert-page"><p role="alert">No verified assessment result found.</p><Link to={retryPath}>Back to assessment</Link></div>;
 
   return (
     <div className="cert-page">

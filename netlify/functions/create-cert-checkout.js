@@ -1,12 +1,14 @@
+const { authenticated, siteUrl } = require("./lib/auth.cjs");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
-exports.handler = async (event) => {
+exports.handler = authenticated(async (event, user, supabase) => {
+  const userId = user.id;
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: "Method not allowed" };
   }
 
   try {
-    const { userId, certType = "git-fundamentals", successUrl, cancelUrl } = JSON.parse(event.body || "{}");
+    const { certType = "git-fundamentals", successUrl, cancelUrl } = JSON.parse(event.body || "{}");
 
     if (!userId) {
       return { statusCode: 400, body: JSON.stringify({ error: "Missing userId" }) };
@@ -34,10 +36,10 @@ exports.handler = async (event) => {
         path: "open-source-contributor"
       }
     };
-    const product = certProducts[certType] || certProducts["git-fundamentals"];
-    const siteUrl = process.env.URL || "http://127.0.0.1:5173";
+    const product = Object.hasOwn(certProducts, certType) ? certProducts[certType] : null;
+    if (!product) return { statusCode: 400, body: JSON.stringify({ error: "Unknown certificate." }) };
+
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
       line_items: [{
         price_data: {
           currency: "gbp",
@@ -50,8 +52,8 @@ exports.handler = async (event) => {
         quantity: 1
       }],
       mode: "payment",
-      success_url: successUrl || `${siteUrl}/certification/${product.path}/assessment?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: cancelUrl || `${siteUrl}/certification/${product.path}`,
+      success_url: siteUrl(successUrl, "/certification/" + product.path + "/assessment?session_id={CHECKOUT_SESSION_ID}"),
+      cancel_url: siteUrl(cancelUrl, "/certification/" + product.path),
       metadata: {
         supabase_user_id: userId,
         cert_type: certType
@@ -63,6 +65,6 @@ exports.handler = async (event) => {
       body: JSON.stringify({ sessionId: session.id, url: session.url })
     };
   } catch (err) {
-    return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
+    return { statusCode: 500, body: JSON.stringify({ error: "Could not complete your request. Please try again." }) };
   }
-};
+});

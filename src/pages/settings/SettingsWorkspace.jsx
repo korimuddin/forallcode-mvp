@@ -76,6 +76,8 @@ export default function SettingsWorkspace() {
 
   async function handleSave() {
     setStatus("saving");
+    try {
+      if (!supabase || !session?.user?.id) throw new Error("Sign in to save.");
     const settingsToSave = { ...settings, deskTheme: visibleDeskTheme };
     if (session?.user?.id) setUserPreference(session.user.id, "workspace", settingsToSave);
     if (supabase && session?.user?.id) {
@@ -87,10 +89,13 @@ export default function SettingsWorkspace() {
         show_decorations: settingsToSave.showDecorations,
         default_note_colour: settingsToSave.defaultNoteColour
       }, { onConflict: "user_id" });
-      void error;
+      if (error) throw error;
     }
     setStatus("saved");
     setTimeout(() => setStatus("default"), 1800);
+    } catch {
+      setStatus("error");
+    }
   }
 
   return (

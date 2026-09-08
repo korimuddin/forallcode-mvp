@@ -1,18 +1,14 @@
+const { authenticated, siteUrl } = require("./lib/auth.cjs");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
-const { createClient } = require("@supabase/supabase-js");
 
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
-
-exports.handler = async (event) => {
+exports.handler = authenticated(async (event, user, supabase) => {
+  const userId = user.id;
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: "Method not allowed" };
   }
 
   try {
-    const { userId, courseId, successUrl, cancelUrl } = JSON.parse(event.body || "{}");
+    const { courseId, successUrl, cancelUrl } = JSON.parse(event.body || "{}");
 
     if (!userId || !courseId) {
       return { statusCode: 400, body: JSON.stringify({ error: "Missing userId or courseId" }) };
@@ -37,7 +33,7 @@ exports.handler = async (event) => {
       .maybeSingle();
 
     if (existing?.id) {
-      return { statusCode: 200, body: JSON.stringify({ alreadyPurchased: true, url: successUrl || "/" }) };
+      return { statusCode: 200, body: JSON.stringify({ alreadyPurchased: true, url: siteUrl(successUrl) }) };
     }
 
     const lineItem = course.stripe_price_id
@@ -55,11 +51,10 @@ exports.handler = async (event) => {
         };
 
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
       line_items: [lineItem],
       mode: "payment",
-      success_url: successUrl,
-      cancel_url: cancelUrl,
+      success_url: siteUrl(successUrl),
+      cancel_url: siteUrl(cancelUrl),
       metadata: {
         supabase_user_id: userId,
         course_id: courseId
@@ -71,6 +66,6 @@ exports.handler = async (event) => {
       body: JSON.stringify({ sessionId: session.id, url: session.url })
     };
   } catch (err) {
-    return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
+    return { statusCode: 500, body: JSON.stringify({ error: "Could not complete your request. Please try again." }) };
   }
-};
+});

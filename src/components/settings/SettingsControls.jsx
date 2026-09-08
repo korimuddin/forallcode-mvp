@@ -14,6 +14,7 @@ export function SettingsSaveButton({ status = "default", children = "Save change
   const label = status === "saving" ? "Saving..." : status === "saved" ? "Saved" : children;
 
   return (
+    <>
     <button
       className={`settings-save-button ${status}`}
       disabled={disabled || status === "saving"}
@@ -23,6 +24,8 @@ export function SettingsSaveButton({ status = "default", children = "Save change
       {status === "saved" && <Check size={15} />}
       {label}
     </button>
+    {status === "error" && <span role="alert">Could not save your changes. Please try again.</span>}
+    </>
   );
 }
 

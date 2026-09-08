@@ -1,4 +1,6 @@
 import React, { lazy, Suspense, useEffect, useState } from "react";
+import { reportError } from "./lib/reportError";
+import { installMarkdownActions } from "./lib/markdownActions";
 import { createRoot } from "react-dom/client";
 import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { BrowserRouter } from "react-router-dom";
@@ -84,17 +86,18 @@ const SettingsWorkspace = lazy(() => import("./pages/settings/SettingsWorkspace"
 const Upgrade = lazy(() => import("./pages/Upgrade"));
 const UpgradeSuccess = lazy(() => import("./pages/UpgradeSuccess"));
 
-const DashboardPage = lazy(() => import("./pages/AppPages").then(({ DashboardPage }) => ({ default: DashboardPage })));
-const WorkspacePage = lazy(() => import("./pages/AppPages").then(({ WorkspacePage }) => ({ default: WorkspacePage })));
-const MyProfilePage = lazy(() => import("./pages/AppPages").then(({ MyProfilePage }) => ({ default: MyProfilePage })));
-const PublicProfile = lazy(() => import("./pages/AppPages").then(({ PublicProfile }) => ({ default: PublicProfile })));
-const RepoPage = lazy(() => import("./pages/AppPages").then(({ RepoPage }) => ({ default: RepoPage })));
-const LearnPage = lazy(() => import("./pages/AppPages").then(({ LearnPage }) => ({ default: LearnPage })));
+const DashboardPage = lazy(() => import("./pages/Dashboard").then(({ DashboardPage }) => ({ default: DashboardPage })));
+const WorkspacePage = lazy(() => import("./pages/WorkspacePage").then(({ WorkspacePage }) => ({ default: WorkspacePage })));
+const MyProfilePage = lazy(() => import("./pages/Profile").then(({ MyProfilePage }) => ({ default: MyProfilePage })));
+const PublicProfile = lazy(() => import("./pages/Profile").then(({ PublicProfile }) => ({ default: PublicProfile })));
+const RepoPage = lazy(() => import("./pages/RepoDetail").then(({ RepoPage }) => ({ default: RepoPage })));
+const LearnPage = lazy(() => import("./pages/Learn").then(({ LearnPage }) => ({ default: LearnPage })));
 
 function App() {
+  useEffect(() => installMarkdownActions(), []);
   useEffect(() => {
     function handleUnhandledRejection(event) {
-      reportToSentry(event.reason);
+      reportError(event.reason);
     }
 
     window.addEventListener("unhandledrejection", handleUnhandledRejection);
@@ -246,6 +249,7 @@ function AppRoutes() {
               <Route path="/:username/:repo" element={<RepoPage />} />
               <Route path="/:username/portfolio" element={<Portfolio />} />
               <Route path="/:username" element={<PublicProfile />} />
+              <Route path="*" element={<main><h1>Page not found</h1><a href="/home">Return home</a></main>} />
               </Routes>
             </Suspense>
           </ChunkLoadBoundary>
@@ -267,7 +271,7 @@ class ChunkLoadBoundary extends React.Component {
   }
 
   componentDidCatch(error) {
-    reportToSentry(error);
+    reportError(error);
   }
 
   render() {
@@ -281,13 +285,6 @@ class ChunkLoadBoundary extends React.Component {
       </div>
     );
   }
-}
-
-function reportToSentry(error) {
-  if (typeof window === "undefined") return;
-  const sentry = window.Sentry;
-  if (!sentry?.captureException) return;
-  sentry.captureException(error instanceof Error ? error : new Error(String(error || "Unhandled rejection")));
 }
 
 function ImpersonationBanner() {

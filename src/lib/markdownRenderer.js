@@ -51,7 +51,7 @@ renderer.code = function code({ text, lang }) {
         <span style="font-family: DM Mono, monospace; font-size: 11px; color: #9c918c;">
           ${language || "code"}
         </span>
-        <button onclick="navigator.clipboard.writeText(this.dataset.code)"
+        <button data-markdown-copy="true" type="button"
                 data-code="${escapeAttribute(text)}"
                 style="font-size: 11px; color: #9c918c; background: none; border: none;
                        cursor: pointer; font-family: DM Sans, sans-serif;">
@@ -75,8 +75,7 @@ renderer.link = function link({ href, title, tokens }) {
   const titleAttr = title ? ` title="${escapeAttribute(title)}"` : "";
   return `<a href="${escapeAttribute(href)}"${titleAttr} style="color: #9b8fd4; text-decoration: none;
                              border-bottom: 1px solid #ddd5f0;"
-     onmouseover="this.style.borderBottomColor='#9b8fd4'"
-     onmouseout="this.style.borderBottomColor='#ddd5f0'">${renderInline(this, tokens)}</a>`;
+     >${renderInline(this, tokens)}</a>`;
 };
 
 renderer.blockquote = function blockquote({ tokens }) {
@@ -145,6 +144,6 @@ export function renderMarkdown(markdown) {
   const rawHtml = markdownParser.parse(markdown);
   // SECURITY: all markdown output MUST pass through DOMPurify. Do not bypass.
   return DOMPurify.sanitize(rawHtml, {
-    ADD_ATTR: ["onclick", "data-code", "onmouseover", "onmouseout"]
+    ADD_ATTR: ["data-code", "data-markdown-copy"]
   });
 }

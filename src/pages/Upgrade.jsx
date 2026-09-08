@@ -1,3 +1,4 @@
+import { functionFetch } from "../lib/functionFetch";
 import { useMemo, useState } from "react";
 import { Check } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -52,7 +53,7 @@ export default function Upgrade() {
       if (userError || !user?.id) throw new Error("Please sign in before upgrading.");
       if (!priceId) throw new Error("Stripe is not configured for this billing option.");
 
-      const response = await fetch("/.netlify/functions/create-checkout-session", {
+      const response = await functionFetch("/.netlify/functions/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -1,3 +1,4 @@
+import { functionFetch } from "../lib/functionFetch";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Award, CheckCircle2, Clock, ExternalLink, GitBranch } from "lucide-react";
@@ -62,7 +63,7 @@ export default function GitTeamsCertInfo() {
     };
   }, []);
 
-  const hasPurchased = Boolean(cert?.id);
+  const hasPurchased = Boolean(cert?.id && !cert.assessment_used);
   const hasPassed = Boolean(cert?.certificate_url);
   const certUrl = hasPassed ? `${window.location.origin}${cert.certificate_url}` : "";
   const linkedInShareUrl = useMemo(() => {
@@ -79,7 +80,7 @@ export default function GitTeamsCertInfo() {
     }
 
     setCheckoutStatus("loading");
-    const response = await fetch("/.netlify/functions/create-cert-checkout", {
+    const response = await functionFetch("/.netlify/functions/create-cert-checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
