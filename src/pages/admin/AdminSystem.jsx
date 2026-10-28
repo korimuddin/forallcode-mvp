@@ -152,7 +152,7 @@ export default function AdminSystem() {
 }
 
 function SystemCard({ label, status, detail }) {
-  const accent = status === "online" ? "#7aaa72" : status === "degraded" ? "#c8a055" : "#d4848c";
+  const accent = status === "online" ? "#1a7f37" : status === "degraded" ? "#9a6700" : "#cf222e";
   return (
     <div className="admin-system-card" style={{ "--admin-stat-accent": accent }}>
       <div>

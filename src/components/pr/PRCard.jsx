@@ -1,9 +1,9 @@
 import { formatDistanceToNow } from "date-fns";
 
 const statusColors = {
-  open: { bg: "#c8d8c4", color: "#27500A", label: "Open" },
-  merged: { bg: "#ddd5f0", color: "#534AB7", label: "Merged" },
-  closed: { bg: "#f4efe6", color: "#9c918c", label: "Closed" }
+  open: { bg: "#dafbe1", color: "#116329", label: "Open" },
+  merged: { bg: "#ddf4ff", color: "#0550ae", label: "Merged" },
+  closed: { bg: "#f6f8fa", color: "#6e7781", label: "Closed" }
 };
 
 export function getPRCommentCount(pr) {

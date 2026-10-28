@@ -7,12 +7,12 @@ import { getUserPreference, setUserPreference } from "../../lib/preferences";
 import { supabase } from "../../lib/supabase";
 
 const gradients = [
-  "linear-gradient(135deg, #ddd5f0, #c8d8c4, #cce0f0)",
-  "linear-gradient(135deg, #f5d5d8, #f5e4c4)",
-  "linear-gradient(135deg, #cce0f0, #ddd5f0)",
-  "linear-gradient(135deg, #c8d8c4, #f5e4c4)",
-  "linear-gradient(135deg, #f5e4c4, #f5d5d8)",
-  "linear-gradient(135deg, #ddd5f0, #f5d5d8)"
+  "linear-gradient(135deg, #ddf4ff, #dafbe1, #ddf4ff)",
+  "linear-gradient(135deg, #ffebe9, #fff8c5)",
+  "linear-gradient(135deg, #ddf4ff, #ddf4ff)",
+  "linear-gradient(135deg, #dafbe1, #fff8c5)",
+  "linear-gradient(135deg, #fff8c5, #ffebe9)",
+  "linear-gradient(135deg, #ddf4ff, #ffebe9)"
 ];
 
 const gradientOptions = gradients.map((colour, index) => ({

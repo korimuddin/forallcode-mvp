@@ -7,15 +7,15 @@ export function UpgradeButton({ small = false }) {
     <button
       onClick={() => navigate("/upgrade")}
       style={{
-        background: "#9b8fd4",
-        color: "#fffdf9",
+        background: "#0969da",
+        color: "#ffffff",
         border: "none",
         borderRadius: 30,
         padding: small ? "5px 14px" : "10px 24px",
         fontSize: small ? 12 : 14,
         fontWeight: 600,
         cursor: "pointer",
-        fontFamily: "DM Sans, sans-serif",
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif",
         whiteSpace: "nowrap"
       }}
       type="button"

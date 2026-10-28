@@ -35,7 +35,7 @@ function createParticleTexture(THREE) {
   const ctx = canvas.getContext("2d", { alpha: true });
   const gradient = ctx.createRadialGradient(32, 32, 2, 32, 32, 32);
 
-  gradient.addColorStop(0, "rgba(255,253,249,1)");
+  gradient.addColorStop(0, "rgba(255,255,255,1)");
   gradient.addColorStop(0.25, "rgba(221,213,240,0.95)");
   gradient.addColorStop(0.62, "rgba(155,143,212,0.45)");
   gradient.addColorStop(1, "rgba(196,184,232,0)");
@@ -45,7 +45,7 @@ function createParticleTexture(THREE) {
   ctx.arc(32, 32, 32, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.strokeStyle = "rgba(255,253,249,0.28)";
+  ctx.strokeStyle = "rgba(255,255,255,0.28)";
   ctx.lineWidth = 1.5;
   ctx.beginPath();
   ctx.arc(32, 32, 17, 0, Math.PI * 2);

@@ -1,17 +1,17 @@
 import { useEffect, useState } from "react";
 
 const SYNC_NODES = [
-  { label: "GitHub account", colour: "#3d3530", textColour: "#fffdf9" },
-  { label: "ForAllCode syncs repos", colour: "#9b8fd4", textColour: "#fffdf9" },
-  { label: "Work here: issues, PRs, files", colour: "#7aaa72", textColour: "#fffdf9" },
-  { label: "Changes push to GitHub", colour: "#6aa8d4", textColour: "#fffdf9" }
+  { label: "GitHub account", colour: "#1f2328", textColour: "#ffffff" },
+  { label: "ForAllCode syncs repos", colour: "#0969da", textColour: "#ffffff" },
+  { label: "Work here: issues, PRs, files", colour: "#1a7f37", textColour: "#ffffff" },
+  { label: "Changes push to GitHub", colour: "#6aa8d4", textColour: "#ffffff" }
 ];
 
 const PILLS = [
-  { label: "⑂ Fork", colour: "#ddd5f0", textColour: "#7a6dc4" },
-  { label: "⌥ Branch", colour: "#c8d8c4", textColour: "#27500A" },
-  { label: "⇌ Merge", colour: "#cce0f0", textColour: "#0C447C" },
-  { label: "↓ Clone", colour: "#f5e4c4", textColour: "#633806" }
+  { label: "⑂ Fork", colour: "#ddf4ff", textColour: "#0550ae" },
+  { label: "⌥ Branch", colour: "#dafbe1", textColour: "#116329" },
+  { label: "⇌ Merge", colour: "#ddf4ff", textColour: "#0a3069" },
+  { label: "↓ Clone", colour: "#fff8c5", textColour: "#7d4e00" }
 ];
 
 export default function GitHubSyncStep({ onBack, onNext, onSkip }) {

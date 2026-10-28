@@ -248,27 +248,27 @@ export default function AdminOverview() {
       ) : (
         <>
           <section className="admin-stat-grid">
-            <StatCard label="Total users" value={stats.users} accent="#9b8fd4" />
-            <StatCard label="New today" value={stats.newToday} accent="#7aaa72" />
+            <StatCard label="Total users" value={stats.users} accent="#0969da" />
+            <StatCard label="New today" value={stats.newToday} accent="#1a7f37" />
             <StatCard label="Active today" value={stats.activeToday} accent="#6aa8d4" />
-            <StatCard label="Lessons completed" value={stats.lessonsCompleted} accent="#c8a055" />
+            <StatCard label="Lessons completed" value={stats.lessonsCompleted} accent="#9a6700" />
           </section>
 
           <section className="admin-stat-grid">
-            <StatCard label="MRR" value={currencyFormatter.format(stats.mrr)} accent="#9b8fd4" />
-            <StatCard label="Pro users" value={stats.proUsers} accent="#7aaa72" />
-            <StatCard label="Cancellations" value={stats.cancellations} accent="#d4848c" />
-            <StatCard label="Failed payments" value={stats.failedPayments} accent="#c8a055" />
+            <StatCard label="MRR" value={currencyFormatter.format(stats.mrr)} accent="#0969da" />
+            <StatCard label="Pro users" value={stats.proUsers} accent="#1a7f37" />
+            <StatCard label="Cancellations" value={stats.cancellations} accent="#cf222e" />
+            <StatCard label="Failed payments" value={stats.failedPayments} accent="#9a6700" />
           </section>
 
           <section className="admin-chart-grid">
             <AdminChart title="User growth" subtitle="New signups over the last 30 days" height={240}>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={growthData}>
-                  <CartesianGrid stroke="#f4efe6" vertical={false} />
-                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: "#9c918c" }} />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: "#9c918c" }} />
-                  <Tooltip contentStyle={{ fontFamily: "DM Sans", fontSize: 12 }} />
+                  <CartesianGrid stroke="#f6f8fa" vertical={false} />
+                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: "#6e7781" }} />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: "#6e7781" }} />
+                  <Tooltip contentStyle={{ fontFamily: "inherit", fontSize: 12 }} />
                   <Line type="monotone" dataKey="users" stroke={ADMIN_CHART_COLORS.primary} strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
@@ -277,10 +277,10 @@ export default function AdminOverview() {
             <AdminChart title="Lesson completions" subtitle="Completed lessons by track" height={240}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={trackData}>
-                  <CartesianGrid stroke="#f4efe6" vertical={false} />
-                  <XAxis dataKey="track" tick={{ fontSize: 10, fill: "#9c918c" }} />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: "#9c918c" }} />
-                  <Tooltip contentStyle={{ fontFamily: "DM Sans", fontSize: 12 }} />
+                  <CartesianGrid stroke="#f6f8fa" vertical={false} />
+                  <XAxis dataKey="track" tick={{ fontSize: 10, fill: "#6e7781" }} />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: "#6e7781" }} />
+                  <Tooltip contentStyle={{ fontFamily: "inherit", fontSize: 12 }} />
                   <Bar dataKey="completions" fill={ADMIN_CHART_COLORS.primary} radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>

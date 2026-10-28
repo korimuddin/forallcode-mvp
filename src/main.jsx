@@ -139,20 +139,31 @@ const currentUser = {
   avatarStyle: "sage"
 };
 
+// GitHub linguist colours: [pill background, language dot]
 const languageStyles = {
-  TypeScript: ["#ddd5f0", "#534AB7"],
-  JavaScript: ["#f5e4c4", "#633806"],
-  Python: ["#cce0f0", "#0C447C"],
-  CSS: ["#c8d8c4", "#27500A"],
-  Rust: ["#f5d5d8", "#72243E"],
-  Shell: ["#f5e4c4", "#633806"],
-  Go: ["#cce0f0", "#0C447C"]
+  TypeScript: ["transparent", "#3178c6"],
+  JavaScript: ["transparent", "#f1e05a"],
+  Python: ["transparent", "#3572A5"],
+  CSS: ["transparent", "#563d7c"],
+  HTML: ["transparent", "#e34c26"],
+  Rust: ["transparent", "#dea584"],
+  Shell: ["transparent", "#89e051"],
+  Go: ["transparent", "#00ADD8"],
+  Java: ["transparent", "#b07219"],
+  Ruby: ["transparent", "#701516"],
+  Swift: ["transparent", "#F05138"],
+  Kotlin: ["transparent", "#A97BFF"],
+  "C++": ["transparent", "#f34b7d"],
+  C: ["transparent", "#555555"],
+  "C#": ["transparent", "#178600"],
+  PHP: ["transparent", "#4F5D95"],
+  Vue: ["transparent", "#41b883"],
+  Dart: ["transparent", "#00B4AB"]
 };
 
 const heroFontOptions = [
-  { label: "Lora", value: '"Lora", serif' },
-  { label: "DM Sans", value: '"DM Sans", sans-serif' },
-  { label: "DM Mono", value: '"DM Mono", monospace' },
+  { label: "System", value: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif' },
+  { label: "Mono", value: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace' },
   { label: "Georgia", value: "Georgia, serif" },
   { label: "Garamond", value: "Garamond, serif" },
   { label: "Palatino", value: "Palatino, serif" },
@@ -166,7 +177,7 @@ const notebookColorThemes = [
   {
     name: "Forest",
     colors: [
-      { id: "forest-moss", label: "Moss", start: "#c8d8c4", end: "#7aaa72" },
+      { id: "forest-moss", label: "Moss", start: "#dafbe1", end: "#1a7f37" },
       { id: "forest-pine", label: "Pine", start: "#a9c5a5", end: "#3f704d" },
       { id: "forest-fern", label: "Fern", start: "#d8e5c8", end: "#84a95b" },
       { id: "forest-bark", label: "Bark", start: "#c8b49a", end: "#74614f" },
@@ -176,9 +187,9 @@ const notebookColorThemes = [
   {
     name: "Beach",
     colors: [
-      { id: "beach-sand", label: "Sand", start: "#f5e4c4", end: "#d2a85f" },
-      { id: "beach-coral", label: "Coral", start: "#f5d5d8", end: "#d98a8e" },
-      { id: "beach-tide", label: "Tide", start: "#cce0f0", end: "#6aa8c8" },
+      { id: "beach-sand", label: "Sand", start: "#fff8c5", end: "#d2a85f" },
+      { id: "beach-coral", label: "Coral", start: "#ffebe9", end: "#d98a8e" },
+      { id: "beach-tide", label: "Tide", start: "#ddf4ff", end: "#6aa8c8" },
       { id: "beach-shell", label: "Shell", start: "#fff1df", end: "#e3b78a" },
       { id: "beach-seafoam", label: "Seafoam", start: "#d8eee6", end: "#7abda7" }
     ]
@@ -189,8 +200,8 @@ const notebookColorThemes = [
       { id: "urban-stone", label: "Stone", start: "#ddd8d2", end: "#8d8580" },
       { id: "urban-brick", label: "Brick", start: "#e8c3b4", end: "#9b5b4a" },
       { id: "urban-graphite", label: "Graphite", start: "#b9b4ae", end: "#4d4742" },
-      { id: "urban-neon", label: "Neon", start: "#ddd5f0", end: "#9b8fd4" },
-      { id: "urban-concrete", label: "Concrete", start: "#e8e0d4", end: "#a99d93" }
+      { id: "urban-neon", label: "Neon", start: "#ddf4ff", end: "#0969da" },
+      { id: "urban-concrete", label: "Concrete", start: "#d0d7de", end: "#a99d93" }
     ]
   },
   {
@@ -198,7 +209,7 @@ const notebookColorThemes = [
     colors: [
       { id: "night-indigo", label: "Indigo", start: "#b9c2e6", end: "#465089" },
       { id: "night-plum", label: "Plum", start: "#d4bfd8", end: "#744d7a" },
-      { id: "night-moon", label: "Moon", start: "#ddd5f0", end: "#8074bd" },
+      { id: "night-moon", label: "Moon", start: "#ddf4ff", end: "#8074bd" },
       { id: "night-slate", label: "Slate", start: "#adb6c7", end: "#364157" },
       { id: "night-ember", label: "Ember", start: "#e5b3a5", end: "#8a4637" }
     ]
@@ -206,9 +217,9 @@ const notebookColorThemes = [
   {
     name: "Morning",
     colors: [
-      { id: "morning-sunrise", label: "Sunrise", start: "#f5d5d8", end: "#d88c9a" },
-      { id: "morning-honey", label: "Honey", start: "#f5e4c4", end: "#c8a055" },
-      { id: "morning-lilac", label: "Lilac", start: "#ddd5f0", end: "#9b8fd4" },
+      { id: "morning-sunrise", label: "Sunrise", start: "#ffebe9", end: "#d88c9a" },
+      { id: "morning-honey", label: "Honey", start: "#fff8c5", end: "#9a6700" },
+      { id: "morning-lilac", label: "Lilac", start: "#ddf4ff", end: "#0969da" },
       { id: "morning-mint", label: "Mint", start: "#dcebd4", end: "#92b985" },
       { id: "morning-peach", label: "Peach", start: "#ffe0cc", end: "#d99a71" }
     ]
@@ -217,10 +228,10 @@ const notebookColorThemes = [
     name: "Arctic",
     colors: [
       { id: "arctic-frost", label: "Frost", start: "#e7f0f7", end: "#a9cce3" },
-      { id: "arctic-glacier", label: "Glacier", start: "#cce0f0", end: "#5d93b8" },
+      { id: "arctic-glacier", label: "Glacier", start: "#ddf4ff", end: "#5d93b8" },
       { id: "arctic-ice", label: "Ice", start: "#eef7f6", end: "#9ccbc6" },
-      { id: "arctic-aurora", label: "Aurora", start: "#d6e8d8", end: "#7aaa72" },
-      { id: "arctic-violet", label: "Violet", start: "#e2dcf5", end: "#9b8fd4" }
+      { id: "arctic-aurora", label: "Aurora", start: "#d6e8d8", end: "#1a7f37" },
+      { id: "arctic-violet", label: "Violet", start: "#e2dcf5", end: "#0969da" }
     ]
   }
 ];
@@ -1376,7 +1387,7 @@ function CarouselHero({ slides, type }) {
     <section
       className={`carousel-hero ${type || ""} tone-${activeSlide.tone || "lavender"} ${activeSlide.image ? "has-image" : ""}`}
       style={activeSlide.image ? {
-        backgroundImage: `linear-gradient(90deg, rgba(20, 16, 14, .78), rgba(20, 16, 14, .24)), url("${activeSlide.image}")`,
+        backgroundImage: `linear-gradient(90deg, rgba(31, 35, 40, .78), rgba(31, 35, 40, .24)), url("${activeSlide.image}")`,
         backgroundPosition: activeSlide.imagePosition || "50% 50%"
       } : undefined}
     >
@@ -1538,7 +1549,7 @@ function CodebaseDiagram({ owner = "origin", repo = "forallcode", repoGraph }) {
       <svg viewBox="0 0 800 380" role="img">
         <defs>
           <marker id="arrow-soft" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3">
-            <path d="M0,0 L0,6 L7,3 z" fill="#9c918c" />
+            <path d="M0,0 L0,6 L7,3 z" fill="#6e7781" />
           </marker>
         </defs>
 
@@ -1547,12 +1558,12 @@ function CodebaseDiagram({ owner = "origin", repo = "forallcode", repoGraph }) {
         {fork.length > 0 && <path className="map-line fork-line" d="M210 170 C212 225 260 258 350 300 C432 332 492 302 590 170" />}
         {pull && <path className="map-line pr-line" d="M500 260 C545 244 570 212 590 170" markerEnd="url(#arrow-soft)" />}
 
-        <rect x="54" y="26" width="196" height="54" rx="16" fill="#fffdf9" stroke="#e8e0d4" />
+        <rect x="54" y="26" width="196" height="54" rx="16" fill="#ffffff" stroke="#d0d7de" />
         <text x="74" y="58">{owner}/{repo}</text>
 
         {pull && (
           <>
-            <rect x="586" y="244" width="146" height="54" rx="16" fill="#f5e4c4" stroke="#e8e0d4" />
+            <rect x="586" y="244" width="146" height="54" rx="16" fill="#fff8c5" stroke="#d0d7de" />
             <text x="606" y="276">PR #{pull.number} {pull.state}</text>
           </>
         )}
@@ -2421,7 +2432,7 @@ function RepoPage() {
       <section
         className={repoHero.image ? "phase-repo-header has-hero-image" : "phase-repo-header"}
         style={repoHero.image ? {
-          backgroundImage: `linear-gradient(90deg, rgba(20, 16, 14, .82) 0%, rgba(20, 16, 14, .66) 34%, rgba(20, 16, 14, .26) 68%, rgba(20, 16, 14, .12) 100%), url("${repoHero.image}")`,
+          backgroundImage: `linear-gradient(90deg, rgba(31, 35, 40, .82) 0%, rgba(31, 35, 40, .66) 34%, rgba(31, 35, 40, .26) 68%, rgba(31, 35, 40, .12) 100%), url("${repoHero.image}")`,
           backgroundPosition: `${repoHero.positionX ?? 50}% ${repoHero.positionY ?? 50}%`
         } : undefined}
       >
@@ -2489,7 +2500,7 @@ function RepoPage() {
                   onPointerMove={moveHeroImage}
                   ref={heroPositionerRef}
                   style={{
-                    backgroundImage: `linear-gradient(90deg, rgba(20, 16, 14, .82), rgba(20, 16, 14, .12)), url("${heroDraft.image}")`,
+                    backgroundImage: `linear-gradient(90deg, rgba(31, 35, 40, .82), rgba(31, 35, 40, .12)), url("${heroDraft.image}")`,
                     backgroundPosition: `${heroDraft.positionX ?? 50}% ${heroDraft.positionY ?? 50}%`
                   }}
                 >
@@ -3453,7 +3464,7 @@ function RepoCard({ repo, actions = false }) {
     <Card>
       {hero.image && (
         <div className="repo-card-hero" style={{
-          backgroundImage: `linear-gradient(90deg, rgba(20, 16, 14, .72), rgba(20, 16, 14, .2)), url("${hero.image}")`,
+          backgroundImage: `linear-gradient(90deg, rgba(31, 35, 40, .72), rgba(31, 35, 40, .2)), url("${hero.image}")`,
           backgroundPosition: `${hero.positionX ?? 50}% ${hero.positionY ?? 50}%`
         }}>
           <span style={{ fontFamily: hero.fontFamily || heroFontOptions[0].value }}>{hero.title || repo.name}</span>
@@ -3508,7 +3519,7 @@ function PhaseRepoCard({ repo }) {
       className={hero.image ? "phase-repo-card has-repo-hero" : "phase-repo-card"}
       onClick={() => navigate(`/${repo.owner}/${repo.name}`)}
       style={hero.image ? {
-        backgroundImage: `linear-gradient(90deg, rgba(20, 16, 14, .86) 0%, rgba(20, 16, 14, .7) 38%, rgba(20, 16, 14, .32) 70%, rgba(20, 16, 14, .14) 100%), url("${hero.image}")`,
+        backgroundImage: `linear-gradient(90deg, rgba(31, 35, 40, .86) 0%, rgba(31, 35, 40, .7) 38%, rgba(31, 35, 40, .32) 70%, rgba(31, 35, 40, .14) 100%), url("${hero.image}")`,
         backgroundPosition: `${hero.positionX ?? 50}% ${hero.positionY ?? 50}%`
       } : undefined}
     >
@@ -3534,7 +3545,7 @@ function PhaseRepoCard({ repo }) {
 }
 
 function LanguagePill({ language }) {
-  const [bg, color] = languageStyles[language] || languageStyles.TypeScript;
+  const [bg, color] = languageStyles[language] || ["transparent", "#8c959f"];
   return <span className="language-pill" style={{ backgroundColor: bg, color }}><span style={{ backgroundColor: color }} />{language}</span>;
 }
 
@@ -3709,7 +3720,7 @@ function ProfileHeader({ editable = false, publicView = false, profileData = nul
       <div
         className={coverImageUrl ? "cover has-cover-image" : "cover"}
         style={coverImageUrl ? {
-          backgroundImage: `linear-gradient(90deg, rgba(20, 16, 14, .56), rgba(20, 16, 14, .08)), url("${coverImageUrl}")`,
+          backgroundImage: `linear-gradient(90deg, rgba(31, 35, 40, .56), rgba(31, 35, 40, .08)), url("${coverImageUrl}")`,
           backgroundPosition: `${coverPositionX}% ${coverPositionY}%`
         } : { background: coverGradient }}
       />
@@ -3781,7 +3792,7 @@ function ProfileHeader({ editable = false, publicView = false, profileData = nul
               <div
                 className="profile-editor-cover-preview"
                 style={draft.coverImageUrl ? {
-                  backgroundImage: `linear-gradient(90deg, rgba(20, 16, 14, .56), rgba(20, 16, 14, .08)), url("${draft.coverImageUrl}")`,
+                  backgroundImage: `linear-gradient(90deg, rgba(31, 35, 40, .56), rgba(31, 35, 40, .08)), url("${draft.coverImageUrl}")`,
                   backgroundPosition: `${draft.coverPositionX ?? 50}% ${draft.coverPositionY ?? 50}%`
                 } : { background: draft.coverGradient }}
               />
@@ -3840,7 +3851,7 @@ function ProfileHeader({ editable = false, publicView = false, profileData = nul
                   onPointerMove={moveProfileCover}
                   ref={coverPositionerRef}
                   style={{
-                    backgroundImage: `linear-gradient(90deg, rgba(20, 16, 14, .62), rgba(20, 16, 14, .1)), url("${draft.coverImageUrl}")`,
+                    backgroundImage: `linear-gradient(90deg, rgba(31, 35, 40, .62), rgba(31, 35, 40, .1)), url("${draft.coverImageUrl}")`,
                     backgroundPosition: `${draft.coverPositionX ?? 50}% ${draft.coverPositionY ?? 50}%`
                   }}
                 >
@@ -4212,10 +4223,10 @@ function LessonIllustration({ lesson }) {
       <svg viewBox="0 0 760 300" role="img" aria-label={`${lesson.title} lesson illustration`}>
         <title>{lesson.title}</title>
         <desc>{lesson.description}</desc>
-        <rect x="0" y="0" width="760" height="300" rx="28" fill="#f4efe6" />
-        <circle cx="660" cy="58" r="58" fill="#ddd5f0" opacity="0.72" />
-        <circle cx="92" cy="235" r="72" fill="#c8d8c4" opacity="0.55" />
-        <path d="M60 252 C188 198 292 274 430 218 S620 206 704 142" stroke="#fffdf9" strokeWidth="26" fill="none" strokeLinecap="round" opacity="0.72" />
+        <rect x="0" y="0" width="760" height="300" rx="28" fill="#f6f8fa" />
+        <circle cx="660" cy="58" r="58" fill="#ddf4ff" opacity="0.72" />
+        <circle cx="92" cy="235" r="72" fill="#dafbe1" opacity="0.55" />
+        <path d="M60 252 C188 198 292 274 430 218 S620 206 704 142" stroke="#ffffff" strokeWidth="26" fill="none" strokeLinecap="round" opacity="0.72" />
         {art}
       </svg>
     </figure>
@@ -4223,20 +4234,20 @@ function LessonIllustration({ lesson }) {
 }
 
 function GeneratedLessonArt({ lesson }) {
-  const accent = lesson.tag === "devops" ? "#6aa8d4" : lesson.tag === "advanced" ? "#d4848c" : "#9b8fd4";
-  const secondary = lesson.tag === "devops" ? "#cce0f0" : lesson.tag === "advanced" ? "#f5d5d8" : "#ddd5f0";
+  const accent = lesson.tag === "devops" ? "#6aa8d4" : lesson.tag === "advanced" ? "#cf222e" : "#0969da";
+  const secondary = lesson.tag === "devops" ? "#ddf4ff" : lesson.tag === "advanced" ? "#ffebe9" : "#ddf4ff";
   const labels = lesson.steps.slice(0, 4).map((step) => step.title.split(" ").slice(0, 2).join(" "));
 
   if (lesson.tag === "devops") {
     return (
       <>
-        <rect x="116" y="78" width="528" height="142" rx="24" fill="#fffdf9" stroke="#cce0f0" strokeWidth="6" />
+        <rect x="116" y="78" width="528" height="142" rx="24" fill="#ffffff" stroke="#ddf4ff" strokeWidth="6" />
         {labels.map((label, index) => {
           const x = 172 + index * 138;
           return (
             <g key={label}>
               {index > 0 && <path d={`M${x - 96} 150 H${x - 38}`} stroke="#6aa8d4" strokeWidth="8" strokeLinecap="round" />}
-              <rect x={x - 36} y="118" width="72" height="64" rx="16" fill={index % 2 ? "#cce0f0" : "#fffdf9"} stroke="#6aa8d4" strokeWidth="5" />
+              <rect x={x - 36} y="118" width="72" height="64" rx="16" fill={index % 2 ? "#ddf4ff" : "#ffffff"} stroke="#6aa8d4" strokeWidth="5" />
               <text x={x} y="205" textAnchor="middle">{label}</text>
             </g>
           );
@@ -4249,11 +4260,11 @@ function GeneratedLessonArt({ lesson }) {
   if (lesson.track === 3) {
     return (
       <>
-        <path d="M114 206 H646" stroke="#d4848c" strokeWidth="9" strokeLinecap="round" />
-        <path d="M180 206 C242 98 330 98 394 206" stroke="#9b8fd4" strokeWidth="8" fill="none" strokeLinecap="round" />
+        <path d="M114 206 H646" stroke="#cf222e" strokeWidth="9" strokeLinecap="round" />
+        <path d="M180 206 C242 98 330 98 394 206" stroke="#0969da" strokeWidth="8" fill="none" strokeLinecap="round" />
         <path d="M394 206 C446 110 536 110 606 206" stroke="#6aa8d4" strokeWidth="8" fill="none" strokeLinecap="round" />
-        {[114, 246, 394, 526, 646].map((x, index) => <GitNode key={x} x={x} y={206} stroke={index % 2 ? accent : "#7aaa72"} label={index === 0 ? "base" : `a${index}`} />)}
-        <rect x="246" y="62" width="268" height="60" rx="18" fill="#fffdf9" stroke={accent} strokeWidth="5" />
+        {[114, 246, 394, 526, 646].map((x, index) => <GitNode key={x} x={x} y={206} stroke={index % 2 ? accent : "#1a7f37"} label={index === 0 ? "base" : `a${index}`} />)}
+        <rect x="246" y="62" width="268" height="60" rx="18" fill="#ffffff" stroke={accent} strokeWidth="5" />
         <text x="380" y="99" textAnchor="middle">{labels[0] || lesson.title}</text>
       </>
     );
@@ -4261,13 +4272,13 @@ function GeneratedLessonArt({ lesson }) {
 
   return (
     <>
-      <rect x="116" y="70" width="528" height="162" rx="24" fill="#fffdf9" stroke="#e8e0d4" />
+      <rect x="116" y="70" width="528" height="162" rx="24" fill="#ffffff" stroke="#d0d7de" />
       <path d="M170 168 H590" stroke={accent} strokeWidth="9" strokeLinecap="round" />
       {labels.map((label, index) => {
         const x = 170 + index * 140;
         return (
           <g key={label}>
-            <GitNode x={x} y={168} stroke={index % 2 ? "#7aaa72" : accent} />
+            <GitNode x={x} y={168} stroke={index % 2 ? "#1a7f37" : accent} />
             <rect x={x - 54} y="88" width="108" height="36" rx="12" fill={secondary} />
             <text x={x} y="112" textAnchor="middle">{label}</text>
           </g>
@@ -4278,7 +4289,7 @@ function GeneratedLessonArt({ lesson }) {
   );
 }
 
-function GitNode({ x, y, fill = "#fffdf9", stroke = "#7aaa72", label }) {
+function GitNode({ x, y, fill = "#ffffff", stroke = "#1a7f37", label }) {
   return (
     <>
       <circle cx={x} cy={y} r="20" fill={fill} stroke={stroke} strokeWidth="7" />
@@ -4290,10 +4301,10 @@ function GitNode({ x, y, fill = "#fffdf9", stroke = "#7aaa72", label }) {
 function BranchingArt() {
   return (
     <>
-      <path d="M100 190 C240 190 326 190 660 190" stroke="#7aaa72" strokeWidth="9" fill="none" strokeLinecap="round" />
-      <path d="M230 190 C292 92 418 92 506 190" stroke="#9b8fd4" strokeWidth="9" fill="none" strokeLinecap="round" />
+      <path d="M100 190 C240 190 326 190 660 190" stroke="#1a7f37" strokeWidth="9" fill="none" strokeLinecap="round" />
+      <path d="M230 190 C292 92 418 92 506 190" stroke="#0969da" strokeWidth="9" fill="none" strokeLinecap="round" />
       {[100, 230, 380, 530, 660].map((x) => <GitNode key={x} x={x} y={190} />)}
-      {[326, 430].map((x) => <GitNode key={x} x={x} y={104} stroke="#9b8fd4" />)}
+      {[326, 430].map((x) => <GitNode key={x} x={x} y={104} stroke="#0969da" />)}
       <text x="98" y="244">main</text><text x="320" y="64">feature branch</text>
     </>
   );
@@ -4302,11 +4313,11 @@ function BranchingArt() {
 function MergingArt() {
   return (
     <>
-      <path d="M96 205 C220 205 354 205 640 205" stroke="#7aaa72" strokeWidth="9" fill="none" strokeLinecap="round" />
-      <path d="M188 205 C284 100 420 100 532 205" stroke="#d4848c" strokeWidth="9" fill="none" strokeLinecap="round" />
+      <path d="M96 205 C220 205 354 205 640 205" stroke="#1a7f37" strokeWidth="9" fill="none" strokeLinecap="round" />
+      <path d="M188 205 C284 100 420 100 532 205" stroke="#cf222e" strokeWidth="9" fill="none" strokeLinecap="round" />
       {[96, 188, 330, 532, 640].map((x) => <GitNode key={x} x={x} y={205} />)}
-      {[286, 410].map((x) => <GitNode key={x} x={x} y={112} stroke="#d4848c" />)}
-      <circle cx="532" cy="205" r="34" fill="none" stroke="#9b8fd4" strokeWidth="4" strokeDasharray="8 8" />
+      {[286, 410].map((x) => <GitNode key={x} x={x} y={112} stroke="#cf222e" />)}
+      <circle cx="532" cy="205" r="34" fill="none" stroke="#0969da" strokeWidth="4" strokeDasharray="8 8" />
       <text x="490" y="258">merge commit</text>
     </>
   );
@@ -4315,12 +4326,12 @@ function MergingArt() {
 function ForkingArt() {
   return (
     <>
-      <rect x="110" y="92" width="190" height="132" rx="22" fill="#fffdf9" stroke="#9b8fd4" strokeWidth="6" />
-      <rect x="460" y="92" width="190" height="132" rx="22" fill="#fffdf9" stroke="#7aaa72" strokeWidth="6" />
+      <rect x="110" y="92" width="190" height="132" rx="22" fill="#ffffff" stroke="#0969da" strokeWidth="6" />
+      <rect x="460" y="92" width="190" height="132" rx="22" fill="#ffffff" stroke="#1a7f37" strokeWidth="6" />
       <path d="M300 158 C360 116 404 116 460 158" stroke="#6aa8d4" strokeWidth="8" fill="none" strokeLinecap="round" markerEnd="url(#forkArrow)" />
       <defs><marker id="forkArrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0 0 L8 3 L0 6 Z" fill="#6aa8d4" /></marker></defs>
       <text x="205" y="142" textAnchor="middle">upstream</text><text x="555" y="142" textAnchor="middle">your fork</text>
-      <path d="M156 184 h98 M506 184 h98" stroke="#e8e0d4" strokeWidth="10" strokeLinecap="round" />
+      <path d="M156 184 h98 M506 184 h98" stroke="#d0d7de" strokeWidth="10" strokeLinecap="round" />
     </>
   );
 }
@@ -4328,9 +4339,9 @@ function ForkingArt() {
 function CommitsArt() {
   return (
     <>
-      <path d="M126 158 H650" stroke="#7aaa72" strokeWidth="9" strokeLinecap="round" />
-      {[126, 238, 350, 462, 574, 650].map((x, index) => <GitNode key={x} x={x} y={158} stroke={index % 2 ? "#9b8fd4" : "#7aaa72"} label={`c${index + 1}`} />)}
-      <rect x="245" y="70" width="270" height="54" rx="16" fill="#fffdf9" stroke="#e8e0d4" />
+      <path d="M126 158 H650" stroke="#1a7f37" strokeWidth="9" strokeLinecap="round" />
+      {[126, 238, 350, 462, 574, 650].map((x, index) => <GitNode key={x} x={x} y={158} stroke={index % 2 ? "#0969da" : "#1a7f37"} label={`c${index + 1}`} />)}
+      <rect x="245" y="70" width="270" height="54" rx="16" fill="#ffffff" stroke="#d0d7de" />
       <text x="380" y="104" textAnchor="middle">clear checkpoint</text>
     </>
   );
@@ -4339,12 +4350,12 @@ function CommitsArt() {
 function PullRequestArt() {
   return (
     <>
-      <rect x="116" y="72" width="528" height="156" rx="24" fill="#fffdf9" stroke="#e8e0d4" />
-      <path d="M174 150 H370" stroke="#7aaa72" strokeWidth="9" strokeLinecap="round" />
-      <path d="M390 150 H588" stroke="#9b8fd4" strokeWidth="9" strokeLinecap="round" />
-      <GitNode x="174" y="150" /><GitNode x="370" y="150" /><GitNode x="588" y="150" stroke="#9b8fd4" />
+      <rect x="116" y="72" width="528" height="156" rx="24" fill="#ffffff" stroke="#d0d7de" />
+      <path d="M174 150 H370" stroke="#1a7f37" strokeWidth="9" strokeLinecap="round" />
+      <path d="M390 150 H588" stroke="#0969da" strokeWidth="9" strokeLinecap="round" />
+      <GitNode x="174" y="150" /><GitNode x="370" y="150" /><GitNode x="588" y="150" stroke="#0969da" />
       <path d="M398 106 h128 M398 132 h162" stroke="#d7cde8" strokeWidth="10" strokeLinecap="round" />
-      <circle cx="176" cy="98" r="12" fill="#d4848c" /><text x="206" y="104">review</text>
+      <circle cx="176" cy="98" r="12" fill="#cf222e" /><text x="206" y="104">review</text>
     </>
   );
 }
@@ -4352,11 +4363,11 @@ function PullRequestArt() {
 function RebasingArt() {
   return (
     <>
-      <path d="M104 212 H640" stroke="#7aaa72" strokeWidth="9" strokeLinecap="round" />
+      <path d="M104 212 H640" stroke="#1a7f37" strokeWidth="9" strokeLinecap="round" />
       {[104, 240, 376, 512, 640].map((x) => <GitNode key={x} x={x} y={212} />)}
-      <path d="M238 86 C318 46 416 46 520 86" stroke="#9b8fd4" strokeWidth="8" fill="none" strokeLinecap="round" strokeDasharray="2 16" />
-      <path d="M238 118 C338 156 420 156 520 118" stroke="#9b8fd4" strokeWidth="8" fill="none" strokeLinecap="round" />
-      <GitNode x={238} y={86} stroke="#9b8fd4" /><GitNode x={378} y={64} stroke="#9b8fd4" /><GitNode x={520} y={86} stroke="#9b8fd4" />
+      <path d="M238 86 C318 46 416 46 520 86" stroke="#0969da" strokeWidth="8" fill="none" strokeLinecap="round" strokeDasharray="2 16" />
+      <path d="M238 118 C338 156 420 156 520 118" stroke="#0969da" strokeWidth="8" fill="none" strokeLinecap="round" />
+      <GitNode x={238} y={86} stroke="#0969da" /><GitNode x={378} y={64} stroke="#0969da" /><GitNode x={520} y={86} stroke="#0969da" />
       <text x="340" y="132">replay commits</text>
     </>
   );
@@ -4365,11 +4376,11 @@ function RebasingArt() {
 function ConflictsArt() {
   return (
     <>
-      <rect x="190" y="58" width="380" height="190" rx="20" fill="#fffdf9" stroke="#e8e0d4" />
-      <path d="M230 108 h190 M230 148 h120 M230 188 h190" stroke="#7aaa72" strokeWidth="10" strokeLinecap="round" />
-      <path d="M230 128 h240 M230 168 h170" stroke="#d4848c" strokeWidth="10" strokeLinecap="round" />
+      <rect x="190" y="58" width="380" height="190" rx="20" fill="#ffffff" stroke="#d0d7de" />
+      <path d="M230 108 h190 M230 148 h120 M230 188 h190" stroke="#1a7f37" strokeWidth="10" strokeLinecap="round" />
+      <path d="M230 128 h240 M230 168 h170" stroke="#cf222e" strokeWidth="10" strokeLinecap="round" />
       <text x="464" y="130">&lt;&lt;&lt;</text><text x="464" y="170">===</text><text x="464" y="210">&gt;&gt;&gt;</text>
-      <circle cx="570" cy="86" r="26" fill="#f5d5d8" /><text x="570" y="94" textAnchor="middle">!</text>
+      <circle cx="570" cy="86" r="26" fill="#ffebe9" /><text x="570" y="94" textAnchor="middle">!</text>
     </>
   );
 }
@@ -4377,10 +4388,10 @@ function ConflictsArt() {
 function GitignoreArt() {
   return (
     <>
-      <rect x="140" y="72" width="260" height="160" rx="20" fill="#fffdf9" stroke="#e8e0d4" />
+      <rect x="140" y="72" width="260" height="160" rx="20" fill="#ffffff" stroke="#d0d7de" />
       {["node_modules/", ".env", "dist/", "*.log"].map((line, index) => <text key={line} x="178" y={118 + index * 30}>{line}</text>)}
-      <path d="M484 84 L642 216" stroke="#d4848c" strokeWidth="14" strokeLinecap="round" />
-      <path d="M642 84 L484 216" stroke="#d4848c" strokeWidth="14" strokeLinecap="round" />
+      <path d="M484 84 L642 216" stroke="#cf222e" strokeWidth="14" strokeLinecap="round" />
+      <path d="M642 84 L484 216" stroke="#cf222e" strokeWidth="14" strokeLinecap="round" />
       <text x="270" y="262" textAnchor="middle">ignored before commit</text>
     </>
   );
@@ -4389,11 +4400,11 @@ function GitignoreArt() {
 function StashingArt() {
   return (
     <>
-      <path d="M126 206 H624" stroke="#7aaa72" strokeWidth="9" strokeLinecap="round" />
+      <path d="M126 206 H624" stroke="#1a7f37" strokeWidth="9" strokeLinecap="round" />
       {[126, 270, 414, 624].map((x) => <GitNode key={x} x={x} y={206} />)}
-      <rect x="292" y="70" width="176" height="86" rx="18" fill="#fffdf9" stroke="#9b8fd4" strokeWidth="6" />
+      <rect x="292" y="70" width="176" height="86" rx="18" fill="#ffffff" stroke="#0969da" strokeWidth="6" />
       <path d="M326 110 h108 M326 132 h82" stroke="#d7cde8" strokeWidth="9" strokeLinecap="round" />
-      <path d="M380 158 V206" stroke="#9b8fd4" strokeWidth="8" strokeLinecap="round" strokeDasharray="8 10" />
+      <path d="M380 158 V206" stroke="#0969da" strokeWidth="8" strokeLinecap="round" strokeDasharray="8 10" />
       <text x="380" y="54" textAnchor="middle">stash shelf</text>
     </>
   );
@@ -4402,11 +4413,11 @@ function StashingArt() {
 function CommitMessagesArt() {
   return (
     <>
-      <rect x="154" y="66" width="452" height="166" rx="22" fill="#fffdf9" stroke="#e8e0d4" />
-      <path d="M200 112 h214" stroke="#3d3530" strokeWidth="12" strokeLinecap="round" />
-      <path d="M200 150 h330 M200 182 h286" stroke="#9b8fd4" strokeWidth="10" strokeLinecap="round" opacity="0.75" />
-      <circle cx="542" cy="112" r="28" fill="#c8d8c4" />
-      <path d="M528 112 l10 10 l20-24" stroke="#7aaa72" strokeWidth="7" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="154" y="66" width="452" height="166" rx="22" fill="#ffffff" stroke="#d0d7de" />
+      <path d="M200 112 h214" stroke="#1f2328" strokeWidth="12" strokeLinecap="round" />
+      <path d="M200 150 h330 M200 182 h286" stroke="#0969da" strokeWidth="10" strokeLinecap="round" opacity="0.75" />
+      <circle cx="542" cy="112" r="28" fill="#dafbe1" />
+      <path d="M528 112 l10 10 l20-24" stroke="#1a7f37" strokeWidth="7" fill="none" strokeLinecap="round" strokeLinejoin="round" />
       <text x="380" y="264" textAnchor="middle">subject + context</text>
     </>
   );
@@ -4415,9 +4426,9 @@ function CommitMessagesArt() {
 function OpenSourceArt() {
   return (
     <>
-      <circle cx="202" cy="126" r="44" fill="#fffdf9" stroke="#7aaa72" strokeWidth="7" />
-      <circle cx="380" cy="176" r="44" fill="#fffdf9" stroke="#9b8fd4" strokeWidth="7" />
-      <circle cx="558" cy="126" r="44" fill="#fffdf9" stroke="#d4848c" strokeWidth="7" />
+      <circle cx="202" cy="126" r="44" fill="#ffffff" stroke="#1a7f37" strokeWidth="7" />
+      <circle cx="380" cy="176" r="44" fill="#ffffff" stroke="#0969da" strokeWidth="7" />
+      <circle cx="558" cy="126" r="44" fill="#ffffff" stroke="#cf222e" strokeWidth="7" />
       <path d="M242 140 C292 162 318 170 336 176 M424 176 C472 158 500 146 518 136" stroke="#6aa8d4" strokeWidth="8" fill="none" strokeLinecap="round" />
       <text x="202" y="132" textAnchor="middle">issue</text><text x="380" y="182" textAnchor="middle">PR</text><text x="558" y="132" textAnchor="middle">review</text>
       <text x="380" y="250" textAnchor="middle">collaborate in the open</text>
@@ -4428,10 +4439,10 @@ function OpenSourceArt() {
 function LicencesArt() {
   return (
     <>
-      <rect x="244" y="52" width="272" height="198" rx="20" fill="#fffdf9" stroke="#e8e0d4" />
-      <path d="M304 112 h152 M304 148 h118 M304 184 h152" stroke="#c8a055" strokeWidth="10" strokeLinecap="round" />
-      <circle cx="288" cy="112" r="8" fill="#7aaa72" /><circle cx="288" cy="148" r="8" fill="#7aaa72" /><circle cx="288" cy="184" r="8" fill="#7aaa72" />
-      <path d="M418 52 v58 h58" fill="#f5e4c4" stroke="#e8e0d4" />
+      <rect x="244" y="52" width="272" height="198" rx="20" fill="#ffffff" stroke="#d0d7de" />
+      <path d="M304 112 h152 M304 148 h118 M304 184 h152" stroke="#9a6700" strokeWidth="10" strokeLinecap="round" />
+      <circle cx="288" cy="112" r="8" fill="#1a7f37" /><circle cx="288" cy="148" r="8" fill="#1a7f37" /><circle cx="288" cy="184" r="8" fill="#1a7f37" />
+      <path d="M418 52 v58 h58" fill="#fff8c5" stroke="#d0d7de" />
       <text x="380" y="278" textAnchor="middle">permissions made visible</text>
     </>
   );
@@ -4447,7 +4458,8 @@ function Button({ children, disabled = false, to, variant = "primary", full = fa
 }
 
 function Badge({ children }) {
-  return <span className="badge">{children}</span>;
+  const variant = typeof children === "string" ? ` badge-${children.toLowerCase().replace(/\s+/g, "-")}` : "";
+  return <span className={`badge${variant}`}>{children}</span>;
 }
 
 function FeatureCard({ title, text, icon }) {

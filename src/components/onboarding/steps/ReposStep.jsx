@@ -3,21 +3,21 @@ const REPO_FEATURES = [
     id: "readme",
     title: "README Studio",
     caption: "Write beautiful project pages with a live preview editor and one-click save to GitHub.",
-    accent: "#ddd5f0",
+    accent: "#ddf4ff",
     previewClass: "readme"
   },
   {
     id: "landing",
     title: "Landing Designer",
     caption: "Build a no-code landing page for any repo. Pick a theme, write your copy, publish in minutes.",
-    accent: "#c8d8c4",
+    accent: "#dafbe1",
     previewClass: "landing"
   },
   {
     id: "notes",
     title: "Sticky Notes",
     caption: "Pin notes to your workspace desk for any repo. Tasks, reminders, ideas — right where you work.",
-    accent: "#f5d5d8",
+    accent: "#ffebe9",
     previewClass: "notes"
   }
 ];

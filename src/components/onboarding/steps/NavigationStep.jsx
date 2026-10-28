@@ -3,12 +3,12 @@ import { useEffect, useState } from "react";
 const NAV_ITEMS = [
   {
     label: "Repos",
-    colour: "#9b8fd4",
+    colour: "#0969da",
     desc: "All your GitHub repositories, synced automatically. Browse, manage, and create new repos without leaving ForAllCode."
   },
   {
     label: "Learn",
-    colour: "#7aaa72",
+    colour: "#1a7f37",
     desc: "Visual Git lessons built for humans. Interactive diagrams, step-by-step explanations — no dry documentation."
   },
   {
@@ -18,7 +18,7 @@ const NAV_ITEMS = [
   },
   {
     label: "Marketplace",
-    colour: "#c8a055",
+    colour: "#9a6700",
     desc: "Courses, certifications, and tools built by the community. Learn from real developers and earn certificates."
   }
 ];

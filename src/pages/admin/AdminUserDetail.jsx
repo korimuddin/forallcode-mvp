@@ -242,9 +242,9 @@ export default function AdminUserDetail() {
 
         <div className="admin-detail-stack">
           <section className="admin-stat-grid compact">
-            <StatCard label="Repos" value={stats.repos} accent="#9b8fd4" />
-            <StatCard label="Lessons" value={stats.lessons} accent="#7aaa72" />
-            <StatCard label="Notes" value={stats.notes} accent="#c8a055" />
+            <StatCard label="Repos" value={stats.repos} accent="#0969da" />
+            <StatCard label="Lessons" value={stats.lessons} accent="#1a7f37" />
+            <StatCard label="Notes" value={stats.notes} accent="#9a6700" />
             <StatCard label="Stars" value={stats.stars} accent="#6aa8d4" />
           </section>
 

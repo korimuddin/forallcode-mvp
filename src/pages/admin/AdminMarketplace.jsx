@@ -155,9 +155,9 @@ export default function AdminMarketplace() {
       ) : (
         <>
           <section className="admin-stat-grid">
-            <StatCard label="Submitted courses" value={pendingCourses.length} delta={0} deltaLabel="pending review" accent="#c8a055" />
-            <StatCard label="Approved courses" value={approvedCourses.length} delta={0} deltaLabel="live" accent="#7aaa72" />
-            <StatCard label="Total revenue" value={`£${totalRevenue.toFixed(2)}`} delta={0} deltaLabel="all time" accent="#9b8fd4" />
+            <StatCard label="Submitted courses" value={pendingCourses.length} delta={0} deltaLabel="pending review" accent="#9a6700" />
+            <StatCard label="Approved courses" value={approvedCourses.length} delta={0} deltaLabel="live" accent="#1a7f37" />
+            <StatCard label="Total revenue" value={`£${totalRevenue.toFixed(2)}`} delta={0} deltaLabel="all time" accent="#0969da" />
             <StatCard label="Avg rating" value={`${averageRating.toFixed(1)}/5`} accent="#6aa8d4" />
           </section>
 

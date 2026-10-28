@@ -480,14 +480,16 @@ function NavDropdown({ label, icon, children, to }) {
 }
 
 function languageColour(language) {
+  // GitHub linguist colours
   const colours = {
-    TypeScript: "#534AB7",
-    JavaScript: "#633806",
-    Python: "#0C447C",
-    CSS: "#27500A",
-    Rust: "#72243E",
-    Shell: "#633806",
-    Go: "#0C447C"
+    TypeScript: "#3178c6",
+    JavaScript: "#f1e05a",
+    Python: "#3572A5",
+    CSS: "#563d7c",
+    HTML: "#e34c26",
+    Rust: "#dea584",
+    Shell: "#89e051",
+    Go: "#00ADD8"
   };
-  return colours[language] || "#7a6dc4";
+  return colours[language] || "#8c959f";
 }

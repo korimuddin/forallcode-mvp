@@ -124,10 +124,10 @@ function InsightCard({ children, title, tone }) {
 
 function getGrade(scorePercentage) {
   if (scorePercentage >= 80) {
-    return { label: "Excellent", color: "#27500A", bg: "#c8d8c4" };
+    return { label: "Excellent", color: "#116329", bg: "#dafbe1" };
   }
   if (scorePercentage >= 60) {
-    return { label: "Good start", color: "#633806", bg: "#f5e4c4" };
+    return { label: "Good start", color: "#7d4e00", bg: "#fff8c5" };
   }
-  return { label: "Needs practice", color: "#72243E", bg: "#f5d5d8" };
+  return { label: "Needs practice", color: "#82071e", bg: "#ffebe9" };
 }

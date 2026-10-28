@@ -4,11 +4,19 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["DM Sans", "sans-serif"],
-        serif: ["Lora", "serif"],
-        mono: ["DM Mono", "monospace"]
+        sans: ["-apple-system", "BlinkMacSystemFont", "Segoe UI", "Noto Sans", "Helvetica", "Arial", "sans-serif"],
+        mono: ["ui-monospace", "SFMono-Regular", "SF Mono", "Menlo", "Consolas", "Liberation Mono", "monospace"]
       },
       colors: {
+        bg: "var(--bg)",
+        surface: "var(--surface)",
+        fg: "var(--fg)",
+        muted: "var(--muted)",
+        border: "var(--border)",
+        accent: "var(--accent)",
+        success: "var(--success)",
+        danger: "var(--danger)",
+        warn: "var(--warn)",
         cream: "var(--cream)",
         cream2: "var(--cream2)",
         cream3: "var(--cream3)",
@@ -33,10 +41,10 @@ export default {
         white: "var(--white)"
       },
       borderRadius: {
-        card: "12px",
-        large: "20px",
-        hero: "28px",
-        pill: "30px"
+        card: "6px",
+        large: "12px",
+        hero: "12px",
+        pill: "9999px"
       },
       boxShadow: {
         none: "none"

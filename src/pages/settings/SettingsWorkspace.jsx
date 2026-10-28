@@ -8,10 +8,10 @@ import { supabase } from "../../lib/supabase";
 import { useSubscription } from "../../lib/useSubscription";
 
 const noteColours = [
-  { label: "Lavender", value: "lavender", colour: "#ddd5f0" },
-  { label: "Rose", value: "rose", colour: "#f5d5d8" },
-  { label: "Sage", value: "sage", colour: "#c8d8c4" },
-  { label: "Amber", value: "amber", colour: "#f5e4c4" }
+  { label: "Lavender", value: "lavender", colour: "#ddf4ff" },
+  { label: "Rose", value: "rose", colour: "#ffebe9" },
+  { label: "Sage", value: "sage", colour: "#dafbe1" },
+  { label: "Amber", value: "amber", colour: "#fff8c5" }
 ];
 
 export default function SettingsWorkspace() {

@@ -128,7 +128,7 @@
 
   .signin-globe-card {
     min-height: 380px;
-    border-radius: 18px;
+    border-radius: 6px;
   }
 
   .signin-globe-copy h2 {
@@ -193,7 +193,7 @@
 
   .carousel-hero {
     gap: 20px;
-    border-radius: 18px;
+    border-radius: 6px;
     padding: 24px;
   }
 
@@ -270,7 +270,7 @@
   .profile-info-panel {
     grid-template-columns: 1fr;
     align-items: start;
-    border-radius: 18px;
+    border-radius: 6px;
     transform: translateY(14px);
   }
 
@@ -366,12 +366,12 @@
     width: 100%;
     min-height: 44px;
     border: 1px solid var(--cream3);
-    border-radius: 12px;
+    border-radius: 6px;
     background: var(--white);
     padding: 11px 14px;
     margin-bottom: 16px;
     color: var(--ink);
-    font-family: "DM Sans", sans-serif;
+    font-family: var(--font-sans);
   }
 
   .phase-code-tab {
@@ -596,7 +596,7 @@
   .lockin-hud-button {
     width: 40px;
     height: 40px;
-    border-radius: 13px;
+    border-radius: 6px;
   }
 
   .lockin-digital-clock {
@@ -630,7 +630,7 @@
     right: 24px;
     width: 48px;
     height: 48px;
-    border-radius: 18px;
+    border-radius: 6px;
   }
 
   .cert-hero h1 {
