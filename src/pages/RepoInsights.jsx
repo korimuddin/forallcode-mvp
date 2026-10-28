@@ -19,12 +19,12 @@ import { getCurrentSession, supabase } from "../lib/supabase";
 import { useRepoAccess } from "../lib/useRepoAccess";
 
 const languageColours = {
-  JavaScript: "#c8a055",
-  TypeScript: "#9b8fd4",
-  CSS: "#7aaa72",
-  HTML: "#d4848c",
+  JavaScript: "#9a6700",
+  TypeScript: "#0969da",
+  CSS: "#1a7f37",
+  HTML: "#cf222e",
   Python: "#6aa8d4",
-  Shell: "#9c918c",
+  Shell: "#6e7781",
   Rust: "#c56f5d",
   Go: "#76b7b2"
 };
@@ -224,11 +224,11 @@ export default function RepoInsights() {
               <h2>Commit frequency</h2>
               <ResponsiveContainer width="100%" height={260}>
                 <LineChart data={githubStats.commits}>
-                  <CartesianGrid stroke="#e8e0d4" strokeDasharray="3 3" />
-                  <XAxis dataKey="label" tick={{ fill: "#6b5f58", fontSize: 11 }} />
-                  <YAxis allowDecimals={false} tick={{ fill: "#6b5f58", fontSize: 11 }} />
-                  <Tooltip contentStyle={{ background: "#fffdf9", border: "1px solid #e8e0d4", borderRadius: 12 }} />
-                  <Line type="monotone" dataKey="commits" stroke="#9b8fd4" strokeWidth={3} dot={false} />
+                  <CartesianGrid stroke="#d0d7de" strokeDasharray="3 3" />
+                  <XAxis dataKey="label" tick={{ fill: "#656d76", fontSize: 11 }} />
+                  <YAxis allowDecimals={false} tick={{ fill: "#656d76", fontSize: 11 }} />
+                  <Tooltip contentStyle={{ background: "#ffffff", border: "1px solid #d0d7de", borderRadius: 12 }} />
+                  <Line type="monotone" dataKey="commits" stroke="#0969da" strokeWidth={3} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             </article>
@@ -241,7 +241,7 @@ export default function RepoInsights() {
                     <Pie data={githubStats.languages} dataKey="value" nameKey="name" innerRadius={58} outerRadius={92} paddingAngle={2}>
                       {githubStats.languages.map((entry) => <Cell fill={entry.color} key={entry.name} />)}
                     </Pie>
-                    <Tooltip contentStyle={{ background: "#fffdf9", border: "1px solid #e8e0d4", borderRadius: 12 }} />
+                    <Tooltip contentStyle={{ background: "#ffffff", border: "1px solid #d0d7de", borderRadius: 12 }} />
                   </PieChart>
                 </ResponsiveContainer>
               ) : <p className="insights-muted">No language data yet.</p>}
@@ -334,6 +334,6 @@ function mapLanguages(languages) {
     .map(([name, value]) => ({
       name,
       value,
-      color: languageColours[name] || "#9b8fd4"
+      color: languageColours[name] || "#0969da"
     }));
 }

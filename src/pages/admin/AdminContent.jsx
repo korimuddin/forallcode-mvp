@@ -362,10 +362,10 @@ export default function AdminContent() {
       ) : activeTab === "lessons" ? (
         <section className="admin-section-stack">
           <div className="admin-stat-grid compact">
-            <StatCard label="Total lessons" value={lessons.length} accent="#9b8fd4" />
-            <StatCard label="Live" value={lessons.filter((lesson) => lesson.is_published).length} accent="#7aaa72" />
-            <StatCard label="Hidden" value={lessons.filter((lesson) => !lesson.is_published).length} accent="#d4848c" />
-            <StatCard label="Featured" value={lessons.filter((lesson) => lesson.is_featured).length} accent="#c8a055" />
+            <StatCard label="Total lessons" value={lessons.length} accent="#0969da" />
+            <StatCard label="Live" value={lessons.filter((lesson) => lesson.is_published).length} accent="#1a7f37" />
+            <StatCard label="Hidden" value={lessons.filter((lesson) => !lesson.is_published).length} accent="#cf222e" />
+            <StatCard label="Featured" value={lessons.filter((lesson) => lesson.is_featured).length} accent="#9a6700" />
           </div>
           <DataTable columns={lessonColumns} data={lessons} emptyMessage="No lessons found" />
         </section>

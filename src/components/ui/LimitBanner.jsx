@@ -16,8 +16,8 @@ export function LimitBanner({ limitKey, currentCount }) {
 
   return (
     <div style={{
-      background: atLimit ? "#f5d5d8" : "#f5e4c4",
-      border: `1px solid ${atLimit ? "#eebfc4" : "#ecd09c"}`,
+      background: atLimit ? "#ffebe9" : "#fff8c5",
+      border: `1px solid ${atLimit ? "#ffcecb" : "#eac54f"}`,
       borderRadius: 12,
       padding: "10px 16px",
       display: "flex",
@@ -25,7 +25,7 @@ export function LimitBanner({ limitKey, currentCount }) {
       justifyContent: "space-between",
       gap: 12,
       fontSize: 13,
-      color: "#3d3530",
+      color: "#1f2328",
       marginBottom: 16
     }}>
       <span>

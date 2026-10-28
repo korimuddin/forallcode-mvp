@@ -1,13 +1,13 @@
 const statusStyles = {
-  active: { bg: "#c8d8c4", color: "#27500A" },
-  pro: { bg: "#ddd5f0", color: "#7a6dc4" },
-  free: { bg: "#f4efe6", color: "#9c918c" },
-  cancelled: { bg: "#f5d5d8", color: "#72243E" },
-  past_due: { bg: "#f5e4c4", color: "#633806" },
-  suspended: { bg: "#3d3530", color: "#fffdf9" },
-  online: { bg: "#c8d8c4", color: "#27500A" },
-  degraded: { bg: "#f5e4c4", color: "#633806" },
-  offline: { bg: "#f5d5d8", color: "#72243E" }
+  active: { bg: "#dafbe1", color: "#116329" },
+  pro: { bg: "#ddf4ff", color: "#0550ae" },
+  free: { bg: "#f6f8fa", color: "#6e7781" },
+  cancelled: { bg: "#ffebe9", color: "#82071e" },
+  past_due: { bg: "#fff8c5", color: "#7d4e00" },
+  suspended: { bg: "#1f2328", color: "#ffffff" },
+  online: { bg: "#dafbe1", color: "#116329" },
+  degraded: { bg: "#fff8c5", color: "#7d4e00" },
+  offline: { bg: "#ffebe9", color: "#82071e" }
 };
 
 export default function StatusBadge({ status }) {

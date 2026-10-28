@@ -24,11 +24,11 @@ import { supabase } from "../../lib/supabase";
 
 const MONTHLY_PRICE = 10;
 const STATUS_COLORS = {
-  active: "#7aaa72",
-  cancelled: "#d4848c",
-  past_due: "#c8a055",
-  trialing: "#9b8fd4",
-  free: "#9c918c"
+  active: "#1a7f37",
+  cancelled: "#cf222e",
+  past_due: "#9a6700",
+  trialing: "#0969da",
+  free: "#6e7781"
 };
 
 export default function AdminSubscriptions() {
@@ -204,21 +204,21 @@ export default function AdminSubscriptions() {
       ) : (
         <>
           <section className="admin-stat-grid">
-            <StatCard label="MRR" value={`£${mrr}`} accent="#7aaa72" />
-            <StatCard label="ARR" value={`£${mrr * 12}`} accent="#7aaa72" />
-            <StatCard label="Pro subscribers" value={proActive.length} accent="#9b8fd4" />
-            <StatCard label="Churn rate" value={`${churnRate}%`} accent="#d4848c" />
+            <StatCard label="MRR" value={`£${mrr}`} accent="#1a7f37" />
+            <StatCard label="ARR" value={`£${mrr * 12}`} accent="#1a7f37" />
+            <StatCard label="Pro subscribers" value={proActive.length} accent="#0969da" />
+            <StatCard label="Churn rate" value={`${churnRate}%`} accent="#cf222e" />
           </section>
 
           <section className="admin-chart-grid">
             <AdminChart title="MRR growth" subtitle="Cumulative MRR from Pro subscriptions" height={280}>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={mrrGrowth}>
-                  <CartesianGrid stroke="#f4efe6" vertical={false} />
-                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: "#9c918c" }} />
-                  <YAxis tick={{ fontSize: 10, fill: "#9c918c" }} />
-                  <Tooltip contentStyle={{ fontFamily: "DM Sans", fontSize: 12 }} />
-                  <Line type="monotone" dataKey="mrr" stroke="#7aaa72" strokeWidth={2} dot={false} />
+                  <CartesianGrid stroke="#f6f8fa" vertical={false} />
+                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: "#6e7781" }} />
+                  <YAxis tick={{ fontSize: 10, fill: "#6e7781" }} />
+                  <Tooltip contentStyle={{ fontFamily: "inherit", fontSize: 12 }} />
+                  <Line type="monotone" dataKey="mrr" stroke="#1a7f37" strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             </AdminChart>
@@ -229,7 +229,7 @@ export default function AdminSubscriptions() {
                   <Pie data={statusBreakdown} dataKey="count" nameKey="status" innerRadius={56} outerRadius={90} paddingAngle={3}>
                     {statusBreakdown.map((entry) => <Cell key={entry.status} fill={STATUS_COLORS[entry.status] || STATUS_COLORS.free} />)}
                   </Pie>
-                  <Tooltip contentStyle={{ fontFamily: "DM Sans", fontSize: 12 }} />
+                  <Tooltip contentStyle={{ fontFamily: "inherit", fontSize: 12 }} />
                 </PieChart>
               </ResponsiveContainer>
             </AdminChart>

@@ -10,9 +10,9 @@ import { supabase } from "../lib/supabase";
 import { useRepoAccess } from "../lib/useRepoAccess";
 
 const DEFAULT_COLUMNS = [
-  { name: "To do", colour: "#f4efe6" },
-  { name: "In progress", colour: "#ddd5f0" },
-  { name: "Done", colour: "#c8d8c4" }
+  { name: "To do", colour: "#f6f8fa" },
+  { name: "In progress", colour: "#ddf4ff" },
+  { name: "Done", colour: "#dafbe1" }
 ];
 
 function ProjectRepoHeader({ repo, repoName, showInsights, username }) {

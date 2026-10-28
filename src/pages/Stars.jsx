@@ -8,14 +8,26 @@ import { supabase } from "../lib/supabase";
 
 const PAGE_SIZE = 12;
 
+// GitHub linguist colours: [pill background, language dot]
 const languageStyles = {
-  TypeScript: ["#ddd5f0", "#534AB7"],
-  JavaScript: ["#f5e4c4", "#633806"],
-  Python: ["#cce0f0", "#0C447C"],
-  CSS: ["#c8d8c4", "#27500A"],
-  Rust: ["#f5d5d8", "#72243E"],
-  Shell: ["#f5e4c4", "#633806"],
-  Go: ["#cce0f0", "#0C447C"]
+  TypeScript: ["transparent", "#3178c6"],
+  JavaScript: ["transparent", "#f1e05a"],
+  Python: ["transparent", "#3572A5"],
+  CSS: ["transparent", "#563d7c"],
+  HTML: ["transparent", "#e34c26"],
+  Rust: ["transparent", "#dea584"],
+  Shell: ["transparent", "#89e051"],
+  Go: ["transparent", "#00ADD8"],
+  Java: ["transparent", "#b07219"],
+  Ruby: ["transparent", "#701516"],
+  Swift: ["transparent", "#F05138"],
+  Kotlin: ["transparent", "#A97BFF"],
+  "C++": ["transparent", "#f34b7d"],
+  C: ["transparent", "#555555"],
+  "C#": ["transparent", "#178600"],
+  PHP: ["transparent", "#4F5D95"],
+  Vue: ["transparent", "#41b883"],
+  Dart: ["transparent", "#00B4AB"]
 };
 
 export default function StarsPage() {
@@ -180,7 +192,7 @@ function StarredRepoCard({ repo }) {
 }
 
 function LanguagePill({ language }) {
-  const [background, color] = languageStyles[language] || languageStyles.TypeScript;
+  const [background, color] = languageStyles[language] || ["transparent", "#8c959f"];
   return (
     <span className="explore-language-pill" style={{ backgroundColor: background, color }}>
       <i style={{ backgroundColor: color }} />

@@ -22,10 +22,10 @@ import { useDocumentTitle } from "../../lib/hooks";
 import { supabase } from "../../lib/supabase";
 
 const TRACK_COLORS = {
-  beginner: "#9b8fd4",
-  intermediate: "#7aaa72",
+  beginner: "#0969da",
+  intermediate: "#1a7f37",
   advanced: "#6aa8d4",
-  unknown: "#9c918c"
+  unknown: "#6e7781"
 };
 
 export default function AdminCourseStats() {
@@ -144,7 +144,7 @@ export default function AdminCourseStats() {
               <Pie data={comfortData} dataKey="value" nameKey="label" innerRadius={58} outerRadius={92} paddingAngle={3}>
                 {comfortData.map((entry) => <Cell key={entry.key} fill={entry.color} />)}
               </Pie>
-              <Tooltip contentStyle={{ fontFamily: "DM Sans", fontSize: 12 }} />
+              <Tooltip contentStyle={{ fontFamily: "inherit", fontSize: 12 }} />
             </PieChart>
           </ResponsiveContainer>
         </AdminChart>
@@ -152,10 +152,10 @@ export default function AdminCourseStats() {
         <AdminChart title="Lessons by completion count" subtitle="Completed lessons, highest first" height={270}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={lessonCompletionData.slice(0, 10)} layout="vertical" margin={{ left: 24 }}>
-              <CartesianGrid stroke="#f4efe6" horizontal={false} />
-              <XAxis type="number" allowDecimals={false} tick={{ fontSize: 10, fill: "#9c918c" }} />
-              <YAxis type="category" dataKey="lesson" width={104} tick={{ fontSize: 10, fill: "#9c918c" }} />
-              <Tooltip contentStyle={{ fontFamily: "DM Sans", fontSize: 12 }} />
+              <CartesianGrid stroke="#f6f8fa" horizontal={false} />
+              <XAxis type="number" allowDecimals={false} tick={{ fontSize: 10, fill: "#6e7781" }} />
+              <YAxis type="category" dataKey="lesson" width={104} tick={{ fontSize: 10, fill: "#6e7781" }} />
+              <Tooltip contentStyle={{ fontFamily: "inherit", fontSize: 12 }} />
               <Bar dataKey="completed" fill={ADMIN_CHART_COLORS.primary} radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>

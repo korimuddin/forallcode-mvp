@@ -214,20 +214,20 @@ export default function AdminNotifications() {
       ) : (
         <>
           <section className="admin-stat-grid">
-            <StatCard label="Sent today" value={sentToday} accent="#9b8fd4" />
-            <StatCard label="Read rate" value={`${readRate}%`} accent="#7aaa72" />
-            <StatCard label="Unread total" value={unreadTotal} accent="#c8a055" />
-            <StatCard label="Failed" value="0" accent="#d4848c" />
+            <StatCard label="Sent today" value={sentToday} accent="#0969da" />
+            <StatCard label="Read rate" value={`${readRate}%`} accent="#1a7f37" />
+            <StatCard label="Unread total" value={unreadTotal} accent="#9a6700" />
+            <StatCard label="Failed" value="0" accent="#cf222e" />
           </section>
 
           <section className="admin-chart-grid">
             <AdminChart title="Notification type breakdown" subtitle="Latest 250 notifications" height={260}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={typeData} layout="vertical" margin={{ left: 24 }}>
-                  <CartesianGrid stroke="#f4efe6" horizontal={false} />
-                  <XAxis type="number" allowDecimals={false} tick={{ fontSize: 10, fill: "#9c918c" }} />
-                  <YAxis type="category" dataKey="type" width={130} tick={{ fontSize: 10, fill: "#9c918c" }} />
-                  <Tooltip contentStyle={{ fontFamily: "DM Sans", fontSize: 12 }} />
+                  <CartesianGrid stroke="#f6f8fa" horizontal={false} />
+                  <XAxis type="number" allowDecimals={false} tick={{ fontSize: 10, fill: "#6e7781" }} />
+                  <YAxis type="category" dataKey="type" width={130} tick={{ fontSize: 10, fill: "#6e7781" }} />
+                  <Tooltip contentStyle={{ fontFamily: "inherit", fontSize: 12 }} />
                   <Bar dataKey="count" fill={ADMIN_CHART_COLORS.primary} radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>

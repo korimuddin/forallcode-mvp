@@ -1,9 +1,11 @@
+// Accent options follow the GitHub (Primer) palette. Keys are kept stable so
+// saved preferences keep working; "lavender" is the default Primer blue.
 export const accentOptions = [
-  { label: "Lavender", value: "lavender", colour: "#9b8fd4", light: "#ddd5f0", soft: "#c4b8e8", dark: "#7a6dc4" },
-  { label: "Sage", value: "sage", colour: "#7aaa72", light: "#c8d8c4", soft: "#a8c4a2", dark: "#5f9257" },
-  { label: "Rose", value: "rose", colour: "#d4848c", light: "#f5d5d8", soft: "#eebfc4", dark: "#b76872" },
-  { label: "Sky", value: "sky", colour: "#6aa8d4", light: "#cce0f0", soft: "#a8cce8", dark: "#4f8fbd" },
-  { label: "Amber", value: "amber", colour: "#c8a055", light: "#f5e4c4", soft: "#ecd09c", dark: "#9f7f43" }
+  { label: "Blue", value: "lavender", colour: "#0969da", light: "#ddf4ff", soft: "#54aeff", dark: "#0550ae" },
+  { label: "Green", value: "sage", colour: "#1a7f37", light: "#dafbe1", soft: "#4ac26b", dark: "#116329" },
+  { label: "Pink", value: "rose", colour: "#bf3989", light: "#ffeff7", soft: "#ff80c8", dark: "#99286e" },
+  { label: "Purple", value: "sky", colour: "#8250df", light: "#fbefff", soft: "#c297ff", dark: "#6639ba" },
+  { label: "Orange", value: "amber", colour: "#bc4c00", light: "#fff1e5", soft: "#fb8f44", dark: "#953800" }
 ];
 
 export const defaultAppearance = {
@@ -16,25 +18,9 @@ export const defaultAppearance = {
 
 const storageKey = "forallcode-appearance";
 
-const lightTokens = {
-  cream: "#faf7f2",
-  cream2: "#f4efe6",
-  cream3: "#e8e0d4",
-  ink: "#3d3530",
-  ink2: "#6b5f58",
-  ink3: "#9c918c",
-  white: "#fffdf9"
-};
-
-const darkTokens = {
-  cream: "#211d1a",
-  cream2: "#2c2824",
-  cream3: "#4b433c",
-  ink: "#fffdf9",
-  ink2: "#e8e0d4",
-  ink3: "#b8aca2",
-  white: "#332e29"
-};
+// Neutral colours (canvas, text, borders) come from the Primer tokens in
+// styles.css, switched by :root[data-theme]. Only the accent is set here.
+const legacyNeutralTokens = ["cream", "cream2", "cream3", "ink", "ink2", "ink3", "white"];
 
 export function readAppearance() {
   if (typeof window === "undefined") return defaultAppearance;
@@ -63,22 +49,23 @@ export function applyAppearance(appearance = readAppearance()) {
   if (typeof document === "undefined") return;
 
   const resolved = getResolvedTheme(appearance.theme);
-  const tokens = resolved === "dark" ? darkTokens : lightTokens;
   const accent = accentOptions.find((option) => option.value === appearance.accent) || accentOptions[0];
   const root = document.documentElement;
 
-  Object.entries(tokens).forEach(([key, value]) => {
-    root.style.setProperty(`--${key}`, value);
-  });
+  legacyNeutralTokens.forEach((key) => root.style.removeProperty(`--${key}`));
 
-  root.style.setProperty("--accent", accent.colour);
+  // In dark mode Primer uses lighter accent text so links stay readable on #0d1117.
+  const accentText = resolved === "dark" ? accent.soft : accent.colour;
+  root.style.setProperty("--accent", accentText);
   root.style.setProperty("--accent-light", accent.light);
   root.style.setProperty("--accent-soft", accent.soft);
   root.style.setProperty("--accent-dark", accent.dark);
-  root.style.setProperty("--lavender", accent.light);
+  root.style.setProperty("--accent-hover", accent.dark);
+  root.style.setProperty("--accent-subtle", resolved === "dark" ? `${accent.colour}26` : accent.light);
+  root.style.setProperty("--lavender", resolved === "dark" ? `${accent.colour}26` : accent.light);
   root.style.setProperty("--lavender2", accent.soft);
   root.style.setProperty("--lavender3", accent.colour);
-  root.style.setProperty("--lavender4", accent.dark);
+  root.style.setProperty("--lavender4", resolved === "dark" ? accent.soft : accent.dark);
   root.dataset.theme = resolved;
   root.dataset.themePreference = appearance.theme;
 

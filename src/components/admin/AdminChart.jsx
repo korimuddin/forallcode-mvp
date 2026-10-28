@@ -1,10 +1,10 @@
 export const ADMIN_CHART_COLORS = {
-  primary: "#9b8fd4",
-  secondary: "#7aaa72",
-  danger: "#d4848c",
-  warning: "#c8a055",
+  primary: "#0969da",
+  secondary: "#1a7f37",
+  danger: "#cf222e",
+  warning: "#9a6700",
   info: "#6aa8d4",
-  neutral: "#9c918c"
+  neutral: "#6e7781"
 };
 
 export default function AdminChart({ title, subtitle, children, height = 200 }) {

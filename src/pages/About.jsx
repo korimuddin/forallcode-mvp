@@ -77,11 +77,11 @@ export default function About() {
 function DecorativeHills() {
   return (
     <svg className="about-hills" viewBox="0 0 680 220" aria-hidden="true">
-      <path d="M0 156 C92 116 132 128 206 160 C286 195 350 116 448 142 C520 162 580 116 680 92 V220 H0 Z" fill="#fffdf9" opacity="0.42" />
-      <path d="M0 184 C118 132 198 176 282 154 C374 130 430 184 514 150 C586 122 626 146 680 126 V220 H0 Z" fill="#f4efe6" opacity="0.72" />
-      <circle cx="116" cy="62" r="8" fill="#fffdf9" opacity="0.76" />
-      <circle cx="548" cy="48" r="6" fill="#fffdf9" opacity="0.72" />
-      <path d="M474 72 l7 17 17 7 -17 7 -7 17 -7 -17 -17 -7 17 -7z" fill="#fffdf9" opacity="0.72" />
+      <path d="M0 156 C92 116 132 128 206 160 C286 195 350 116 448 142 C520 162 580 116 680 92 V220 H0 Z" fill="#ffffff" opacity="0.42" />
+      <path d="M0 184 C118 132 198 176 282 154 C374 130 430 184 514 150 C586 122 626 146 680 126 V220 H0 Z" fill="#f6f8fa" opacity="0.72" />
+      <circle cx="116" cy="62" r="8" fill="#ffffff" opacity="0.76" />
+      <circle cx="548" cy="48" r="6" fill="#ffffff" opacity="0.72" />
+      <path d="M474 72 l7 17 17 7 -17 7 -7 17 -7 -17 -17 -7 17 -7z" fill="#ffffff" opacity="0.72" />
     </svg>
   );
 }

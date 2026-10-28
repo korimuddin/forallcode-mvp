@@ -174,10 +174,10 @@ export default function AdminDataUsage() {
       ) : (
         <>
           <section className="admin-stat-grid">
-            <StatCard label="Total estimated usage" value={formatBytes(totalEstimatedBytes)} accent="#9b8fd4" />
-            <StatCard label="repo-heroes bucket" value={formatBytes(totalHeroBytes)} accent="#7aaa72" />
+            <StatCard label="Total estimated usage" value={formatBytes(totalEstimatedBytes)} accent="#0969da" />
+            <StatCard label="repo-heroes bucket" value={formatBytes(totalHeroBytes)} accent="#1a7f37" />
             <StatCard label={managementDatabaseBytes ? "Database size" : "Estimated database"} value={formatBytes(databaseBytes)} accent="#6aa8d4" />
-            <StatCard label="API requests" value={apiRequestCount ?? "Not configured"} accent="#c8a055" />
+            <StatCard label="API requests" value={apiRequestCount ?? "Not configured"} accent="#9a6700" />
           </section>
 
           <section className="admin-usage-grid">
@@ -219,10 +219,10 @@ export default function AdminDataUsage() {
             <AdminChart title="Hero uploads" subtitle="Uploads per day over the last 30 days" height={300}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={uploadData}>
-                  <CartesianGrid stroke="#f4efe6" vertical={false} />
-                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: "#9c918c" }} />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: "#9c918c" }} />
-                  <Tooltip contentStyle={{ fontFamily: "DM Sans", fontSize: 12 }} />
+                  <CartesianGrid stroke="#f6f8fa" vertical={false} />
+                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: "#6e7781" }} />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: "#6e7781" }} />
+                  <Tooltip contentStyle={{ fontFamily: "inherit", fontSize: 12 }} />
                   <Bar dataKey="uploads" fill={ADMIN_CHART_COLORS.primary} radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>

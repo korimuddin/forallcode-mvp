@@ -15,7 +15,7 @@ export default function BoardColumn({
       className="board-column"
       onDragOver={(event) => canEdit && event.preventDefault()}
       onDrop={(event) => onDrop?.(event, column)}
-      style={{ background: column.colour || "#f4efe6" }}
+      style={{ background: column.colour || "#f6f8fa" }}
     >
       <header>
         <span>{column.name}</span>

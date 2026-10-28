@@ -1,6 +1,6 @@
 export const learnTracks = [
-  { id: 'beginner', track: 1, title: 'Beginner', subtitle: 'New to Git', color: '#9b8fd4' },
-  { id: 'intermediate', track: 2, title: 'Intermediate', subtitle: 'Getting Comfortable', color: '#7aaa72' },
+  { id: 'beginner', track: 1, title: 'Beginner', subtitle: 'New to Git', color: '#0969da' },
+  { id: 'intermediate', track: 2, title: 'Intermediate', subtitle: 'Getting Comfortable', color: '#1a7f37' },
   { id: 'advanced', track: 3, title: 'Advanced', subtitle: 'Going Further', color: '#6aa8d4' }
 ];
 

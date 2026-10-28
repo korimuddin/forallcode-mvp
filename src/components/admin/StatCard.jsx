@@ -1,4 +1,4 @@
-export default function StatCard({ label, value, delta, deltaLabel, accent = "#9b8fd4" }) {
+export default function StatCard({ label, value, delta, deltaLabel, accent = "#0969da" }) {
   const hasDelta = delta !== undefined && delta !== null;
   const positive = Number(delta) >= 0;
 

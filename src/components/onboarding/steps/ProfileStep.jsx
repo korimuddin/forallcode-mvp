@@ -35,7 +35,7 @@ export default function ProfileStep({ onBack, onCustomiseProfile, onNext, onSkip
     }
 
     return {
-      background: profile?.coverGradient || "linear-gradient(135deg, #ddd5f0, #c8d8c4)"
+      background: profile?.coverGradient || "linear-gradient(135deg, #ddf4ff, #dafbe1)"
     };
   }, [profile]);
 
@@ -67,9 +67,9 @@ export default function ProfileStep({ onBack, onCustomiseProfile, onNext, onSkip
           <span>@{username}</span>
         </div>
         <div className="onboarding-profile-desk">
-          <span style={{ background: "#ddd5f0" }} />
-          <span style={{ background: "#f5d5d8" }} />
-          <span style={{ background: "#c8d8c4" }} />
+          <span style={{ background: "#ddf4ff" }} />
+          <span style={{ background: "#ffebe9" }} />
+          <span style={{ background: "#dafbe1" }} />
         </div>
         <div className="onboarding-profile-repos">
           <span />

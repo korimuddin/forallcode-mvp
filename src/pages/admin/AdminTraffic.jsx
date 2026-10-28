@@ -22,10 +22,10 @@ import { useDocumentTitle } from "../../lib/hooks";
 import { supabase } from "../../lib/supabase";
 
 const DEVICE_COLORS = {
-  desktop: "#9b8fd4",
-  mobile: "#7aaa72",
+  desktop: "#0969da",
+  mobile: "#1a7f37",
   tablet: "#6aa8d4",
-  unknown: "#9c918c"
+  unknown: "#6e7781"
 };
 
 export default function AdminTraffic() {
@@ -123,20 +123,20 @@ export default function AdminTraffic() {
       ) : (
         <>
           <section className="admin-stat-grid">
-            <StatCard label="Page views" value={views.length} accent="#9b8fd4" />
-            <StatCard label="Unique users" value={uniqueUsers} accent="#7aaa72" />
+            <StatCard label="Page views" value={views.length} accent="#0969da" />
+            <StatCard label="Unique users" value={uniqueUsers} accent="#1a7f37" />
             <StatCard label="Top route" value={routeData[0]?.route || "None"} accent="#6aa8d4" />
-            <StatCard label="Direct views" value={directViews} accent="#c8a055" />
+            <StatCard label="Direct views" value={directViews} accent="#9a6700" />
           </section>
 
           <section className="admin-chart-grid">
             <AdminChart title="Page views by route" subtitle="Top routes in the last 30 days" height={310}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={routeData} layout="vertical" margin={{ left: 24 }}>
-                  <CartesianGrid stroke="#f4efe6" horizontal={false} />
-                  <XAxis type="number" allowDecimals={false} tick={{ fontSize: 10, fill: "#9c918c" }} />
-                  <YAxis type="category" dataKey="route" width={120} tick={{ fontSize: 10, fill: "#9c918c" }} />
-                  <Tooltip contentStyle={{ fontFamily: "DM Sans", fontSize: 12 }} />
+                  <CartesianGrid stroke="#f6f8fa" horizontal={false} />
+                  <XAxis type="number" allowDecimals={false} tick={{ fontSize: 10, fill: "#6e7781" }} />
+                  <YAxis type="category" dataKey="route" width={120} tick={{ fontSize: 10, fill: "#6e7781" }} />
+                  <Tooltip contentStyle={{ fontFamily: "inherit", fontSize: 12 }} />
                   <Bar dataKey="views" fill={ADMIN_CHART_COLORS.primary} radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -145,12 +145,12 @@ export default function AdminTraffic() {
             <AdminChart title="Traffic over time" subtitle="Daily views and unique users" height={310}>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={dailyData}>
-                  <CartesianGrid stroke="#f4efe6" vertical={false} />
-                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: "#9c918c" }} />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: "#9c918c" }} />
-                  <Tooltip contentStyle={{ fontFamily: "DM Sans", fontSize: 12 }} />
-                  <Line type="monotone" dataKey="views" stroke="#9b8fd4" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="users" stroke="#7aaa72" strokeWidth={2} dot={false} />
+                  <CartesianGrid stroke="#f6f8fa" vertical={false} />
+                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: "#6e7781" }} />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: "#6e7781" }} />
+                  <Tooltip contentStyle={{ fontFamily: "inherit", fontSize: 12 }} />
+                  <Line type="monotone" dataKey="views" stroke="#0969da" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="users" stroke="#1a7f37" strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             </AdminChart>
@@ -160,10 +160,10 @@ export default function AdminTraffic() {
             <AdminChart title="Referrer breakdown" subtitle="Where visits came from" height={280}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={referrerData} layout="vertical" margin={{ left: 24 }}>
-                  <CartesianGrid stroke="#f4efe6" horizontal={false} />
-                  <XAxis type="number" allowDecimals={false} tick={{ fontSize: 10, fill: "#9c918c" }} />
-                  <YAxis type="category" dataKey="referrer" width={120} tick={{ fontSize: 10, fill: "#9c918c" }} />
-                  <Tooltip contentStyle={{ fontFamily: "DM Sans", fontSize: 12 }} />
+                  <CartesianGrid stroke="#f6f8fa" horizontal={false} />
+                  <XAxis type="number" allowDecimals={false} tick={{ fontSize: 10, fill: "#6e7781" }} />
+                  <YAxis type="category" dataKey="referrer" width={120} tick={{ fontSize: 10, fill: "#6e7781" }} />
+                  <Tooltip contentStyle={{ fontFamily: "inherit", fontSize: 12 }} />
                   <Bar dataKey="views" fill={ADMIN_CHART_COLORS.info} radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -175,7 +175,7 @@ export default function AdminTraffic() {
                   <Pie data={deviceData} dataKey="views" nameKey="device" innerRadius={56} outerRadius={90} paddingAngle={3}>
                     {deviceData.map((entry) => <Cell key={entry.device} fill={DEVICE_COLORS[entry.device] || DEVICE_COLORS.unknown} />)}
                   </Pie>
-                  <Tooltip contentStyle={{ fontFamily: "DM Sans", fontSize: 12 }} />
+                  <Tooltip contentStyle={{ fontFamily: "inherit", fontSize: 12 }} />
                 </PieChart>
               </ResponsiveContainer>
             </AdminChart>

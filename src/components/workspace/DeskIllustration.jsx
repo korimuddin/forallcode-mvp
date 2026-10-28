@@ -34,7 +34,7 @@ export default function DeskIllustration({
         <>
           <rect x="615" y="92" width="76" height="86" rx="18" fill={colours.mug} stroke={colours.deskEdge} />
           <path d="M690 116c42 0 42 42 0 42" fill="none" stroke={colours.deskEdge} strokeWidth="10" />
-          <path d="M640 70c-8-18 8-28 0-44M668 70c-8-18 8-28 0-44" stroke={isNight ? "#8d8278" : "#9c918c"} strokeWidth="5" strokeLinecap="round" />
+          <path d="M640 70c-8-18 8-28 0-44M668 70c-8-18 8-28 0-44" stroke={isNight ? "#8d8278" : "#6e7781"} strokeWidth="5" strokeLinecap="round" />
           <rect x="650" y="325" width="92" height="88" rx="18" fill={colours.plant} stroke={colours.deskEdge} />
           <path d="M696 325c-42-54-98-28-54 10M696 325c34-68 92-32 44 8" fill={colours.leaf} />
           <rect x="640" y="410" width="116" height="26" rx="13" fill={colours.deskEdge} />
@@ -53,7 +53,7 @@ export default function DeskIllustration({
         </>
       )}
 
-      <circle cx="110" cy="104" r="11" fill={isNight ? "#b96c7a" : "#d4848c"} />
+      <circle cx="110" cy="104" r="11" fill={isNight ? "#b96c7a" : "#cf222e"} />
       <rect x="86" y="114" width="116" height="86" rx="10" fill={colours.note2} stroke={colours.deskEdge} transform="rotate(-8 144 157)" />
       <rect x="148" y="126" width="112" height="82" rx="10" fill={colours.note1} stroke={colours.deskEdge} transform="rotate(-3 204 167)" />
     </svg>
